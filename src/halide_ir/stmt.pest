@@ -1,0 +1,125 @@
+// primitive data types
+num = @{ int+ }
+int = { ASCII_DIGIT+ }
+
+ident_syms = _{ "_" | "." | "-" }
+
+identifier = @{ ("_" | ASCII_ALPHA)+ ~ (ident_syms | ASCII_ALPHA | ASCII_DIGIT)* }
+number = @{ ASCII_DIGIT+ }
+
+// toplevel stmt parsing
+
+file = {
+    SOI
+    ~ module
+    ~ ANY*
+    ~ EOI
+}
+
+module = {
+    "module"
+    ~ (module_kv ~ ("," ~ module_kv)*)? ~ NEWLINE
+    ~ funcs
+}
+
+module_kv = {
+    identifier ~ "=" ~ identifier
+}
+
+funcs = {
+    func*
+}
+
+func = {
+    identifier?
+    ~ "func"
+    ~ identifier
+    ~ func_arg_list
+    ~ block
+}
+
+func_arg_list = {
+    "("
+    ~ (identifier ~ ("," ~ identifier)*)?
+    ~ ")"
+}
+
+block = {
+    "{" ~ NEWLINE
+    ~ (stmt ~ NEWLINE)*
+    ~ "}"
+    // ~ "}"
+}
+
+stmt = {
+    let_stmt // | for_stmt | if_stmt | produce_stmt | predicate_stmt
+}
+
+let_stmt = {
+    "let"
+    ~ identifier
+    ~ "="
+    ~ expr
+}
+
+for_stmt = {
+    "for"
+}
+
+if_stmt = {
+    "if"
+}
+
+produce_stmt = {
+    "produce"
+}
+
+predicate_stmt = {
+    "predicate"
+}
+
+// expression parsing
+
+expr = {
+    funcall
+  | cast_expr
+  | binop
+}
+
+// binary operations
+binop = {
+    primary ~ (infix ~ primary)*
+}
+
+infix = _{
+    add | sub | mul | div | modulo
+}
+add     = { "+" }
+sub     = { "-" }
+mul     = { "*" }
+div     = { "/" }
+modulo  = { "%" }
+primary = _{ number | identifier | "(" ~ expr ~ ")" }
+
+// function calls
+funcall = {
+    identifier
+    ~ "(" ~ funcall_args? ~ ")"
+}
+
+funcall_args = {
+    expr ~ ("," ~ expr)*
+}
+
+// cast expressions
+cast_expr = {
+    "(" ~ cast_args? ~ ")" ~ expr
+}
+
+ptr = { "*" }
+cast_args = {
+    identifier ~ (identifier | ptr)*
+}
+
+WHITESPACE = _{ " " | "\t" }
+COMMENT = _{ ("//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE) | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }

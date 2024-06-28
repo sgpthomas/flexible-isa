@@ -1,0 +1,11 @@
+[package]
+name = "flexible-isa"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+argh = "0.1.12"
+lazy_static = "1.5.0"
+pest = "2.7.10"
+pest_consume = "1.1.3"

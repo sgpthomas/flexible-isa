@@ -1,0 +1,3 @@
+* Flexible ISA from Halide
+
+Experimental Instruction selection for Halide that can invent new instructions to increase efficiency.
