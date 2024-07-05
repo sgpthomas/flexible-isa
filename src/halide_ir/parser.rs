@@ -23,7 +23,14 @@ lazy_static::lazy_static! {
         .op(Op::infix(Rule::sub, Assoc::Left))
         .op(Op::infix(Rule::mul, Assoc::Left))
         .op(Op::infix(Rule::div, Assoc::Left))
-        .op(Op::infix(Rule::modulo, Assoc::Left));
+        .op(Op::infix(Rule::modulo, Assoc::Left))
+        .op(Op::infix(Rule::lt, Assoc::Left))
+        .op(Op::infix(Rule::lte, Assoc::Left))
+        .op(Op::infix(Rule::eq, Assoc::Left))
+        .op(Op::infix(Rule::neq, Assoc::Left))
+        .op(Op::infix(Rule::gte, Assoc::Left))
+        .op(Op::infix(Rule::gt, Assoc::Left))
+        .op(Op::infix(Rule::if_infx, Assoc::Left));
 }
 
 #[derive(pest_consume::Parser)]
@@ -35,32 +42,38 @@ impl StmtParser {
         let raw_content = fs::read(path)?;
         let string_content = std::str::from_utf8(&raw_content)?.to_string();
 
-        println!("{string_content}");
-
         let inputs = StmtParser::parse(Rule::file, &string_content)?;
 
         Ok(StmtParser::file(inputs.single().unwrap()).unwrap())
     }
 
-    fn binop_helper(pairs: Pairs<Rule>) -> ParseResult<Expr> {
+    fn expr_pratt(pairs: Pairs<Rule>) -> ParseResult<Expr> {
         PRATT
-            .map_primary(|primary| {
-                println!("{primary:#?}");
-                match primary.as_rule() {
-                    Rule::number => Ok(Expr::Number(Self::number(Node::new(primary))?)),
-                    Rule::identifier => Ok(Expr::Ident(Self::identifier(Node::new(primary))?)),
-                    Rule::expr => Self::expr(Node::new(primary)),
-                    x => unreachable!("Unexpected rule {x:?} for expr"),
-                }
+            .map_primary(|primary| match primary.as_rule() {
+                Rule::funcall => Self::funcall(Node::new(primary)),
+                Rule::cast_expr => Self::cast_expr(Node::new(primary)),
+                Rule::access_expr => Self::access_expr(Node::new(primary)),
+                Rule::number => Ok(Expr::Number(Self::number(Node::new(primary))?)),
+                Rule::identifier => Ok(Expr::Ident(Self::identifier(Node::new(primary))?)),
+                Rule::expr => Self::expr(Node::new(primary)),
+                x => unreachable!("Unexpected rule `{x:?}` for expr"),
             })
             .map_infix(|lhs, op, rhs| {
-                {
-                    Ok(match op.as_rule() {
-                        Rule::add => Expr::Add(Box::new(lhs?), Box::new(rhs?)),
-                        Rule::sub => Expr::Sub(Box::new(lhs?), Box::new(rhs?)),
-                        _ => unreachable!(),
-                    })
-                }
+                Ok(match op.as_rule() {
+                    Rule::add => Expr::Add(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::sub => Expr::Sub(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::mul => Expr::Mul(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::div => Expr::Div(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::modulo => Expr::Modulo(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::lt => Expr::Lt(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::lte => Expr::Lte(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::eq => Expr::Eq(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::neq => Expr::Neq(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::gte => Expr::Gte(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::gt => Expr::Gt(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::if_infx => Expr::If(Box::new(lhs?), Box::new(rhs?)),
+                    x => unreachable!("Unexpected infix operator: `{x:?}`"),
+                })
             })
             .parse(pairs)
     }
@@ -152,7 +165,9 @@ impl StmtParser {
             [for_stmt(s)] => s,
             [if_stmt(s)] => s,
             [produce_stmt(s)] => s,
-            [predicate_stmt(s)] => s
+            [predicate_stmt(s)] => s,
+            [update_stmt(s)] => s,
+            [expr(e)] => Stmt::Expr(e)
         ))
     }
 
@@ -163,33 +178,45 @@ impl StmtParser {
         ))
     }
 
-    fn for_stmt(_input: Node) -> ParseResult<Stmt> {
-        todo!()
-    }
-
-    fn if_stmt(_input: Node) -> ParseResult<Stmt> {
-        todo!()
-    }
-
-    fn produce_stmt(_input: Node) -> ParseResult<Stmt> {
-        todo!()
-    }
-
-    fn predicate_stmt(_input: Node) -> ParseResult<Stmt> {
-        todo!()
-    }
-
-    fn expr(input: Node) -> ParseResult<Expr> {
+    fn for_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [binop(expr)] => expr,
-            [funcall(expr)] => expr,
-            [cast_expr(expr)] => expr
+            [expr(var), expr(low), expr(high), block(body)] => Stmt::For { var, low, high, body }
         ))
     }
 
-    fn binop(input: Node) -> ParseResult<Expr> {
-        Self::binop_helper(input.into_pair().into_inner())
+    fn if_stmt(input: Node) -> ParseResult<Stmt> {
+        Ok(match_nodes!(
+            input.into_children();
+            [expr(cond), block(tru)] => Stmt::If { cond, tru, fls: None},
+            [expr(cond), block(tru), block(fls)] => Stmt::If { cond, tru, fls: Some(fls) },
+            [expr(cond), block(tru), if_stmt(fls)] => Stmt::If { cond, tru, fls: Some(vec![fls]) }
+        ))
+    }
+
+    fn produce_stmt(input: Node) -> ParseResult<Stmt> {
+        Ok(match_nodes!(
+            input.into_children();
+            [identifier(var), block(body)] => Stmt::Produce { var, body }
+        ))
+    }
+
+    fn predicate_stmt(input: Node) -> ParseResult<Stmt> {
+        Ok(match_nodes!(
+            input.into_children();
+            [expr(cond), stmt(stmt)] => Stmt::Predicate { cond, stmt: Box::new(stmt) }
+        ))
+    }
+
+    fn update_stmt(input: Node) -> ParseResult<Stmt> {
+        Ok(match_nodes!(
+            input.into_children();
+            [identifier(array), expr(idx), expr(value)] => Stmt::Update { array, idx, value }
+        ))
+    }
+
+    fn expr(input: Node) -> ParseResult<Expr> {
+        Self::expr_pratt(input.into_pair().into_inner())
     }
 
     fn add(input: Node) -> ParseResult<()> {
@@ -209,6 +236,34 @@ impl StmtParser {
     }
 
     fn modulo(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn lt(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn lte(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn eq(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn neq(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn gte(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn gt(input: Node) -> ParseResult<()> {
+        Ok(())
+    }
+
+    fn if_infx(input: Node) -> ParseResult<()> {
         Ok(())
     }
 
@@ -244,6 +299,13 @@ impl StmtParser {
             input.into_children();
             [identifier(id)..] => id.collect(),
             [identifier(id).., ptr(ptr)] => id.chain(vec![ptr].into_iter()).collect()
+        ))
+    }
+
+    fn access_expr(input: Node) -> ParseResult<Expr> {
+        Ok(match_nodes!(
+            input.into_children();
+            [identifier(id), expr(e)] => Expr::Access(id, Box::new(e))
         ))
     }
 

@@ -27,7 +27,7 @@ module_kv = {
 }
 
 funcs = {
-    func*
+    func+
 }
 
 func = {
@@ -48,11 +48,11 @@ block = {
     "{" ~ NEWLINE
     ~ (stmt ~ NEWLINE)*
     ~ "}"
-    // ~ "}"
 }
 
 stmt = {
-    let_stmt // | for_stmt | if_stmt | produce_stmt | predicate_stmt
+    let_stmt | for_stmt | if_stmt | produce_stmt | predicate_stmt | update_stmt
+  | expr
 }
 
 let_stmt = {
@@ -63,43 +63,55 @@ let_stmt = {
 }
 
 for_stmt = {
-    "for"
+    "for" ~ "(" ~ expr ~ "," ~ expr ~ "," ~ expr ~ ")"
+    ~ block
 }
 
 if_stmt = {
-    "if"
+    "if" ~ "(" ~ expr ~ ")" ~ block ~ ("else" ~ (if_stmt | block))?
 }
 
 produce_stmt = {
-    "produce"
+    "produce" ~ identifier ~ block
 }
 
 predicate_stmt = {
-    "predicate"
+    "predicate" ~ expr ~ NEWLINE ~ stmt
 }
 
-// expression parsing
-
-expr = {
-    funcall
-  | cast_expr
-  | binop
+update_stmt = {
+    identifier ~ "[" ~ expr ~ "]" ~ "=" ~ expr
 }
 
 // binary operations
-binop = {
+expr = {
     primary ~ (infix ~ primary)*
 }
 
 infix = _{
     add | sub | mul | div | modulo
+  | lte | lt | eq | neq | gte | gt | if_infx
 }
 add     = { "+" }
 sub     = { "-" }
 mul     = { "*" }
 div     = { "/" }
 modulo  = { "%" }
-primary = _{ number | identifier | "(" ~ expr ~ ")" }
+lt      = { "<" }
+lte     = { "<=" }
+eq      = { "==" }
+neq     = { "!=" }
+gte     = { ">=" }
+gt      = { ">" }
+if_infx = { "if" }
+primary = _{
+    funcall
+  | cast_expr
+  | access_expr
+  | number
+  | identifier
+  | "(" ~ expr ~ ")"
+}
 
 // function calls
 funcall = {
@@ -119,6 +131,11 @@ cast_expr = {
 ptr = { "*" }
 cast_args = {
     identifier ~ (identifier | ptr)*
+}
+
+// array access
+access_expr = {
+    identifier ~ "[" ~ expr ~ "]"
 }
 
 WHITESPACE = _{ " " | "\t" }

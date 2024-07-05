@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct Id {
-    name: String,
+    pub name: String,
 }
 
 #[derive(Debug)]
 pub struct Number {
-    value: u64,
+    pub value: u64,
 }
 
 impl Id {
@@ -42,11 +42,35 @@ pub type Block = Vec<Stmt>;
 
 #[derive(Debug)]
 pub enum Stmt {
-    Let { var: Id, expr: Expr },
-    For { var: Expr, low: Expr, high: Expr },
-    If { cond: Expr, tru: Block, fals: Block },
-    Produce { var: Id, block: Block },
-    Predicate,
+    Let {
+        var: Id,
+        expr: Expr,
+    },
+    For {
+        var: Expr,
+        low: Expr,
+        high: Expr,
+        body: Block,
+    },
+    If {
+        cond: Expr,
+        tru: Block,
+        fls: Option<Block>,
+    },
+    Produce {
+        var: Id,
+        body: Block,
+    },
+    Predicate {
+        cond: Expr,
+        stmt: Box<Stmt>,
+    },
+    Update {
+        array: Id,
+        idx: Expr,
+        value: Expr,
+    },
+    Expr(Expr),
 }
 
 #[derive(Debug)]
@@ -55,19 +79,28 @@ pub enum Expr {
     Number(Number),
     Ident(Id),
 
+    // arith operators
     Add(Box<Expr>, Box<Expr>),
     Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
-    Mod(Box<Expr>, Box<Expr>),
+    Modulo(Box<Expr>, Box<Expr>),
+
+    // comparison operators
+    Lt(Box<Expr>, Box<Expr>),
+    Lte(Box<Expr>, Box<Expr>),
+    Eq(Box<Expr>, Box<Expr>),
+    Neq(Box<Expr>, Box<Expr>),
+    Gte(Box<Expr>, Box<Expr>),
+    Gt(Box<Expr>, Box<Expr>),
+    If(Box<Expr>, Box<Expr>),
 
     // function calls
     FunCall(Id, Vec<Expr>),
 
     // Casts
     Cast(Vec<Id>, Box<Expr>),
-    StructCast(Id, Id, Box<Expr>),
 
-    // placeholder expr
-    TODO,
+    // array access
+    Access(Id, Box<Expr>),
 }
