@@ -12,13 +12,15 @@ type Doc<'a> = RcDoc<'a, ColorSpec>;
 #[allow(unused)]
 pub trait Printer {
     fn to_doc(&self) -> Doc;
+
     fn to_pretty(&self) -> String {
         let mut w = Vec::new();
         self.to_doc().render(80, &mut w).unwrap();
         String::from_utf8(w).unwrap()
     }
+
     fn stdout(&self) {
-        let stdout = StandardStream::stdout(ColorChoice::Auto);
+        let stdout = StandardStream::stdout(ColorChoice::Always);
         self.to_doc().render_colored(80, stdout).unwrap()
     }
 }
@@ -198,7 +200,7 @@ impl Printer for ast::Module {
         Doc::text("module")
             .highlight(|cs| cs.set_bold(true).keyword())
             .space_then(self.params.intersperse("="))
-            .line_then(self.funcs.intersperse(Doc::hardline()).block())
+            .line_then(self.funcs.intersperse(Doc::hardline()))
     }
 }
 
@@ -206,7 +208,7 @@ impl Printer for ast::Func {
     fn to_doc(&self) -> Doc {
         self.metadata
             .to_doc()
-            .highlight(|cs| cs.set_italic(true))
+            .highlight(|cs| cs.set_italic(true).set_fg(Some(Color::Black)))
             .space_then(Doc::text("func").highlight(|cs| cs.keyword()))
             .space_then(self.name.to_doc().highlight(|cs| cs.func()))
             .space_then(self.args.intersperse(Doc::text(",").line()).parens())
@@ -229,6 +231,7 @@ impl Printer for ast::Stmt {
                 body,
             } => Doc::text("for").highlight(|cs| cs.keyword()).space_then(
                 var.to_doc()
+                    .highlight(|cs| cs.var())
                     .append(",")
                     .space_then(low.to_doc())
                     .append(",")
@@ -257,7 +260,7 @@ impl Printer for ast::Stmt {
             }
             ast::Stmt::Produce { var, body } => Doc::text("produce")
                 .highlight(|cs| cs.keyword())
-                .space_then(var.to_doc())
+                .space_then(var.to_doc().highlight(|cs| cs.set_bold(true)))
                 .space_then(body.intersperse(Doc::hardline()).block()),
             ast::Stmt::Predicate { cond, stmt } => Doc::text("predicate")
                 .highlight(|cs| cs.keyword())
@@ -315,7 +318,8 @@ impl Printer for ast::Expr {
             ast::Expr::FunCall(fn_name, args) => fn_name
                 .to_doc()
                 .highlight(|cs| cs.funcall())
-                .append(args.intersperse(Doc::text(",").line_()).parens()),
+                .append(args.intersperse(Doc::text(",").line_()).parens())
+                .group(),
             ast::Expr::Cast(typs, expr) => typs
                 .intersperse(Doc::space())
                 .enclose("(", ")")

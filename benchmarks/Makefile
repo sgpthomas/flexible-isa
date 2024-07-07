@@ -11,15 +11,15 @@ hannk = hannk/common_halide.cpp \
 all: $(benchmarks)
 
 $(benchmarks): %: %/bin %/out
-	g++ --std=c++17 -fno-rtti -O3 -DLOG2VLEN=7 \
+	clang++ --std=c++17 -fno-rtti -O3 -DLOG2VLEN=7 \
 		-I $(HALIDE_DIR)/include -I $(HALIDE_DIR)/tools \
 		-g $@/src/$@_generator.cpp $(HALIDE_DIR)/tools/GenGen.cpp \
-		$(hank) \
+		$(hannk) \
 		-o $@/bin/$@_generator \
-		-L $(HALIDE_DIR)/lib -lHalide $(shell llvm-config --system-libs --link-static)
+		-L $(HALIDE_DIR)/lib -lHalide
 	DYLD_LIBRARY_PATH=$(HALIDE_DIR)/lib LD_LIBRARY_PATH=$(HALIDE_DIR)/lib ./$@/bin/$@_generator \
 		-o $@/out \
-		-g $@ -e stmt \
+		-g $@ -e stmt,assembly \
 		-f $@_hvx128 target=hexagon-32-noos-no_bounds_query-no_asserts-hvx_128-hvx_v66
 
 $(out_dirs) $(bin_dirs): %:

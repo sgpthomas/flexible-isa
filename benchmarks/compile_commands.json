@@ -1,0 +1,86 @@
+[
+  {
+    "arguments": [
+      "/opt/homebrew/opt/llvm/bin//clang++",
+      "-c",
+      "--std=c++17",
+      "-fno-rtti",
+      "-O3",
+      "-DLOG2VLEN=7",
+      "-I",
+      "/Users/sgt/Research/Halide/include",
+      "-I",
+      "/Users/sgt/Research/Halide/tools",
+      "-g",
+      "-o",
+      "add/bin/add_generator",
+      "add/src/add_generator.cpp"
+    ],
+    "directory": "/Users/sgt/Research/flexible-isa/benchmarks",
+    "file": "/Users/sgt/Research/flexible-isa/benchmarks/add/src/add_generator.cpp",
+    "output": "/Users/sgt/Research/flexible-isa/benchmarks/add/bin/add_generator"
+  },
+  {
+    "arguments": [
+      "/opt/homebrew/opt/llvm/bin//clang++",
+      "-c",
+      "--std=c++17",
+      "-fno-rtti",
+      "-O3",
+      "-DLOG2VLEN=7",
+      "-I",
+      "/Users/sgt/Research/Halide/include",
+      "-I",
+      "/Users/sgt/Research/Halide/tools",
+      "-g",
+      "-o",
+      "add/bin/add_generator",
+      "/Users/sgt/Research/Halide/tools/GenGen.cpp"
+    ],
+    "directory": "/Users/sgt/Research/flexible-isa/benchmarks",
+    "file": "/Users/sgt/Research/Halide/tools/GenGen.cpp",
+    "output": "/Users/sgt/Research/flexible-isa/benchmarks/add/bin/add_generator"
+  },
+  {
+    "arguments": [
+      "/opt/homebrew/opt/llvm/bin//clang++",
+      "-c",
+      "--std=c++17",
+      "-fno-rtti",
+      "-O3",
+      "-DLOG2VLEN=7",
+      "-I",
+      "/Users/sgt/Research/Halide/include",
+      "-I",
+      "/Users/sgt/Research/Halide/tools",
+      "-g",
+      "-o",
+      "add/bin/add_generator",
+      "hannk/common_halide.cpp"
+    ],
+    "directory": "/Users/sgt/Research/flexible-isa/benchmarks",
+    "file": "/Users/sgt/Research/flexible-isa/benchmarks/hannk/common_halide.cpp",
+    "output": "/Users/sgt/Research/flexible-isa/benchmarks/add/bin/add_generator"
+  },
+  {
+    "arguments": [
+      "/opt/homebrew/opt/llvm/bin//clang++",
+      "-c",
+      "--std=c++17",
+      "-fno-rtti",
+      "-O3",
+      "-DLOG2VLEN=7",
+      "-I",
+      "/Users/sgt/Research/Halide/include",
+      "-I",
+      "/Users/sgt/Research/Halide/tools",
+      "-g",
+      "-o",
+      "add/bin/add_generator",
+      "hannk/interpreter/elementwise_program.cpp"
+    ],
+    "directory": "/Users/sgt/Research/flexible-isa/benchmarks",
+    "file": "/Users/sgt/Research/flexible-isa/benchmarks/hannk/interpreter/elementwise_program.cpp",
+    "output": "/Users/sgt/Research/flexible-isa/benchmarks/add/bin/add_generator"
+  }
+]

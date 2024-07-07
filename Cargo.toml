@@ -1,3 +1,6 @@
+[workspace]
+members = ["bisa"]
+
 [package]
 name = "flexible-isa"
 version = "0.1.0"

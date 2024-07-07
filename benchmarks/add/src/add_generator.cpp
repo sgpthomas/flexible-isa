@@ -1,7 +1,5 @@
 #include "Halide.h"
-#include "../../hannk/common_halide.h"
 #include "../../hannk/constants.h"
-#include "../../hannk/interpreter/elementwise_program.h"
 
 using namespace Halide;
 using namespace Halide::ConciseCasts;
