@@ -1,3 +1,28 @@
 * Flexible ISA from Halide
 
 Experimental Instruction selection for Halide that can invent new instructions to increase efficiency.
+
+** Installation
+
+Run =cargo build --all= to build both the flexible isa binary as well as the =bisa= binary.
+
+*** Bisa (Build ISA)
+
+A simple build tool based on =fud-core= to build an ISA from a set of Halide generators. It's maybe overly complicated to have a separate build tool for this. But I wanted to play around more with =fud-core= and see what it felt like to build a build tool with it for a particular purpose. It's also pretty nice for debugging. I find it nicer to work with than =Makefiles=.
+
+Anyways, to get things working you need to have a =~/.config/bisa.toml= file with the keys =halide.base= pointing to a Halide installation and =hannk.base= pointing to where =hannk= is stored. There's a copy in this repository located at =benchmarks/hank=. Once you have this, =bisa= will be able to run.
+
+*** Halide
+
+We need Halide to be able to run generators.
+
+Clone the repository. And install any necessary dependencies. Refer to the =README_cmake.md= for details about dependencies.
+
+In the repository run the following commands.
+
+#+begin_src shell
+rm -rf build # make sure that the build directory is clean
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DTARGET_WEBASSEMBLY=no -S . -B build
+cmake --build build
+cmake --install build --prefix .
+#+end_src
