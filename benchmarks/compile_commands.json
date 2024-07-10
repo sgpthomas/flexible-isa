@@ -11,6 +11,8 @@
       "/Users/sgt/Research/Halide/include",
       "-I",
       "/Users/sgt/Research/Halide/tools",
+      "-I",
+      "hannk",
       "-g",
       "-o",
       "add/bin/add_generator",
@@ -32,6 +34,8 @@
       "/Users/sgt/Research/Halide/include",
       "-I",
       "/Users/sgt/Research/Halide/tools",
+      "-I",
+      "hannk",
       "-g",
       "-o",
       "add/bin/add_generator",
@@ -53,13 +57,15 @@
       "/Users/sgt/Research/Halide/include",
       "-I",
       "/Users/sgt/Research/Halide/tools",
+      "-I",
+      "hannk",
       "-g",
       "-o",
       "add/bin/add_generator",
-      "hannk/common_halide.cpp"
+      "hannk/hannk/common_halide.cpp"
     ],
     "directory": "/Users/sgt/Research/flexible-isa/benchmarks",
-    "file": "/Users/sgt/Research/flexible-isa/benchmarks/hannk/common_halide.cpp",
+    "file": "/Users/sgt/Research/flexible-isa/benchmarks/hannk/hannk/common_halide.cpp",
     "output": "/Users/sgt/Research/flexible-isa/benchmarks/add/bin/add_generator"
   },
   {
@@ -74,13 +80,15 @@
       "/Users/sgt/Research/Halide/include",
       "-I",
       "/Users/sgt/Research/Halide/tools",
+      "-I",
+      "hannk",
       "-g",
       "-o",
       "add/bin/add_generator",
-      "hannk/interpreter/elementwise_program.cpp"
+      "hannk/hannk/interpreter/elementwise_program.cpp"
     ],
     "directory": "/Users/sgt/Research/flexible-isa/benchmarks",
-    "file": "/Users/sgt/Research/flexible-isa/benchmarks/hannk/interpreter/elementwise_program.cpp",
+    "file": "/Users/sgt/Research/flexible-isa/benchmarks/hannk/hannk/interpreter/elementwise_program.cpp",
     "output": "/Users/sgt/Research/flexible-isa/benchmarks/add/bin/add_generator"
   }
 ]

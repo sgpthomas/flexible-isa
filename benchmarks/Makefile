@@ -3,8 +3,8 @@ benchmarks = add
 bin_dirs = $(addsuffix /bin,$(benchmarks))
 out_dirs = $(addsuffix /out,$(benchmarks))
 
-hannk = hannk/common_halide.cpp \
-	    hannk/interpreter/elementwise_program.cpp
+hannk = hannk/hannk/common_halide.cpp \
+	    hannk/hannk/interpreter/elementwise_program.cpp
 
 .PHONY: clean all
 
@@ -12,7 +12,7 @@ all: $(benchmarks)
 
 $(benchmarks): %: %/bin %/out
 	clang++ --std=c++17 -fno-rtti -O3 -DLOG2VLEN=7 \
-		-I $(HALIDE_DIR)/include -I $(HALIDE_DIR)/tools \
+		-I $(HALIDE_DIR)/include -I $(HALIDE_DIR)/tools -I hannk \
 		-g $@/src/$@_generator.cpp $(HALIDE_DIR)/tools/GenGen.cpp \
 		$(hannk) \
 		-o $@/bin/$@_generator \

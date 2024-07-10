@@ -2,7 +2,7 @@
 num = @{ int+ }
 int = { ASCII_DIGIT+ }
 
-ident_syms = _{ "_" | "." | "-" }
+ident_syms = _{ "_" | "." | "-" | "$" }
 
 identifier = @{ ("_" | ASCII_ALPHA)+ ~ (ident_syms | ASCII_ALPHA | ASCII_DIGIT)* }
 number = @{ ASCII_DIGIT+ }
@@ -51,7 +51,10 @@ block = {
 }
 
 stmt = {
-    let_stmt | for_stmt | if_stmt | produce_stmt | predicate_stmt | update_stmt
+    let_stmt | for_stmt | if_stmt
+  | produce_stmt | consume_stmt
+  | predicate_stmt | update_stmt
+  | allocate_stmt | free_stmt
   | expr
 }
 
@@ -60,10 +63,11 @@ let_stmt = {
     ~ identifier
     ~ "="
     ~ expr
+    ~ ("in" ~ expr)?
 }
 
 for_stmt = {
-    "for" ~ "(" ~ expr ~ "," ~ expr ~ "," ~ expr ~ ")"
+    "for" ~ ("<" ~ device_api ~ ">")? ~ "(" ~ expr ~ "," ~ expr ~ "," ~ expr ~ ")"
     ~ block
 }
 
@@ -75,22 +79,88 @@ produce_stmt = {
     "produce" ~ identifier ~ block
 }
 
+consume_stmt = {
+    "consume" ~ identifier ~ block
+}
+
 predicate_stmt = {
     "predicate" ~ expr ~ NEWLINE ~ stmt
 }
 
 update_stmt = {
-    identifier ~ "[" ~ expr ~ "]" ~ "=" ~ expr
+    access_expr ~ "=" ~ expr
+}
+
+allocate_stmt = {
+    "allocate" ~ access_expr ~ ("in" ~ memory_type)? ~ ("if" ~ expr)?
+}
+
+device_api = {
+    none
+  | host
+  | default_gpu
+  | cuda
+  | open_cl
+  | metal
+  | hexagon
+  | hexagon_dma
+  | d3d12_compute
+  | vulkan
+  | web_gpu
+}
+
+none = { "None" }
+host = { "Host" }
+default_gpu = { "Default_GPU" }
+cuda = { "CUDA" }
+open_cl = { "OpenCL" }
+metal = { "Metal" }
+hexagon = { "Hexagon" }
+hexagon_dma = { "HexagonDma" }
+d3d12_compute = { "D3D12Compute" }
+vulkan = { "Vulkan" }
+web_gpu = { "WebGPU" }
+
+memory_type = {
+    auto
+    | heap
+    | stack
+    | register
+    | gpu_shared
+    | gpu_texture
+    | locked_cache
+    | vtcm
+    | amx_tile
+}
+auto         = { "Auto" }
+heap         = { "Heap" }
+stack        = { "Stack" }
+register     = { "Register" }
+gpu_shared   = { "GPUShared" }
+gpu_texture  = { "GPUTexture" }
+locked_cache = { "LockedCache" }
+vtcm         = { "VTCM" }
+amx_tile     = { "AMXTile" }
+
+free_stmt = {
+    "free" ~ identifier
 }
 
 // binary operations
 expr = {
-    primary ~ (infix ~ primary)*
+    prefix? ~ primary ~ (infix ~ prefix? ~ primary)*
 }
+
+prefix = _{
+    neg
+}
+neg = {"-"}
 
 infix = _{
     add | sub | mul | div | modulo
-  | lte | lt | eq | neq | gte | gt | if_infx
+  | lte | lt | eq | neq | gte | gt
+  | and | or
+  | if_infx
 }
 add     = { "+" }
 sub     = { "-" }
@@ -103,17 +173,25 @@ eq      = { "==" }
 neq     = { "!=" }
 gte     = { ">=" }
 gt      = { ">" }
+and     = { "&&" }
+or      = { "||" }
 if_infx = { "if" }
 primary = _{
-    funcall
+    reinterpret
+  | funcall
   | cast_expr
   | access_expr
+  | let_expr
   | number
   | identifier
   | "(" ~ expr ~ ")"
 }
 
 // function calls
+reinterpret = {
+    "reinterpret" ~ "<(" ~ cast_args ~ ")>" ~ "(" ~ funcall_args? ~ ")"
+}
+
 funcall = {
     identifier
     ~ "(" ~ funcall_args? ~ ")"
@@ -130,12 +208,16 @@ cast_expr = {
 
 ptr = { "*" }
 cast_args = {
-    identifier ~ (identifier | ptr)*
+    identifier+ ~ ptr?
 }
 
 // array access
 access_expr = {
-    identifier ~ "[" ~ expr ~ "]"
+    identifier ~ "[" ~ expr ~ ("aligned" ~ "(" ~ number ~ "," ~ number ~ ")")? ~ "]"
+}
+
+let_expr = {
+    "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
 }
 
 WHITESPACE = _{ " " | "\t" }

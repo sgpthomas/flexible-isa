@@ -1,5 +1,5 @@
 #include "Halide.h"
-#include "../../hannk/constants.h"
+#include "hannk/constants.h"
 
 using namespace Halide;
 using namespace Halide::ConciseCasts;

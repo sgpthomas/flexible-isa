@@ -5,7 +5,7 @@ use pretty::{
     DocAllocator, DocBuilder, Pretty, RcAllocator, RcDoc,
 };
 
-use super::ast;
+use super::ast::{self, DeviceApi};
 
 type Doc<'a> = RcDoc<'a, ColorSpec>;
 
@@ -72,6 +72,13 @@ trait PrinterUtils<'a, A: DocAllocator<'a, ColorSpec>> {
     fn line_then<S>(self, next: S) -> Self
     where
         S: Pretty<'a, RcAllocator, ColorSpec>;
+    fn map_append<T, F, S>(self, thing: &'a Option<T>, f: F) -> Self
+    where
+        F: Fn(&'a T) -> S,
+        S: Pretty<'a, RcAllocator, ColorSpec>;
+    fn append_if<S>(self, cond: bool, next: S) -> Self
+    where
+        S: Pretty<'a, RcAllocator, ColorSpec>;
     fn space(self) -> Self;
     fn line(self) -> Self;
     fn line_(self) -> Self;
@@ -105,6 +112,29 @@ impl<'a> PrinterUtils<'a, RcAllocator> for Doc<'a> {
         S: Pretty<'a, RcAllocator, ColorSpec>,
     {
         self.line().append(next)
+    }
+
+    fn map_append<T, F, S>(self, thing: &'a Option<T>, f: F) -> Self
+    where
+        F: Fn(&'a T) -> S,
+        S: Pretty<'a, RcAllocator, ColorSpec>,
+    {
+        if let Some(t) = thing {
+            self.append(f(t))
+        } else {
+            self
+        }
+    }
+
+    fn append_if<S>(self, cond: bool, next: S) -> Self
+    where
+        S: Pretty<'a, RcAllocator, ColorSpec>,
+    {
+        if cond {
+            self.append(next)
+        } else {
+            self
+        }
     }
 
     fn space(self) -> Self {
@@ -211,7 +241,12 @@ impl Printer for ast::Func {
             .highlight(|cs| cs.set_italic(true).set_fg(Some(Color::Black)))
             .space_then(Doc::text("func").highlight(|cs| cs.keyword()))
             .space_then(self.name.to_doc().highlight(|cs| cs.func()))
-            .space_then(self.args.intersperse(Doc::text(",").line()).parens())
+            .space_then(
+                self.args
+                    .intersperse(Doc::text(",").line())
+                    .parens()
+                    .group(),
+            )
             .space_then(self.stmts.intersperse(Doc::hardline()).block())
     }
 }
@@ -229,16 +264,23 @@ impl Printer for ast::Stmt {
                 low,
                 high,
                 body,
-            } => Doc::text("for").highlight(|cs| cs.keyword()).space_then(
-                var.to_doc()
-                    .highlight(|cs| cs.var())
-                    .append(",")
-                    .space_then(low.to_doc())
-                    .append(",")
-                    .space_then(high.to_doc())
-                    .enclose("(", ")")
-                    .space_then(body.intersperse(Doc::hardline()).block()),
-            ),
+                device,
+            } => Doc::text("for")
+                .highlight(|cs| cs.keyword())
+                .append_if(
+                    !matches!(device, DeviceApi::None),
+                    device.to_doc().enclose("<", ">"),
+                )
+                .space_then(
+                    var.to_doc()
+                        .highlight(|cs| cs.var())
+                        .append(",")
+                        .space_then(low.to_doc())
+                        .append(",")
+                        .space_then(high.to_doc())
+                        .enclose("(", ")")
+                        .space_then(body.intersperse(Doc::hardline()).block()),
+                ),
             ast::Stmt::If { cond, tru, fls } => {
                 let tru_branch = Doc::text("if")
                     .highlight(|cs| cs.keyword())
@@ -262,16 +304,41 @@ impl Printer for ast::Stmt {
                 .highlight(|cs| cs.keyword())
                 .space_then(var.to_doc().highlight(|cs| cs.set_bold(true)))
                 .space_then(body.intersperse(Doc::hardline()).block()),
+            ast::Stmt::Consume { var, body } => Doc::text("consume")
+                .highlight(|cs| cs.keyword())
+                .space_then(var.to_doc().highlight(|cs| cs.set_bold(true)))
+                .space_then(body.intersperse(Doc::hardline()).block()),
             ast::Stmt::Predicate { cond, stmt } => Doc::text("predicate")
                 .highlight(|cs| cs.keyword())
                 .space_then(cond.to_doc().enclose("(", ")"))
                 .line_then(stmt.to_doc().group())
                 .nest(2),
-            ast::Stmt::Update { array, idx, value } => array
+            ast::Stmt::Store { access, value } => access
                 .to_doc()
-                .append(idx.to_doc().nest(2).group().enclose("[", "]"))
-                .line_then("=")
-                .space_then(value.to_doc().nest(2)),
+                .line_then(Doc::text("=").space_then(value.to_doc()))
+                .nest(2)
+                .group(),
+            ast::Stmt::Allocate {
+                access,
+                loc,
+                condition,
+            } => Doc::text("allocate")
+                .highlight(|cs| cs.keyword())
+                .space_then(access.to_doc())
+                .append_if(
+                    !matches!(loc, ast::MemoryType::Auto),
+                    Doc::space()
+                        .append(Doc::text("in").highlight(|cs| cs.keyword()))
+                        .space_then(loc.to_doc()),
+                )
+                .map_append(condition, |e| {
+                    Doc::space()
+                        .append(Doc::text("if").highlight(|cs| cs.keyword()))
+                        .space_then(e.to_doc())
+                }),
+            ast::Stmt::Free { var } => Doc::text("free")
+                .highlight(|cs| cs.keyword())
+                .space_then(var.to_doc()),
             ast::Stmt::Expr(e) => e.to_doc(),
         }
     }
@@ -282,6 +349,7 @@ impl Printer for ast::Expr {
         match self {
             ast::Expr::Number(n) => Doc::as_string(n.value).highlight(|cs| cs.literal()),
             ast::Expr::Ident(id) => id.to_doc(),
+            ast::Expr::Neg(rhs) => Doc::text("-").append(rhs.to_doc()),
             ast::Expr::Add(lhs, rhs)
             | ast::Expr::Sub(lhs, rhs)
             | ast::Expr::Mul(lhs, rhs)
@@ -293,6 +361,8 @@ impl Printer for ast::Expr {
             | ast::Expr::Neq(lhs, rhs)
             | ast::Expr::Gte(lhs, rhs)
             | ast::Expr::Gt(lhs, rhs)
+            | ast::Expr::And(lhs, rhs)
+            | ast::Expr::Or(lhs, rhs)
             | ast::Expr::If(lhs, rhs) => {
                 let op = match self {
                     ast::Expr::Add(_, _) => "+",
@@ -306,6 +376,8 @@ impl Printer for ast::Expr {
                     ast::Expr::Neq(_, _) => "!=",
                     ast::Expr::Gte(_, _) => ">=",
                     ast::Expr::Gt(_, _) => ">",
+                    ast::Expr::And(_, _) => "&&",
+                    ast::Expr::Or(_, _) => "||",
                     ast::Expr::If(_, _) => "if",
                     _ => unreachable!(),
                 };
@@ -318,6 +390,15 @@ impl Printer for ast::Expr {
             ast::Expr::FunCall(fn_name, args) => fn_name
                 .to_doc()
                 .highlight(|cs| cs.funcall())
+                .append(args.intersperse(Doc::text(",").line_()).parens().group())
+                .group(),
+            ast::Expr::Reinterpret(cast, args) => Doc::text("reinterpret")
+                .highlight(|cs| cs.funcall())
+                .append(
+                    cast.intersperse(Doc::space())
+                        .enclose("<(", ")>")
+                        .highlight(|cs| cs.typcast()),
+                )
                 .append(args.intersperse(Doc::text(",").line_()).parens())
                 .group(),
             ast::Expr::Cast(typs, expr) => typs
@@ -325,9 +406,67 @@ impl Printer for ast::Expr {
                 .enclose("(", ")")
                 .highlight(|cs| cs.typcast())
                 .append(expr.to_doc()),
-            ast::Expr::Access(array, idx) => array
-                .to_doc()
-                .append(idx.to_doc().nest(2).group().enclose("[", "]")),
+            ast::Expr::Access(access) => access.to_doc(),
+            ast::Expr::LetIn(var, binding, body) => Doc::text("let")
+                .highlight(|cs| cs.keyword())
+                .space_then(var.to_doc().highlight(|cs| cs.var()))
+                .space_then("=")
+                .line_then(binding.to_doc().nest(2))
+                .space_then(Doc::text("in").highlight(|cs| cs.keyword()))
+                .line_then(body.to_doc().nest(2)),
+        }
+    }
+}
+
+impl Printer for ast::Access {
+    fn to_doc(&self) -> Doc {
+        let idx_doc = self.idx.to_doc().map_append(&self.align, |(low, hi)| {
+            Doc::space().append(
+                Doc::text("aligned").highlight(|cs| cs.funcall()).append(
+                    Doc::as_string(low)
+                        .highlight(|cs| cs.literal())
+                        .append(",")
+                        .space_then(Doc::as_string(hi).highlight(|cs| cs.literal()))
+                        .parens(),
+                ),
+            )
+        });
+        self.var
+            .to_doc()
+            .append(idx_doc.nest(2).group().enclose("[", "]"))
+    }
+}
+
+impl Printer for ast::DeviceApi {
+    fn to_doc(&self) -> Doc {
+        match self {
+            DeviceApi::None => Doc::text("None"),
+            DeviceApi::Host => Doc::text("Host"),
+            DeviceApi::DefaultGPU => Doc::text("DefaultGPU"),
+            DeviceApi::CUDA => Doc::text("CUDA"),
+            DeviceApi::OpenCL => Doc::text("OpenCL"),
+            DeviceApi::Metal => Doc::text("Metal"),
+            DeviceApi::Hexagon => Doc::text("Hexagon"),
+            DeviceApi::HexagonDma => Doc::text("HexagonDma"),
+            DeviceApi::D3D12Compute => Doc::text("D3D12Compute"),
+            DeviceApi::Vulkan => Doc::text("Vulkan"),
+            DeviceApi::WebGPU => Doc::text("WebGPU"),
+        }
+    }
+}
+
+impl Printer for ast::MemoryType {
+    fn to_doc(&self) -> Doc {
+        match self {
+            ast::MemoryType::Auto => Doc::text("Auto"),
+            ast::MemoryType::Heap => Doc::text("Heap"),
+            ast::MemoryType::Stack => Doc::text("Stack"),
+            ast::MemoryType::Register => Doc::text("Register"),
+            ast::MemoryType::GPUShared => Doc::text("GPUShared"),
+            ast::MemoryType::GPUTexture => Doc::text("GPUTexture"),
+            ast::MemoryType::LockedCache => Doc::text("LockedCache"),
+            ast::MemoryType::VTCM => Doc::text("VTCM"),
+            ast::MemoryType::AMXTile => Doc::text("AMXTile"),
         }
     }
 }
