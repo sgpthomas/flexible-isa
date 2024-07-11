@@ -82,3 +82,9 @@ impl From<ast::Id> for babble::Expr<HalideExprOp> {
         babble::Expr(babble::AstNode::leaf(HalideExprOp::Ident(value)))
     }
 }
+
+impl From<ast::Expr> for egg::RecExpr<babble::AstNode<HalideExprOp>> {
+    fn from(value: ast::Expr) -> Self {
+        egg::RecExpr::from(babble::Expr::from(value))
+    }
+}
