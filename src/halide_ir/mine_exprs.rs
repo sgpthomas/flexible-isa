@@ -3,6 +3,10 @@ use super::ast;
 #[derive(Default)]
 pub struct MineExpressions<'a> {
     exprs: Vec<&'a ast::Expr>,
+
+    /// signals whether or not we should mine the current expressions. this is false
+    /// until we hit the first produce block
+    should_mine: bool,
 }
 
 impl<'a> MineExpressions<'a> {
@@ -27,10 +31,13 @@ impl<'a> MineExpressions<'a> {
         'a: 's,
     {
         match stmt {
-            ast::Stmt::Let { var: _, expr } => self.exprs.push(expr),
-            ast::Stmt::Produce { var: _, body } => self.mine_block(body),
+            ast::Stmt::Let { var: _, expr } if self.should_mine => self.exprs.push(expr),
+            ast::Stmt::Produce { var: _, body } => {
+                self.should_mine = true;
+                self.mine_block(body)
+            }
             ast::Stmt::Consume { var: _, body } => self.mine_block(body),
-            ast::Stmt::Store { access, value } => {
+            ast::Stmt::Store { access, value } if self.should_mine => {
                 self.exprs.push(&access.idx);
                 self.exprs.push(value)
             }
@@ -38,7 +45,7 @@ impl<'a> MineExpressions<'a> {
                 access,
                 loc: _,
                 condition,
-            } => {
+            } if self.should_mine => {
                 self.exprs.push(&access.idx);
                 if let Some(expr) = condition {
                     self.exprs.push(expr)
@@ -51,24 +58,25 @@ impl<'a> MineExpressions<'a> {
                 high,
                 device: _,
                 body,
-            } => {
+            } if self.should_mine => {
                 self.exprs.push(var);
                 self.exprs.push(low);
                 self.exprs.push(high);
                 self.mine_block(body);
             }
-            ast::Stmt::If { cond, tru, fls } => {
+            ast::Stmt::If { cond, tru, fls } if self.should_mine => {
                 self.exprs.push(cond);
                 self.mine_block(tru);
                 if let Some(fls) = fls {
                     self.mine_block(fls);
                 }
             }
-            ast::Stmt::Predicate { cond, stmt } => {
+            ast::Stmt::Predicate { cond, stmt } if self.should_mine => {
                 self.exprs.push(cond);
                 self.mine_stmt(stmt);
             }
-            ast::Stmt::Expr(expr) => self.exprs.push(expr),
+            ast::Stmt::Expr(expr) if self.should_mine => self.exprs.push(expr),
+            _ => (),
         }
     }
 }

@@ -1,5 +1,7 @@
 #[allow(unused)]
 use halide_ir::Printer;
+#[allow(unused)]
+use instruction_select::Simplify;
 
 use halide_ir::{MineExpressions, StmtParser};
 use instruction_select::Instructions;
@@ -32,11 +34,16 @@ fn main() -> anyhow::Result<()> {
         println!("--");
     });
 
+    // run anti-unification to discover patterns
+    let instrs = inst_sel.anti_unify();
+
     println!("== Learned Patterns ==");
-    let libs = inst_sel.learn();
-    libs.iter().for_each(|pat| {
+    instrs.instructions().for_each(|pat| {
         println!("{}", pat.pretty(80));
     });
+
+    println!("== Final Program ==");
+    println!("{}", instrs.apply().pretty(80));
 
     Ok(())
 }

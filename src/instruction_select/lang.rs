@@ -2,8 +2,6 @@ use std::{convert::Infallible, fmt::Display, str::FromStr};
 
 use crate::halide_ir::ast;
 
-use babble;
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum BabbleOp {
     List,
@@ -57,6 +55,7 @@ pub enum HalideExprOp {
 
     /// Babble necessary operations
     Babble(BabbleOp),
+    PatternVar(egg::Var),
 }
 
 impl FromStr for HalideExprOp {
@@ -113,13 +112,13 @@ impl FromStr for HalideExprOp {
 impl Display for BabbleOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BabbleOp::List => f.write_str("list"),
-            BabbleOp::Symbol(sym) => sym.fmt(f),
-            BabbleOp::Lambda => f.write_str("lambda"),
-            BabbleOp::Apply => f.write_str("apply"),
-            BabbleOp::LambdaVar(didx) => didx.fmt(f),
-            BabbleOp::Lib(lib_id) => lib_id.fmt(f),
-            BabbleOp::LibVar(lib_id) => lib_id.fmt(f),
+            BabbleOp::List => f.write_str("bab:list"),
+            BabbleOp::Symbol(sym) => write!(f, "bab:{sym}"),
+            BabbleOp::Lambda => f.write_str("bab:lambda"),
+            BabbleOp::Apply => f.write_str("bab:apply"),
+            BabbleOp::LambdaVar(didx) => write!(f, "bab:{didx}"),
+            BabbleOp::Lib(lib_id) => write!(f, "bab:{lib_id}"),
+            BabbleOp::LibVar(lib_id) => write!(f, "bab:{lib_id}"),
         }
     }
 }
@@ -167,6 +166,7 @@ impl Display for HalideExprOp {
             }
             HalideExprOp::Access => f.write_str("get"),
             HalideExprOp::Babble(bab) => bab.fmt(f),
+            HalideExprOp::PatternVar(v) => v.fmt(f),
         }
     }
 }
@@ -181,6 +181,13 @@ impl babble::Arity for BabbleOp {
             BabbleOp::LambdaVar(_) => 0,
             BabbleOp::Lib(_) => 2,
             BabbleOp::LibVar(_) => 0,
+        }
+    }
+
+    fn max_arity(&self) -> Option<usize> {
+        match self {
+            BabbleOp::List => None,
+            _ => Some(self.min_arity()),
         }
     }
 }
@@ -210,6 +217,7 @@ impl babble::Arity for HalideExprOp {
             HalideExprOp::Cast(_) => 1,
             HalideExprOp::Access => 2,
             HalideExprOp::Babble(b) => b.min_arity(),
+            HalideExprOp::PatternVar(_) => 0,
         }
     }
 
@@ -328,5 +336,49 @@ impl babble::Printable for HalideExprOp {
         _printer: &mut babble::Printer<W>,
     ) -> std::fmt::Result {
         todo!()
+    }
+}
+
+/// Translate an `egg::Language` into and out of an `egg::Pattern`
+pub trait PatternConvert: Sized + Clone + egg::Language {
+    /// How to construct a pattern var from self
+    fn construct_pattern_var(&self) -> egg::ENodeOrVar<Self>;
+
+    /// How to construct Self from a pattern var
+    fn deconstruct_pattern_var(var: egg::Var) -> Self;
+
+    fn from_pattern(pat: &egg::Pattern<Self>) -> egg::RecExpr<Self> {
+        pat.ast
+            .as_ref()
+            .iter()
+            .map(|node| match node {
+                egg::ENodeOrVar::ENode(node) => node.clone(),
+                egg::ENodeOrVar::Var(v) => Self::deconstruct_pattern_var(*v),
+            })
+            .collect::<Vec<Self>>()
+            .into()
+    }
+
+    fn to_pattern(pat: &egg::RecExpr<Self>) -> egg::Pattern<Self> {
+        let rec_expr: egg::RecExpr<_> = pat
+            .as_ref()
+            .iter()
+            .map(Self::construct_pattern_var)
+            .collect::<Vec<_>>()
+            .into();
+        egg::Pattern::new(rec_expr)
+    }
+}
+
+impl PatternConvert for babble::AstNode<HalideExprOp> {
+    fn construct_pattern_var(&self) -> egg::ENodeOrVar<Self> {
+        match self.operation() {
+            HalideExprOp::PatternVar(v) => egg::ENodeOrVar::Var(*v),
+            _ => egg::ENodeOrVar::ENode(self.clone()),
+        }
+    }
+
+    fn deconstruct_pattern_var(var: egg::Var) -> Self {
+        babble::AstNode::leaf(HalideExprOp::PatternVar(var))
     }
 }

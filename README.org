@@ -26,3 +26,9 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DTARGET_WEBASSEMBLY=no -S . -B build
 cmake --build build
 cmake --install build --prefix .
 #+end_src
+
+** Testing
+
+#+begin_src async-shell :results none :name flex-isa
+bisa --from benchmark --to isa benchmarks/l2norm
+#+end_src
