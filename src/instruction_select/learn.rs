@@ -1,9 +1,11 @@
 //! Use babble to learn common patterns in a list of expressions.
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use babble::Teachable;
-use egg::Language;
+use egg::AstSize;
+
+use crate::rewrite_recexpr::RecExprRewriter;
 
 use super::{lang::HalideExprOp, AntiUnified, Init, InstructionState};
 
@@ -37,6 +39,7 @@ impl Instructions<Init> {
         let co_ext: babble::COBuilder<HalideExprOp, _> =
             babble::COBuilder::new(&self.egraph, &self.roots);
         let co_occurs = co_ext.run();
+        println!("{co_occurs:#?}");
         log::debug!("Finished in {}ms", co_time.elapsed().as_millis());
 
         log::debug!("Running anti-unification... ");
@@ -66,35 +69,25 @@ impl Instructions<Init> {
 
 impl Instructions<AntiUnified> {
     pub fn apply(&self) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
-        // 3 step plan
-        // 1: make a new egraph from the old one
-        // 2: run all rewrites from the learned library
-        // 3: extract program that prefers using libraries over not
-
-        // extract list of rewrites from learned_lib
-        let rewrites = self.state.learned_lib.rewrites().collect::<Vec<_>>();
-
-        // apply them to the e-graph
-        let mut runner = egg::Runner::<_, _, ()>::new(())
-            .with_egraph(self.egraph.clone())
-            .with_iter_limit(3)
-            .with_time_limit(Duration::from_secs(60))
-            .run(rewrites.iter());
-
-        // get the root of the graph by adding all of our other roots
-        // into a list node. we do this after applying rewrite rules
-        // so that we can't apply any rules to the toplevel list.
-        // this is probably an unnecessary pre-caution
-        let root = runner.egraph.add(babble::AstNode::new(
+        // extract the best program
+        let mut egraph = self.egraph.clone();
+        let root = egraph.add(babble::AstNode::new(
             HalideExprOp::list(),
             self.roots.clone(),
         ));
-
-        // extract the best program
-        let extractor = egg::Extractor::new(&runner.egraph, ApplyInstructions);
+        let extractor = egg::Extractor::new(&egraph, AstSize);
         let (_, best) = extractor.find_best(root);
 
-        babble::extract::lift_libs(&best)
+        // extract list of rewrites from learned_lib
+        let rewrites: Vec<egg::Rewrite<_, ()>> = self
+            .state
+            .learned_lib
+            .rewrites()
+            .inspect(|rw| println!("{rw:?}"))
+            .collect::<Vec<_>>();
+
+        // lift the instructions to the top of the program
+        babble::extract::lift_libs(&best.destructively_rewrite(rewrites))
     }
 
     pub fn instructions(&self) -> impl Iterator<Item = LibraryPattern> + '_ {
@@ -148,23 +141,4 @@ impl Instructions<AntiUnified> {
 
     //     self.state.learned_lib.libs().collect()
     // }
-}
-
-/// A cost function the prefers instructions over anything else
-struct ApplyInstructions;
-
-impl egg::CostFunction<babble::AstNode<HalideExprOp>> for ApplyInstructions {
-    type Cost = f64;
-
-    fn cost<C>(&mut self, enode: &babble::AstNode<HalideExprOp>, mut costs: C) -> Self::Cost
-    where
-        C: FnMut(egg::Id) -> Self::Cost,
-    {
-        let op_cost = match enode.operation() {
-            HalideExprOp::Babble(_) => 0.0,
-            _ => 1.0,
-        };
-
-        enode.fold(op_cost, |sum, id| sum + costs(id))
-    }
 }

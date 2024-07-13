@@ -9,6 +9,7 @@ use instruction_select::Instructions;
 mod cli;
 mod halide_ir;
 mod instruction_select;
+mod rewrite_recexpr;
 
 fn main() -> anyhow::Result<()> {
     let _ = env_logger::builder().try_init();

@@ -31,24 +31,24 @@ impl<'a> MineExpressions<'a> {
         'a: 's,
     {
         match stmt {
-            ast::Stmt::Let { var: _, expr } if self.should_mine => self.exprs.push(expr),
+            ast::Stmt::Let { var: _, expr } if self.should_mine => self.mine_expr(expr),
             ast::Stmt::Produce { var: _, body } => {
                 self.should_mine = true;
                 self.mine_block(body)
             }
             ast::Stmt::Consume { var: _, body } => self.mine_block(body),
             ast::Stmt::Store { access, value } if self.should_mine => {
-                self.exprs.push(&access.idx);
-                self.exprs.push(value)
+                self.mine_expr(&access.idx);
+                self.mine_expr(value)
             }
             ast::Stmt::Allocate {
                 access,
                 loc: _,
                 condition,
             } if self.should_mine => {
-                self.exprs.push(&access.idx);
+                self.mine_expr(&access.idx);
                 if let Some(expr) = condition {
-                    self.exprs.push(expr)
+                    self.mine_expr(expr)
                 }
             }
             ast::Stmt::Free { .. } => (),
@@ -59,24 +59,37 @@ impl<'a> MineExpressions<'a> {
                 device: _,
                 body,
             } if self.should_mine => {
-                self.exprs.push(var);
-                self.exprs.push(low);
-                self.exprs.push(high);
+                self.mine_expr(var);
+                self.mine_expr(low);
+                self.mine_expr(high);
                 self.mine_block(body);
             }
             ast::Stmt::If { cond, tru, fls } if self.should_mine => {
-                self.exprs.push(cond);
+                self.mine_expr(cond);
                 self.mine_block(tru);
                 if let Some(fls) = fls {
                     self.mine_block(fls);
                 }
             }
             ast::Stmt::Predicate { cond, stmt } if self.should_mine => {
-                self.exprs.push(cond);
+                self.mine_expr(cond);
                 self.mine_stmt(stmt);
             }
             ast::Stmt::Expr(expr) if self.should_mine => self.exprs.push(expr),
             _ => (),
+        }
+    }
+
+    pub fn mine_expr<'s>(&'s mut self, expr: &'a ast::Expr)
+    where
+        'a: 's,
+    {
+        // exlude ramp calls from top-level expressions
+        // TODO: exclude it altogether. not totally sure
+        // waht the right way to do this is
+        match expr {
+            ast::Expr::FunCall(id, _) if id.name == "ramp" => (),
+            expr => self.exprs.push(expr),
         }
     }
 }
