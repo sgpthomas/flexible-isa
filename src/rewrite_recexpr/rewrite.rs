@@ -18,6 +18,10 @@ where
 /// `egraph` rewriting behave like traditional destructive rewriting. You should
 /// only use this on an e-graph that has a single node per `eclass`. Otherwise you
 /// might get weird results.
+///
+/// This also doesn't work for patterns that don't match any variables. Not totally
+/// sure why that's the case. For now, I just check if there are variables, and
+/// disable the destructive behavior.
 struct DestructiveApplier<L, N>
 where
     L: egg::Language,
@@ -39,7 +43,13 @@ where
         searcher_ast: Option<&egg::PatternAst<L>>,
         rule_name: egg::Symbol,
     ) -> Vec<egg::Id> {
-        egraph[eclass].nodes = vec![];
+        // HACK: Don't remove nodes if we aren't matching any variables.
+        if !self.applier.vars().is_empty() {
+            egraph[eclass].nodes = vec![];
+        }
+
+        // call the underlying applier. now that we have removed the root of the pattern
+        // match, this behaves like a destructive applier
         self.applier
             .apply_one(egraph, eclass, subst, searcher_ast, rule_name)
     }

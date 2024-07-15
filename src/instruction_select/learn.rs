@@ -1,7 +1,5 @@
 //! Use babble to learn common patterns in a list of expressions.
 
-use std::time::Instant;
-
 use babble::Teachable;
 use egg::AstSize;
 
@@ -34,22 +32,9 @@ impl Instructions<Init> {
     }
 
     pub fn anti_unify(self) -> Instructions<AntiUnified> {
-        log::debug!("Running co-occurence analysis...");
-        let co_time = Instant::now();
-        let co_ext: babble::COBuilder<HalideExprOp, _> =
-            babble::COBuilder::new(&self.egraph, &self.roots);
-        let co_occurs = co_ext.run();
-        println!("{co_occurs:#?}");
-        log::debug!("Finished in {}ms", co_time.elapsed().as_millis());
-
-        log::debug!("Running anti-unification... ");
-        let au_time = Instant::now();
-        let learned_library = babble::LearnedLibrary::new(&self.egraph, false, None, co_occurs);
-        log::debug!(
-            "Found {} patterns in {}ms",
-            learned_library.size(),
-            au_time.elapsed().as_millis()
-        );
+        let learned_library = babble::LearnedLibraryBuilder::default()
+            .learn_trivial(true)
+            .build(&self.egraph, &self.roots);
 
         let Self {
             egraph,

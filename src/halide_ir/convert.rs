@@ -50,12 +50,10 @@ impl From<ast::Expr> for babble::Expr<HalideExprOp> {
             ast::Expr::If(lhs, rhs) => {
                 babble::AstNode::new(HalideExprOp::If, [lhs.into(), rhs.into()])
             }
-            ast::Expr::FunCall(id, args) => {
-                let mut babble_args = vec![];
-                babble_args.push(id.into());
-                babble_args.extend(args.into_iter().map(babble::Expr::from));
-                babble::AstNode::new(HalideExprOp::FunCall, babble_args)
-            }
+            ast::Expr::FunCall(id, args) => babble::AstNode::new(
+                HalideExprOp::FunCall(id),
+                args.into_iter().map(babble::Expr::from),
+            ),
             ast::Expr::Reinterpret(typs, args) => babble::AstNode::new(
                 HalideExprOp::Reinterpret(typs),
                 args.into_iter().map(babble::Expr::from),

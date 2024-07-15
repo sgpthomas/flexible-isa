@@ -44,7 +44,7 @@ pub enum HalideExprOp {
     If,
 
     // function calls
-    FunCall,
+    FunCall(ast::Id),
     Reinterpret(Vec<ast::Id>),
 
     // casts
@@ -83,7 +83,7 @@ impl FromStr for HalideExprOp {
             "if" => Self::If,
 
             // function calls
-            "call" => Self::FunCall,
+            // "call" => Self::FunCall,
             // "reinterpret" => Self::Reinterpret,
 
             // // casts
@@ -143,7 +143,7 @@ impl Display for HalideExprOp {
             HalideExprOp::And => f.write_str("&&"),
             HalideExprOp::Or => f.write_str("||"),
             HalideExprOp::If => f.write_str("if"),
-            HalideExprOp::FunCall => f.write_str("call"),
+            HalideExprOp::FunCall(ast::Id { name }) => write!(f, "call[{name}]"),
             HalideExprOp::Reinterpret(ids) => {
                 write!(
                     f,
@@ -212,7 +212,7 @@ impl babble::Arity for HalideExprOp {
             | HalideExprOp::And
             | HalideExprOp::Or
             | HalideExprOp::If => 2,
-            HalideExprOp::FunCall => 2,
+            HalideExprOp::FunCall(_) => 1,
             HalideExprOp::Reinterpret(_) => 1,
             HalideExprOp::Cast(_) => 1,
             HalideExprOp::Access => 2,
@@ -223,7 +223,7 @@ impl babble::Arity for HalideExprOp {
 
     fn max_arity(&self) -> Option<usize> {
         match self {
-            HalideExprOp::FunCall | HalideExprOp::Reinterpret(_) => None,
+            HalideExprOp::FunCall(_) | HalideExprOp::Reinterpret(_) => None,
             HalideExprOp::Babble(b) => b.max_arity(),
             _ => Some(self.min_arity()),
         }
