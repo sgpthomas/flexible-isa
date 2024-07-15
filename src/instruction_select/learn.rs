@@ -64,12 +64,8 @@ impl Instructions<AntiUnified> {
         let (_, best) = extractor.find_best(root);
 
         // extract list of rewrites from learned_lib
-        let rewrites: Vec<egg::Rewrite<_, ()>> = self
-            .state
-            .learned_lib
-            .rewrites()
-            .inspect(|rw| println!("{rw:?}"))
-            .collect::<Vec<_>>();
+        let rewrites: Vec<egg::Rewrite<_, ()>> =
+            self.state.learned_lib.rewrites().collect::<Vec<_>>();
 
         // lift the instructions to the top of the program
         babble::extract::lift_libs(&best.destructively_rewrite(rewrites))
