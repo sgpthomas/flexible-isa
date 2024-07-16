@@ -382,3 +382,13 @@ impl PatternConvert for babble::AstNode<HalideExprOp> {
         babble::AstNode::leaf(HalideExprOp::PatternVar(var))
     }
 }
+
+impl babble::DiscriminantEq for HalideExprOp {
+    fn discriminant_eq(&self, other: &Self) -> bool {
+        use HalideExprOp::*;
+        match (self, other) {
+            (Cast(_), Cast(_)) => true,
+            (x, y) => x.eq(y),
+        }
+    }
+}

@@ -61,7 +61,7 @@ impl StmtParser {
                 Rule::identifier => Ok(Expr::Ident(Self::identifier(Node::new(primary))?)),
                 Rule::let_expr => Self::let_expr(Node::new(primary)),
                 Rule::expr => Self::expr(Node::new(primary)),
-                x => unreachable!("Unexpected rule `{x:?}` for expr"),
+                x => unreachable!("Unexpected rule `{x:?}` for primary {primary:#?}"),
             })
             .map_prefix(|op, rhs| {
                 Ok(match op.as_rule() {
@@ -110,7 +110,7 @@ impl StmtParser {
         input
             .as_str()
             .parse::<u64>()
-            .map(|n| Number::new(n))
+            .map(Number::new)
             .map_err(|_| input.error("Expected valid u64"))
     }
 

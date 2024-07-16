@@ -34,7 +34,9 @@ impl Instructions<Init> {
     pub fn anti_unify(self) -> Instructions<AntiUnified> {
         let learned_library = babble::LearnedLibraryBuilder::default()
             .learn_trivial(true)
-            .build(&self.egraph, &self.roots);
+            .ban_op(HalideExprOp::Cast(vec![]))
+            .with_roots(self.roots.clone())
+            .build(&self.egraph);
 
         let Self {
             egraph,
