@@ -1,23 +1,40 @@
 use super::ast;
 
-#[derive(Default)]
-pub struct MineExpressions<'a> {
-    exprs: Vec<&'a ast::Expr>,
+pub struct MineExpressions<'a, T> {
+    exprs: Vec<&'a ast::Expr<T>>,
 
     /// signals whether or not we should mine the current expressions. this is false
     /// until we hit the first produce block
     should_mine: bool,
 }
 
-impl<'a> MineExpressions<'a> {
-    pub fn mine_func<'s>(&'s mut self, func: &'a ast::Func)
+impl<'a, T> Default for MineExpressions<'a, T> {
+    fn default() -> Self {
+        Self {
+            exprs: vec![],
+            should_mine: false,
+        }
+    }
+}
+
+impl<'a, T> MineExpressions<'a, T> {
+    pub fn mine_module<'s>(&'s mut self, module: &'a ast::Module<T>)
+    where
+        'a: 's,
+    {
+        for func in &module.funcs {
+            self.mine_func(func);
+        }
+    }
+
+    pub fn mine_func<'s>(&'s mut self, func: &'a ast::Func<T>)
     where
         'a: 's,
     {
         self.mine_block(&func.stmts);
     }
 
-    pub fn mine_block<'s>(&'s mut self, block: &'a ast::Block)
+    pub fn mine_block<'s>(&'s mut self, block: &'a ast::Block<T>)
     where
         'a: 's,
     {
@@ -26,25 +43,23 @@ impl<'a> MineExpressions<'a> {
         }
     }
 
-    pub fn mine_stmt<'s>(&'s mut self, stmt: &'a ast::Stmt)
+    pub fn mine_stmt<'s>(&'s mut self, stmt: &'a ast::Stmt<T>)
     where
         'a: 's,
     {
         match stmt {
-            ast::Stmt::Let { var: _, expr } if self.should_mine => self.mine_expr(expr),
-            ast::Stmt::Produce { var: _, body } => {
+            ast::Stmt::Let { expr, .. } if self.should_mine => self.mine_expr(expr),
+            ast::Stmt::Produce { body, .. } => {
                 self.should_mine = true;
                 self.mine_block(body)
             }
-            ast::Stmt::Consume { var: _, body } => self.mine_block(body),
-            ast::Stmt::Store { access, value } if self.should_mine => {
+            ast::Stmt::Consume { body, .. } => self.mine_block(body),
+            ast::Stmt::Store { access, value, .. } if self.should_mine => {
                 self.mine_expr(&access.idx);
                 self.mine_expr(value)
             }
             ast::Stmt::Allocate {
-                access,
-                loc: _,
-                condition,
+                access, condition, ..
             } if self.should_mine => {
                 self.mine_expr(&access.idx);
                 if let Some(expr) = condition {
@@ -56,31 +71,31 @@ impl<'a> MineExpressions<'a> {
                 var,
                 low,
                 high,
-                device: _,
                 body,
+                ..
             } if self.should_mine => {
                 self.mine_expr(var);
                 self.mine_expr(low);
                 self.mine_expr(high);
                 self.mine_block(body);
             }
-            ast::Stmt::If { cond, tru, fls } if self.should_mine => {
+            ast::Stmt::If { cond, tru, fls, .. } if self.should_mine => {
                 self.mine_expr(cond);
                 self.mine_block(tru);
                 if let Some(fls) = fls {
                     self.mine_block(fls);
                 }
             }
-            ast::Stmt::Predicate { cond, stmt } if self.should_mine => {
+            ast::Stmt::Predicate { cond, stmt, .. } if self.should_mine => {
                 self.mine_expr(cond);
                 self.mine_stmt(stmt);
             }
-            ast::Stmt::Expr(expr) if self.should_mine => self.exprs.push(expr),
+            ast::Stmt::Expr(expr, _) if self.should_mine => self.exprs.push(expr),
             _ => (),
         }
     }
 
-    pub fn mine_expr<'s>(&'s mut self, expr: &'a ast::Expr)
+    pub fn mine_expr<'s>(&'s mut self, expr: &'a ast::Expr<T>)
     where
         'a: 's,
     {
@@ -88,14 +103,14 @@ impl<'a> MineExpressions<'a> {
         // TODO: exclude it altogether. not totally sure
         // waht the right way to do this is
         match expr {
-            ast::Expr::FunCall(id, _) if id.name == "ramp" => (),
+            ast::Expr::FunCall(id, _, _) if id.name == "ramp" => (),
             expr => self.exprs.push(expr),
         }
     }
 }
 
-impl<'a> IntoIterator for MineExpressions<'a> {
-    type Item = &'a ast::Expr;
+impl<'a, T> IntoIterator for MineExpressions<'a, T> {
+    type Item = &'a ast::Expr<T>;
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 

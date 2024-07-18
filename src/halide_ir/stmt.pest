@@ -203,7 +203,7 @@ funcall_args = {
 
 // cast expressions
 cast_expr = {
-    "(" ~ cast_args? ~ ")" ~ expr
+    "(" ~ cast_args ~ ")" ~ expr
 }
 
 ptr = { "*" }

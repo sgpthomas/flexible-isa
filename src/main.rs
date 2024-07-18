@@ -6,6 +6,8 @@ use instruction_select::Simplify;
 use halide_ir::{MineExpressions, StmtParser};
 use instruction_select::Instructions;
 
+use crate::halide_ir::TypeAnnotator;
+
 mod cli;
 mod halide_ir;
 mod instruction_select;
@@ -18,13 +20,19 @@ fn main() -> anyhow::Result<()> {
 
     let ast = StmtParser::parse_file(&args.input)?;
 
+    let ast = TypeAnnotator::default().check_module(ast);
+
     ast.stdout();
     println!();
 
+    // let mut type_annot = TypeAnnotator::default();
+    // let ast_tmp = ast.clone();
+    // type_annot.check_module(&ast_tmp);
+
+    // let ast = type_annot.annotate(ast);
+
     let mut exprs = MineExpressions::default();
-    for func in &ast.funcs {
-        exprs.mine_func(func);
-    }
+    exprs.mine_module(&ast);
 
     let mut inst_sel = Instructions::default();
 

@@ -24,117 +24,208 @@ impl Number {
     }
 }
 
-#[derive(Debug)]
-pub struct Module {
+#[derive(Debug, Clone)]
+pub struct Module<T = ()> {
     pub params: HashMap<Id, Id>,
-    pub funcs: Vec<Func>,
+    pub funcs: Vec<Func<T>>,
+    pub data: T,
 }
 
-#[derive(Debug)]
-pub struct Func {
+#[derive(Debug, Clone)]
+pub struct Func<T = ()> {
     pub metadata: Id,
     pub name: Id,
     pub args: Vec<Id>,
-    pub stmts: Block,
+    pub stmts: Block<T>,
+    pub data: T,
 }
 
-pub type Block = Vec<Stmt>;
+pub type Block<T = ()> = Vec<Stmt<T>>;
 
-#[derive(Debug)]
-pub enum Stmt {
+#[derive(Debug, Clone)]
+pub enum Stmt<T = ()> {
     Let {
         var: Id,
-        expr: Expr,
+        expr: Expr<T>,
+        data: T,
     },
     // Assert {
-    //     condition: Expr,
+    //     condition: Expr<T>,
     //     body: Box<Stmt>,
     // },
     Produce {
         var: Id,
-        body: Block,
+        body: Block<T>,
+        data: T,
     },
     Consume {
         var: Id,
-        body: Block,
+        body: Block<T>,
+        data: T,
     },
     Store {
-        access: Access,
-        value: Expr,
-        // TODO: in halide, predicate is stored here
+        access: Access<T>,
+        value: Expr<T>,
+        data: T, // TODO: in halide, predicate is stored here
     },
     // Halide Provide
     Allocate {
-        access: Access,
+        access: Access<T>,
         loc: MemoryType,
-        condition: Option<Expr>,
+        condition: Option<Expr<T>>,
+        data: T,
     },
     Free {
         var: Id,
+        data: T,
     },
     // Fork
     For {
-        var: Expr,
-        low: Expr,
-        high: Expr,
+        var: Expr<T>,
+        low: Expr<T>,
+        high: Expr<T>,
         device: DeviceApi,
-        body: Block,
+        body: Block<T>,
+        data: T,
     },
     If {
-        cond: Expr,
-        tru: Block,
-        fls: Option<Block>,
+        cond: Expr<T>,
+        tru: Block<T>,
+        fls: Option<Block<T>>,
+        data: T,
     },
     Predicate {
-        cond: Expr,
-        stmt: Box<Stmt>,
+        cond: Expr<T>,
+        stmt: Box<Stmt<T>>,
+        data: T,
     },
-    Expr(Expr),
+    Expr(Expr<T>, T),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Expr {
+pub enum Unop {
+    Neg,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ArithBinop {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Modulo,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum CompBinop {
+    Lt,
+    Lte,
+    Eq,
+    Neq,
+    Gte,
+    Gt,
+    And,
+    Or,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Expr<T = ()> {
     // Base cases
-    Number(Number),
-    Ident(Id),
+    Number(Number, T),
+    Ident(Id, T),
 
-    // arith operators
-    Neg(Box<Expr>),
-    Add(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
-    Div(Box<Expr>, Box<Expr>),
-    Modulo(Box<Expr>, Box<Expr>),
+    Unop(Unop, Box<Expr<T>>, T),
+    ArithBinop(ArithBinop, Box<Expr<T>>, Box<Expr<T>>, T),
+    CompBinop(CompBinop, Box<Expr<T>>, Box<Expr<T>>, T),
 
-    // comparison operators
-    Lt(Box<Expr>, Box<Expr>),
-    Lte(Box<Expr>, Box<Expr>),
-    Eq(Box<Expr>, Box<Expr>),
-    Neq(Box<Expr>, Box<Expr>),
-    Gte(Box<Expr>, Box<Expr>),
-    Gt(Box<Expr>, Box<Expr>),
-    And(Box<Expr>, Box<Expr>),
-    Or(Box<Expr>, Box<Expr>),
-    If(Box<Expr>, Box<Expr>),
+    // Not sure what the semnatics of this are
+    If(Box<Expr<T>>, Box<Expr<T>>, T),
 
     // function calls
-    FunCall(Id, Vec<Expr>),
-    Reinterpret(Vec<Id>, Vec<Expr>),
+    FunCall(Id, Vec<Expr<T>>, T),
+    Reinterpret(Vec<Id>, Vec<Expr<T>>, T),
 
     // Casts
-    Cast(Vec<Id>, Box<Expr>),
+    Cast(Id, Box<Expr<T>>, T),
+    PtrCast(Vec<Id>, Box<Expr<T>>, T),
 
     // array access
-    Access(Access),
+    Access(Access, T),
 
     // let in exprs
-    LetIn(Id, Box<Expr>, Box<Expr>),
+    LetIn(Id, Box<Expr<T>>, Box<Expr<T>>, T),
+}
+
+impl<T> Expr<T>
+where
+    T: Default,
+{
+    pub fn neg(inner: Expr<T>) -> Expr<T> {
+        Expr::Unop(Unop::Neg, Box::new(inner), T::default())
+    }
+
+    pub fn add(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::ArithBinop(ArithBinop::Add, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn sub(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::ArithBinop(ArithBinop::Sub, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn mul(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::ArithBinop(ArithBinop::Mul, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn div(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::ArithBinop(ArithBinop::Div, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn modulo(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::ArithBinop(
+            ArithBinop::Modulo,
+            Box::new(lhs),
+            Box::new(rhs),
+            T::default(),
+        )
+    }
+
+    pub fn lt(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Lt, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn lte(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Lte, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn eq(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Eq, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn neq(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Neq, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn gte(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Gte, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn gt(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Gt, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn and(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::And, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn or(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
+        Expr::CompBinop(CompBinop::Or, Box::new(lhs), Box::new(rhs), T::default())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Access {
+pub struct Access<T = ()> {
     pub var: Id,
-    pub idx: Box<Expr>,
+    pub idx: Box<Expr<T>>,
     pub align: Option<(u64, u64)>,
 }
 
@@ -144,7 +235,7 @@ pub enum DeviceApi {
     None,
     Host,
     DefaultGPU,
-    CUDA,
+    Cuda,
     OpenCL,
     Metal,
     Hexagon,
@@ -163,6 +254,58 @@ pub enum MemoryType {
     GPUShared,
     GPUTexture,
     LockedCache,
-    VTCM,
+    Vtcm,
     AMXTile,
+}
+
+pub trait Annotation<T> {
+    fn data(&self) -> &T;
+}
+
+impl<T> Annotation<T> for Module<T> {
+    fn data(&self) -> &T {
+        &self.data
+    }
+}
+
+impl<T> Annotation<T> for Func<T> {
+    fn data(&self) -> &T {
+        &self.data
+    }
+}
+
+impl<T> Annotation<T> for Stmt<T> {
+    fn data(&self) -> &T {
+        match &self {
+            Stmt::Let { data, .. } => data,
+            Stmt::Produce { data, .. } => data,
+            Stmt::Consume { data, .. } => data,
+            Stmt::Store { data, .. } => data,
+            Stmt::Allocate { data, .. } => data,
+            Stmt::Free { data, .. } => data,
+            Stmt::For { data, .. } => data,
+            Stmt::If { data, .. } => data,
+            Stmt::Predicate { data, .. } => data,
+            Stmt::Expr(_, data) => data,
+        }
+    }
+}
+
+impl<T> Annotation<T> for Expr<T> {
+    fn data(&self) -> &T {
+        match self {
+            Expr::Number(_, data) => data,
+            Expr::Ident(_, data) => data,
+            Expr::Unop(_, _, data) => data,
+            Expr::ArithBinop(_, _, _, data) => data,
+            Expr::CompBinop(_, _, _, data) => data,
+            Expr::If(_, _, data) => data,
+            Expr::FunCall(_, _, data) => data,
+            Expr::Reinterpret(_, _, data) => data,
+            Expr::Cast(_, _, data) => data,
+            Expr::PtrCast(_, _, data) => data,
+            Expr::Access(_, data) => data,
+            Expr::LetIn(_, _, _, data) => data,
+        }
+    }
 }

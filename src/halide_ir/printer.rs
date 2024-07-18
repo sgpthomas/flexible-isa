@@ -221,11 +221,11 @@ impl Printer for ast::Id {
 
 impl Printer for ast::Number {
     fn to_doc(&self) -> Doc {
-        Doc::as_string(&self.value)
+        Doc::as_string(self.value)
     }
 }
 
-impl Printer for ast::Module {
+impl<T> Printer for ast::Module<T> {
     fn to_doc(&self) -> Doc {
         Doc::text("module")
             .highlight(|cs| cs.set_bold(true).keyword())
@@ -234,7 +234,7 @@ impl Printer for ast::Module {
     }
 }
 
-impl Printer for ast::Func {
+impl<T> Printer for ast::Func<T> {
     fn to_doc(&self) -> Doc {
         self.metadata
             .to_doc()
@@ -251,10 +251,10 @@ impl Printer for ast::Func {
     }
 }
 
-impl Printer for ast::Stmt {
+impl<T> Printer for ast::Stmt<T> {
     fn to_doc(&self) -> Doc {
         match self {
-            ast::Stmt::Let { var, expr } => Doc::text("let")
+            ast::Stmt::Let { var, expr, data: _ } => Doc::text("let")
                 .highlight(|cs| cs.keyword())
                 .space_then(var.to_doc().highlight(|cs| cs.var()))
                 .space_then("=")
@@ -265,6 +265,7 @@ impl Printer for ast::Stmt {
                 high,
                 body,
                 device,
+                data: _,
             } => Doc::text("for")
                 .highlight(|cs| cs.keyword())
                 .append_if(
@@ -281,7 +282,12 @@ impl Printer for ast::Stmt {
                         .enclose("(", ")")
                         .space_then(body.intersperse(Doc::hardline()).block()),
                 ),
-            ast::Stmt::If { cond, tru, fls } => {
+            ast::Stmt::If {
+                cond,
+                tru,
+                fls,
+                data: _,
+            } => {
                 let tru_branch = Doc::text("if")
                     .highlight(|cs| cs.keyword())
                     .space_then(cond.to_doc().enclose("(", ")"))
@@ -300,20 +306,28 @@ impl Printer for ast::Stmt {
                     tru_branch
                 }
             }
-            ast::Stmt::Produce { var, body } => Doc::text("produce")
+            ast::Stmt::Produce { var, body, data: _ } => Doc::text("produce")
                 .highlight(|cs| cs.keyword())
                 .space_then(var.to_doc().highlight(|cs| cs.set_bold(true)))
                 .space_then(body.intersperse(Doc::hardline()).block()),
-            ast::Stmt::Consume { var, body } => Doc::text("consume")
+            ast::Stmt::Consume { var, body, data: _ } => Doc::text("consume")
                 .highlight(|cs| cs.keyword())
                 .space_then(var.to_doc().highlight(|cs| cs.set_bold(true)))
                 .space_then(body.intersperse(Doc::hardline()).block()),
-            ast::Stmt::Predicate { cond, stmt } => Doc::text("predicate")
+            ast::Stmt::Predicate {
+                cond,
+                stmt,
+                data: _,
+            } => Doc::text("predicate")
                 .highlight(|cs| cs.keyword())
                 .space_then(cond.to_doc().enclose("(", ")"))
                 .line_then(stmt.to_doc().group())
                 .nest(2),
-            ast::Stmt::Store { access, value } => access
+            ast::Stmt::Store {
+                access,
+                value,
+                data: _,
+            } => access
                 .to_doc()
                 .line_then(Doc::text("=").space_then(value.to_doc()))
                 .nest(2)
@@ -322,6 +336,7 @@ impl Printer for ast::Stmt {
                 access,
                 loc,
                 condition,
+                data: _,
             } => Doc::text("allocate")
                 .highlight(|cs| cs.keyword())
                 .space_then(access.to_doc())
@@ -336,50 +351,32 @@ impl Printer for ast::Stmt {
                         .append(Doc::text("if").highlight(|cs| cs.keyword()))
                         .space_then(e.to_doc())
                 }),
-            ast::Stmt::Free { var } => Doc::text("free")
+            ast::Stmt::Free { var, data: _ } => Doc::text("free")
                 .highlight(|cs| cs.keyword())
                 .space_then(var.to_doc()),
-            ast::Stmt::Expr(e) => e.to_doc(),
+            ast::Stmt::Expr(e, _) => e.to_doc(),
         }
     }
 }
 
-impl Printer for ast::Expr {
+impl<T> Printer for ast::Expr<T> {
     fn to_doc(&self) -> Doc {
         match self {
-            ast::Expr::Number(n) => Doc::as_string(n.value).highlight(|cs| cs.literal()),
-            ast::Expr::Ident(id) => id.to_doc(),
-            ast::Expr::Neg(rhs) => Doc::text("-").append(rhs.to_doc()),
-            ast::Expr::Add(lhs, rhs)
-            | ast::Expr::Sub(lhs, rhs)
-            | ast::Expr::Mul(lhs, rhs)
-            | ast::Expr::Div(lhs, rhs)
-            | ast::Expr::Modulo(lhs, rhs)
-            | ast::Expr::Lt(lhs, rhs)
-            | ast::Expr::Lte(lhs, rhs)
-            | ast::Expr::Eq(lhs, rhs)
-            | ast::Expr::Neq(lhs, rhs)
-            | ast::Expr::Gte(lhs, rhs)
-            | ast::Expr::Gt(lhs, rhs)
-            | ast::Expr::And(lhs, rhs)
-            | ast::Expr::Or(lhs, rhs)
-            | ast::Expr::If(lhs, rhs) => {
-                let op = match self {
-                    ast::Expr::Add(_, _) => "+",
-                    ast::Expr::Sub(_, _) => "-",
-                    ast::Expr::Mul(_, _) => "*",
-                    ast::Expr::Div(_, _) => "/",
-                    ast::Expr::Modulo(_, _) => "%",
-                    ast::Expr::Lt(_, _) => "<",
-                    ast::Expr::Lte(_, _) => "<=",
-                    ast::Expr::Eq(_, _) => "==",
-                    ast::Expr::Neq(_, _) => "!=",
-                    ast::Expr::Gte(_, _) => ">=",
-                    ast::Expr::Gt(_, _) => ">",
-                    ast::Expr::And(_, _) => "&&",
-                    ast::Expr::Or(_, _) => "||",
-                    ast::Expr::If(_, _) => "if",
-                    _ => unreachable!(),
+            ast::Expr::Number(n, _) => Doc::as_string(n.value).highlight(|cs| cs.literal()),
+            ast::Expr::Ident(id, _) => id.to_doc(),
+            ast::Expr::Unop(op, rhs, _) => {
+                let op = match op {
+                    ast::Unop::Neg => "-",
+                };
+                Doc::text(op).append(rhs.to_doc())
+            }
+            ast::Expr::ArithBinop(op, lhs, rhs, _) => {
+                let op = match op {
+                    ast::ArithBinop::Add => "+",
+                    ast::ArithBinop::Sub => "-",
+                    ast::ArithBinop::Mul => "*",
+                    ast::ArithBinop::Div => "/",
+                    ast::ArithBinop::Modulo => "%",
                 };
                 lhs.to_doc()
                     .space_then(op)
@@ -387,12 +384,35 @@ impl Printer for ast::Expr {
                     .group()
                     .enclose("(", ")")
             }
-            ast::Expr::FunCall(fn_name, args) => fn_name
+            ast::Expr::CompBinop(op, lhs, rhs, _) => {
+                let op = match op {
+                    ast::CompBinop::Lt => "<",
+                    ast::CompBinop::Lte => "<=",
+                    ast::CompBinop::Eq => "==",
+                    ast::CompBinop::Neq => "!=",
+                    ast::CompBinop::Gte => ">=",
+                    ast::CompBinop::Gt => ">",
+                    ast::CompBinop::And => "&&",
+                    ast::CompBinop::Or => "||",
+                };
+                lhs.to_doc()
+                    .space_then(op)
+                    .space_then(rhs.to_doc())
+                    .group()
+                    .enclose("(", ")")
+            }
+            ast::Expr::If(lhs, rhs, _) => lhs
+                .to_doc()
+                .space_then("if")
+                .space_then(rhs.to_doc())
+                .group()
+                .enclose("(", ")"),
+            ast::Expr::FunCall(fn_name, args, _) => fn_name
                 .to_doc()
                 .highlight(|cs| cs.funcall())
                 .append(args.intersperse(Doc::text(",").line_()).parens().group())
                 .group(),
-            ast::Expr::Reinterpret(cast, args) => Doc::text("reinterpret")
+            ast::Expr::Reinterpret(cast, args, _) => Doc::text("reinterpret")
                 .highlight(|cs| cs.funcall())
                 .append(
                     cast.intersperse(Doc::space())
@@ -401,13 +421,19 @@ impl Printer for ast::Expr {
                 )
                 .append(args.intersperse(Doc::text(",").line_()).parens())
                 .group(),
-            ast::Expr::Cast(typs, expr) => typs
-                .intersperse(Doc::space())
+            ast::Expr::Cast(typ, expr, _) => typ
+                .to_doc()
                 .enclose("(", ")")
                 .highlight(|cs| cs.typcast())
                 .append(expr.to_doc()),
-            ast::Expr::Access(access) => access.to_doc(),
-            ast::Expr::LetIn(var, binding, body) => Doc::text("let")
+            ast::Expr::PtrCast(typs, expr, _) => typs
+                .intersperse(Doc::space())
+                .space_then("*")
+                .enclose("(", ")")
+                .highlight(|cs| cs.typcast())
+                .append(expr.to_doc()),
+            ast::Expr::Access(access, _) => access.to_doc(),
+            ast::Expr::LetIn(var, binding, body, _) => Doc::text("let")
                 .highlight(|cs| cs.keyword())
                 .space_then(var.to_doc().highlight(|cs| cs.var()))
                 .space_then("=")
@@ -418,7 +444,7 @@ impl Printer for ast::Expr {
     }
 }
 
-impl Printer for ast::Access {
+impl<T> Printer for ast::Access<T> {
     fn to_doc(&self) -> Doc {
         let idx_doc = self.idx.to_doc().map_append(&self.align, |(low, hi)| {
             Doc::space().append(
@@ -443,7 +469,7 @@ impl Printer for ast::DeviceApi {
             DeviceApi::None => Doc::text("None"),
             DeviceApi::Host => Doc::text("Host"),
             DeviceApi::DefaultGPU => Doc::text("DefaultGPU"),
-            DeviceApi::CUDA => Doc::text("CUDA"),
+            DeviceApi::Cuda => Doc::text("CUDA"),
             DeviceApi::OpenCL => Doc::text("OpenCL"),
             DeviceApi::Metal => Doc::text("Metal"),
             DeviceApi::Hexagon => Doc::text("Hexagon"),
@@ -465,7 +491,7 @@ impl Printer for ast::MemoryType {
             ast::MemoryType::GPUShared => Doc::text("GPUShared"),
             ast::MemoryType::GPUTexture => Doc::text("GPUTexture"),
             ast::MemoryType::LockedCache => Doc::text("LockedCache"),
-            ast::MemoryType::VTCM => Doc::text("VTCM"),
+            ast::MemoryType::Vtcm => Doc::text("VTCM"),
             ast::MemoryType::AMXTile => Doc::text("AMXTile"),
         }
     }

@@ -56,35 +56,35 @@ impl StmtParser {
                 Rule::reinterpret => Self::reinterpret(Node::new(primary)),
                 Rule::funcall => Self::funcall(Node::new(primary)),
                 Rule::cast_expr => Self::cast_expr(Node::new(primary)),
-                Rule::access_expr => Ok(Expr::Access(Self::access_expr(Node::new(primary))?)),
-                Rule::number => Ok(Expr::Number(Self::number(Node::new(primary))?)),
-                Rule::identifier => Ok(Expr::Ident(Self::identifier(Node::new(primary))?)),
+                Rule::access_expr => Ok(Expr::Access(Self::access_expr(Node::new(primary))?, ())),
+                Rule::number => Ok(Expr::Number(Self::number(Node::new(primary))?, ())),
+                Rule::identifier => Ok(Expr::Ident(Self::identifier(Node::new(primary))?, ())),
                 Rule::let_expr => Self::let_expr(Node::new(primary)),
                 Rule::expr => Self::expr(Node::new(primary)),
                 x => unreachable!("Unexpected rule `{x:?}` for primary {primary:#?}"),
             })
             .map_prefix(|op, rhs| {
                 Ok(match op.as_rule() {
-                    Rule::neg => Expr::Neg(Box::new(rhs?)),
+                    Rule::neg => Expr::neg(rhs?),
                     x => unreachable!("Unexpected prefix `{x:?}"),
                 })
             })
             .map_infix(|lhs, op, rhs| {
                 Ok(match op.as_rule() {
-                    Rule::add => Expr::Add(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::sub => Expr::Sub(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::mul => Expr::Mul(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::div => Expr::Div(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::modulo => Expr::Modulo(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::lt => Expr::Lt(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::lte => Expr::Lte(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::eq => Expr::Eq(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::neq => Expr::Neq(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::gte => Expr::Gte(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::gt => Expr::Gt(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::and => Expr::And(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::or => Expr::Or(Box::new(lhs?), Box::new(rhs?)),
-                    Rule::if_infx => Expr::If(Box::new(lhs?), Box::new(rhs?)),
+                    Rule::add => Expr::add(lhs?, rhs?),
+                    Rule::sub => Expr::sub(lhs?, rhs?),
+                    Rule::mul => Expr::mul(lhs?, rhs?),
+                    Rule::div => Expr::div(lhs?, rhs?),
+                    Rule::modulo => Expr::modulo(lhs?, rhs?),
+                    Rule::lt => Expr::lt(lhs?, rhs?),
+                    Rule::lte => Expr::lte(lhs?, rhs?),
+                    Rule::eq => Expr::eq(lhs?, rhs?),
+                    Rule::neq => Expr::neq(lhs?, rhs?),
+                    Rule::gte => Expr::gte(lhs?, rhs?),
+                    Rule::gt => Expr::gt(lhs?, rhs?),
+                    Rule::and => Expr::and(lhs?, rhs?),
+                    Rule::or => Expr::or(lhs?, rhs?),
+                    Rule::if_infx => Expr::If(Box::new(lhs?), Box::new(rhs?), ()),
                     x => unreachable!("Unexpected infix operator: `{x:?}`"),
                 })
             })
@@ -126,7 +126,8 @@ impl StmtParser {
             input.into_children();
             [module_kv(pairs).., funcs(fs)] => Module {
                 params: pairs.collect(),
-                funcs: fs
+                funcs: fs,
+                data: ()
             }
         ))
     }
@@ -152,7 +153,8 @@ impl StmtParser {
                 metadata,
                 name: fn_name,
                 args,
-                stmts: block
+                stmts: block,
+                data: ()
             }
         ))
     }
@@ -183,16 +185,17 @@ impl StmtParser {
             [update_stmt(s)] => s,
             [free_stmt(s)] => s,
             [allocate_stmt(s)] => s,
-            [expr(e)] => Stmt::Expr(e)
+            [expr(e)] => Stmt::Expr(e, ())
         ))
     }
 
     fn let_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(var), expr(expr)] => Stmt::Let { var, expr },
+            [identifier(var), expr(expr)] => Stmt::Let { var, expr, data: () },
             [identifier(var), expr(binding), expr(body)] => Stmt::Expr(
-                Expr::LetIn(var, Box::new(binding), Box::new(body))
+                Expr::LetIn(var, Box::new(binding), Box::new(body), ()),
+                ()
             )
         ))
     }
@@ -205,14 +208,16 @@ impl StmtParser {
                 low,
                 high,
                 body,
-                device: DeviceApi::None
+                device: DeviceApi::None,
+                data: ()
             },
             [device_api(device), expr(var), expr(low), expr(high), block(body)] => Stmt::For {
                 var,
                 low,
                 high,
                 body,
-                device
+                device,
+                data: ()
             },
         ))
     }
@@ -223,7 +228,7 @@ impl StmtParser {
             [none(_)] => DeviceApi::None,
             [host(_)] => DeviceApi::Host,
             [default_gpu(_)] => DeviceApi::DefaultGPU,
-            [cuda(_)] => DeviceApi::CUDA,
+            [cuda(_)] => DeviceApi::Cuda,
             [open_cl(_)] => DeviceApi::OpenCL,
             [metal(_)] => DeviceApi::Metal,
             [hexagon(_)] => DeviceApi::Hexagon,
@@ -281,54 +286,56 @@ impl StmtParser {
     fn if_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [expr(cond), block(tru)] => Stmt::If { cond, tru, fls: None},
-            [expr(cond), block(tru), block(fls)] => Stmt::If { cond, tru, fls: Some(fls) },
-            [expr(cond), block(tru), if_stmt(fls)] => Stmt::If { cond, tru, fls: Some(vec![fls]) }
+            [expr(cond), block(tru)] => Stmt::If { cond, tru, fls: None, data: () },
+            [expr(cond), block(tru), block(fls)] => Stmt::If { cond, tru, fls: Some(fls), data: () },
+            [expr(cond), block(tru), if_stmt(fls)] => Stmt::If { cond, tru, fls: Some(vec![fls]), data: () }
         ))
     }
 
     fn produce_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(var), block(body)] => Stmt::Produce { var, body }
+            [identifier(var), block(body)] => Stmt::Produce { var, body, data: () }
         ))
     }
 
     fn consume_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(var), block(body)] => Stmt::Consume { var, body }
+            [identifier(var), block(body)] => Stmt::Consume { var, body, data: () }
         ))
     }
 
     fn predicate_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [expr(cond), stmt(stmt)] => Stmt::Predicate { cond, stmt: Box::new(stmt) }
+            [expr(cond), stmt(stmt)] => Stmt::Predicate { cond, stmt: Box::new(stmt), data: () }
         ))
     }
 
     fn update_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [access_expr(access), expr(value)] => Stmt::Store { access, value }
+            [access_expr(access), expr(value)] => Stmt::Store { access, value, data: () }
         ))
     }
 
     fn allocate_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [access_expr(access)] => Stmt::Allocate { access, loc: MemoryType::Auto, condition: None },
-            [access_expr(access), memory_type(loc)] => Stmt::Allocate { access, loc, condition: None },
+            [access_expr(access)] => Stmt::Allocate { access, loc: MemoryType::Auto, condition: None, data: () },
+            [access_expr(access), memory_type(loc)] => Stmt::Allocate { access, loc, condition: None, data: () },
             [access_expr(access), expr(expr)] => Stmt::Allocate {
                 access,
                 loc: MemoryType::Auto,
-                condition: Some(expr)
+                condition: Some(expr),
+                data: ()
             },
             [access_expr(access), memory_type(loc), expr(expr)] => Stmt::Allocate {
                 access,
                 loc,
-                condition: Some(expr)
+                condition: Some(expr),
+                data: ()
             },
         ))
     }
@@ -343,7 +350,7 @@ impl StmtParser {
             [gpu_shared(_)] => MemoryType::GPUShared,
             [gpu_texture(_)] => MemoryType::GPUTexture,
             [locked_cache(_)] => MemoryType::LockedCache,
-            [vtcm(_)] => MemoryType::VTCM,
+            [vtcm(_)] => MemoryType::Vtcm,
             [amx_tile(_)] => MemoryType::AMXTile,
         ))
     }
@@ -387,7 +394,7 @@ impl StmtParser {
     fn free_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(var)] => Stmt::Free { var }
+            [identifier(var)] => Stmt::Free { var, data: () }
         ))
     }
 
@@ -458,15 +465,15 @@ impl StmtParser {
     fn reinterpret(input: Node) -> ParseResult<Expr> {
         Ok(match_nodes!(
             input.into_children();
-            [cast_args(cast), funcall_args(args)] => Expr::Reinterpret(cast, args)
+            [cast_args(cast), funcall_args(args)] => Expr::Reinterpret(cast.0, args, ())
         ))
     }
 
     fn funcall(input: Node) -> ParseResult<Expr> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(name)] => Expr::FunCall(name, vec![]),
-            [identifier(name), funcall_args(args)] => Expr::FunCall(name, args)
+            [identifier(name)] => Expr::FunCall(name, vec![], ()),
+            [identifier(name), funcall_args(args)] => Expr::FunCall(name, args, ())
         ))
     }
 
@@ -480,20 +487,26 @@ impl StmtParser {
     fn cast_expr(input: Node) -> ParseResult<Expr> {
         Ok(match_nodes!(
             input.into_children();
-            [cast_args(args), expr(expr)] => Expr::Cast(args, Box::new(expr)),
-            [expr(expr)] => Expr::Cast(vec![], Box::new(expr)),
+            [cast_args(args), expr(expr)] => {
+                let (args, ptr) = args;
+                if ptr {
+                    Expr::PtrCast(args, Box::new(expr), ())
+                } else {
+                    Expr::Cast(args[0].clone(), Box::new(expr), ())
+                }
+            }
         ))
     }
 
-    fn ptr(input: Node) -> ParseResult<Id> {
-        Ok(Id::new("*"))
+    fn ptr(input: Node) -> ParseResult<()> {
+        Ok(())
     }
 
-    fn cast_args(input: Node) -> ParseResult<Vec<Id>> {
+    fn cast_args(input: Node) -> ParseResult<(Vec<Id>, bool)> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(id)..] => id.collect(),
-            [identifier(id).., ptr(ptr)] => id.chain(vec![ptr].into_iter()).collect()
+            [identifier(id)..] => (id.collect(), false),
+            [identifier(id).., ptr(_)] => (id.collect(), true)
         ))
     }
 
@@ -512,7 +525,7 @@ impl StmtParser {
     fn let_expr(input: Node) -> ParseResult<Expr> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(var), expr(binding), expr(body)] => Expr::LetIn(var, Box::new(binding), Box::new(body))
+            [identifier(var), expr(binding), expr(body)] => Expr::LetIn(var, Box::new(binding), Box::new(body), ())
         ))
     }
 
