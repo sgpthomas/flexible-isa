@@ -6,7 +6,7 @@ use instruction_select::Simplify;
 use halide_ir::{MineExpressions, StmtParser};
 use instruction_select::Instructions;
 
-use crate::halide_ir::TypeAnnotator;
+use crate::halide_ir::{InsertCasts, TypeAnnotator};
 
 mod cli;
 mod halide_ir;
@@ -21,6 +21,7 @@ fn main() -> anyhow::Result<()> {
     let ast = StmtParser::parse_file(&args.input)?;
 
     let ast = TypeAnnotator::default().check_module(ast);
+    let ast = InsertCasts.cast_module(ast);
 
     ast.stdout();
     println!();

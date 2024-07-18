@@ -138,7 +138,7 @@ pub enum Expr<T = ()> {
     ArithBinop(ArithBinop, Box<Expr<T>>, Box<Expr<T>>, T),
     CompBinop(CompBinop, Box<Expr<T>>, Box<Expr<T>>, T),
 
-    // Not sure what the semnatics of this are
+    // Not sure what the semantics of this are
     If(Box<Expr<T>>, Box<Expr<T>>, T),
 
     // function calls
@@ -150,7 +150,7 @@ pub enum Expr<T = ()> {
     PtrCast(Vec<Id>, Box<Expr<T>>, T),
 
     // array access
-    Access(Access, T),
+    Access(Access<T>, T),
 
     // let in exprs
     LetIn(Id, Box<Expr<T>>, Box<Expr<T>>, T),

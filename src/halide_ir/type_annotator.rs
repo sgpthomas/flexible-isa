@@ -24,7 +24,7 @@ impl HalideType {
         }
     }
 
-    fn from_id(id: &ast::Id) -> Self {
+    pub fn from_id(id: &ast::Id) -> Self {
         use HalideType::*;
         match id.name.as_str() {
             "uint8" => Unsigned(8),
@@ -32,6 +32,19 @@ impl HalideType {
             "int8" => Signed(8),
             "int16" => Signed(16),
             _ => Unknown,
+        }
+    }
+
+    pub fn to_id(&self) -> ast::Id {
+        use HalideType::*;
+        match self {
+            Unknown => ast::Id::new("unknown"),
+            AnyNumber => ast::Id::new("number"),
+            Unsigned(n) => ast::Id::new(format!("uint{n}")),
+            Signed(n) => ast::Id::new(format!("int{n}")),
+            Bool => ast::Id::new("bool"),
+            Vec(n, typ) => ast::Id::new(format!("vec{n}<{}>", typ.to_id().name)),
+            Ptr(_typs) => todo!("Not sure what to do for this case."),
         }
     }
 }
