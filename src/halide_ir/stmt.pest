@@ -67,7 +67,7 @@ let_stmt = {
 }
 
 for_stmt = {
-    "for" ~ ("<" ~ device_api ~ ">")? ~ "(" ~ expr ~ "," ~ expr ~ "," ~ expr ~ ")"
+    "for" ~ ("<" ~ device_api ~ ">")? ~ "(" ~ identifier ~ "," ~ expr ~ "," ~ expr ~ ")"
     ~ block
 }
 
@@ -92,7 +92,7 @@ update_stmt = {
 }
 
 allocate_stmt = {
-    "allocate" ~ access_expr ~ ("in" ~ memory_type)? ~ ("if" ~ expr)?
+    "allocate" ~ identifier ~ "[" ~ identifier ~ "*" ~ expr ~ ("+" ~ expr)? ~ "]" ~ ("in" ~ memory_type)? ~ ("if" ~ expr)?
 }
 
 device_api = {

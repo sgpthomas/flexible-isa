@@ -333,13 +333,22 @@ impl<T> Printer for ast::Stmt<T> {
                 .nest(2)
                 .group(),
             ast::Stmt::Allocate {
-                access,
+                name,
+                typ,
+                extents,
                 loc,
                 condition,
                 data: _,
             } => Doc::text("allocate")
                 .highlight(|cs| cs.keyword())
-                .space_then(access.to_doc())
+                .space_then(name.to_doc())
+                .append(
+                    typ.to_doc()
+                        .space_then("*")
+                        .space_then(extents.intersperse("+"))
+                        .enclose("[", "]")
+                        .group(),
+                )
                 .append_if(
                     !matches!(loc, ast::MemoryType::Auto),
                     Doc::space()
@@ -448,13 +457,16 @@ impl<T> Printer for ast::Access<T> {
     fn to_doc(&self) -> Doc {
         let idx_doc = self.idx.to_doc().map_append(&self.align, |(low, hi)| {
             Doc::space().append(
-                Doc::text("aligned").highlight(|cs| cs.funcall()).append(
-                    Doc::as_string(low)
-                        .highlight(|cs| cs.literal())
-                        .append(",")
-                        .space_then(Doc::as_string(hi).highlight(|cs| cs.literal()))
-                        .parens(),
-                ),
+                Doc::text("aligned")
+                    .highlight(|cs| cs.funcall())
+                    .append(
+                        Doc::as_string(low)
+                            .highlight(|cs| cs.literal())
+                            .append(",")
+                            .space_then(Doc::as_string(hi).highlight(|cs| cs.literal()))
+                            .parens(),
+                    )
+                    .group(),
             )
         });
         self.var

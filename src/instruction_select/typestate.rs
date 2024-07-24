@@ -21,5 +21,5 @@ pub struct Init;
 #[derive(Deftly)]
 #[derive_deftly(InstructionState)]
 pub struct AntiUnified {
-    pub(super) learned_lib: babble::LearnedLibrary<HalideExprOp, (egg::Id, egg::Id)>,
+    pub learned_lib: babble::LearnedLibrary<HalideExprOp, (egg::Id, egg::Id)>,
 }

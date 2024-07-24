@@ -1,3 +1,4 @@
+mod cost;
 mod lang;
 mod learn;
 mod simplify;

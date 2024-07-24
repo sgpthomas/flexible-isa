@@ -5,7 +5,7 @@ use std::path::PathBuf;
 pub struct Args {
     /// input .stmt file
     #[argh(positional)]
-    pub input: PathBuf,
+    pub input: Vec<PathBuf>,
 }
 
 pub fn cli() -> Args {

@@ -53,6 +53,9 @@ pub enum HalideExprOp {
     // array access
     Access,
 
+    // Instructions
+    Instruction(u64),
+
     /// Babble necessary operations
     Babble(BabbleOp),
     PatternVar(egg::Var),
@@ -165,6 +168,7 @@ impl Display for HalideExprOp {
                 )
             }
             HalideExprOp::Access => f.write_str("get"),
+            HalideExprOp::Instruction(i) => write!(f, "inst<{i}>"),
             HalideExprOp::Babble(bab) => bab.fmt(f),
             HalideExprOp::PatternVar(v) => v.fmt(f),
         }
@@ -216,6 +220,7 @@ impl babble::Arity for HalideExprOp {
             HalideExprOp::Reinterpret(_) => 1,
             HalideExprOp::Cast(_) => 1,
             HalideExprOp::Access => 2,
+            HalideExprOp::Instruction(_) => 0,
             HalideExprOp::Babble(b) => b.min_arity(),
             HalideExprOp::PatternVar(_) => 0,
         }
@@ -223,7 +228,9 @@ impl babble::Arity for HalideExprOp {
 
     fn max_arity(&self) -> Option<usize> {
         match self {
-            HalideExprOp::FunCall(_) | HalideExprOp::Reinterpret(_) => None,
+            HalideExprOp::FunCall(_)
+            | HalideExprOp::Reinterpret(_)
+            | HalideExprOp::Instruction(_) => None,
             HalideExprOp::Babble(b) => b.max_arity(),
             _ => Some(self.min_arity()),
         }

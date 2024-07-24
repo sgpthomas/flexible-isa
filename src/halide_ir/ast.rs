@@ -1,3 +1,4 @@
+use derive_deftly::Deftly;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -24,29 +25,35 @@ impl Number {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deftly)]
+#[derive_deftly(Annotation)]
 pub struct Module<T = ()> {
     pub params: HashMap<Id, Id>,
     pub funcs: Vec<Func<T>>,
+    #[deftly(data)]
     pub data: T,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deftly)]
+#[derive_deftly(Annotation)]
 pub struct Func<T = ()> {
     pub metadata: Id,
     pub name: Id,
     pub args: Vec<Id>,
     pub stmts: Block<T>,
+    #[deftly(data)]
     pub data: T,
 }
 
 pub type Block<T = ()> = Vec<Stmt<T>>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deftly)]
+#[derive_deftly(Annotation)]
 pub enum Stmt<T = ()> {
     Let {
         var: Id,
         expr: Expr<T>,
+        #[deftly(data)]
         data: T,
     },
     // Assert {
@@ -56,50 +63,60 @@ pub enum Stmt<T = ()> {
     Produce {
         var: Id,
         body: Block<T>,
+        #[deftly(data)]
         data: T,
     },
     Consume {
         var: Id,
         body: Block<T>,
+        #[deftly(data)]
         data: T,
     },
     Store {
         access: Access<T>,
         value: Expr<T>,
+        #[deftly(data)]
         data: T, // TODO: in halide, predicate is stored here
     },
     // Halide Provide
     Allocate {
-        access: Access<T>,
+        name: Id,
+        typ: Id,
+        extents: Vec<Expr<T>>,
         loc: MemoryType,
         condition: Option<Expr<T>>,
+        #[deftly(data)]
         data: T,
     },
     Free {
         var: Id,
+        #[deftly(data)]
         data: T,
     },
     // Fork
     For {
-        var: Expr<T>,
+        var: Id,
         low: Expr<T>,
         high: Expr<T>,
         device: DeviceApi,
         body: Block<T>,
+        #[deftly(data)]
         data: T,
     },
     If {
         cond: Expr<T>,
         tru: Block<T>,
         fls: Option<Block<T>>,
+        #[deftly(data)]
         data: T,
     },
     Predicate {
         cond: Expr<T>,
         stmt: Box<Stmt<T>>,
+        #[deftly(data)]
         data: T,
     },
-    Expr(Expr<T>, T),
+    Expr(Expr<T>, #[deftly(data)] T),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -128,32 +145,33 @@ pub enum CompBinop {
     Or,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deftly)]
+#[derive_deftly(Annotation)]
 pub enum Expr<T = ()> {
     // Base cases
-    Number(Number, T),
-    Ident(Id, T),
+    Number(Number, #[deftly(data)] T),
+    Ident(Id, #[deftly(data)] T),
 
-    Unop(Unop, Box<Expr<T>>, T),
-    ArithBinop(ArithBinop, Box<Expr<T>>, Box<Expr<T>>, T),
-    CompBinop(CompBinop, Box<Expr<T>>, Box<Expr<T>>, T),
+    Unop(Unop, Box<Expr<T>>, #[deftly(data)] T),
+    ArithBinop(ArithBinop, Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
+    CompBinop(CompBinop, Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
 
     // Not sure what the semantics of this are
-    If(Box<Expr<T>>, Box<Expr<T>>, T),
+    If(Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
 
     // function calls
-    FunCall(Id, Vec<Expr<T>>, T),
-    Reinterpret(Vec<Id>, Vec<Expr<T>>, T),
+    FunCall(Id, Vec<Expr<T>>, #[deftly(data)] T),
+    Reinterpret(Vec<Id>, Vec<Expr<T>>, #[deftly(data)] T),
 
     // Casts
-    Cast(Id, Box<Expr<T>>, T),
-    PtrCast(Vec<Id>, Box<Expr<T>>, T),
+    Cast(Id, Box<Expr<T>>, #[deftly(data)] T),
+    PtrCast(Vec<Id>, Box<Expr<T>>, #[deftly(data)] T),
 
     // array access
-    Access(Access<T>, T),
+    Access(Access<T>, #[deftly(data)] T),
 
     // let in exprs
-    LetIn(Id, Box<Expr<T>>, Box<Expr<T>>, T),
+    LetIn(Id, Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
 }
 
 impl<T> Expr<T>
@@ -256,56 +274,4 @@ pub enum MemoryType {
     LockedCache,
     Vtcm,
     AMXTile,
-}
-
-pub trait Annotation<T> {
-    fn data(&self) -> &T;
-}
-
-impl<T> Annotation<T> for Module<T> {
-    fn data(&self) -> &T {
-        &self.data
-    }
-}
-
-impl<T> Annotation<T> for Func<T> {
-    fn data(&self) -> &T {
-        &self.data
-    }
-}
-
-impl<T> Annotation<T> for Stmt<T> {
-    fn data(&self) -> &T {
-        match &self {
-            Stmt::Let { data, .. } => data,
-            Stmt::Produce { data, .. } => data,
-            Stmt::Consume { data, .. } => data,
-            Stmt::Store { data, .. } => data,
-            Stmt::Allocate { data, .. } => data,
-            Stmt::Free { data, .. } => data,
-            Stmt::For { data, .. } => data,
-            Stmt::If { data, .. } => data,
-            Stmt::Predicate { data, .. } => data,
-            Stmt::Expr(_, data) => data,
-        }
-    }
-}
-
-impl<T> Annotation<T> for Expr<T> {
-    fn data(&self) -> &T {
-        match self {
-            Expr::Number(_, data) => data,
-            Expr::Ident(_, data) => data,
-            Expr::Unop(_, _, data) => data,
-            Expr::ArithBinop(_, _, _, data) => data,
-            Expr::CompBinop(_, _, _, data) => data,
-            Expr::If(_, _, data) => data,
-            Expr::FunCall(_, _, data) => data,
-            Expr::Reinterpret(_, _, data) => data,
-            Expr::Cast(_, _, data) => data,
-            Expr::PtrCast(_, _, data) => data,
-            Expr::Access(_, data) => data,
-            Expr::LetIn(_, _, _, data) => data,
-        }
-    }
 }

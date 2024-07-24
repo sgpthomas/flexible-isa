@@ -203,7 +203,7 @@ impl StmtParser {
     fn for_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [expr(var), expr(low), expr(high), block(body)] => Stmt::For {
+            [identifier(var), expr(low), expr(high), block(body)] => Stmt::For {
                 var,
                 low,
                 high,
@@ -211,7 +211,7 @@ impl StmtParser {
                 device: DeviceApi::None,
                 data: ()
             },
-            [device_api(device), expr(var), expr(low), expr(high), block(body)] => Stmt::For {
+            [device_api(device), identifier(var), expr(low), expr(high), block(body)] => Stmt::For {
                 var,
                 low,
                 high,
@@ -323,18 +323,36 @@ impl StmtParser {
     fn allocate_stmt(input: Node) -> ParseResult<Stmt> {
         Ok(match_nodes!(
             input.into_children();
-            [access_expr(access)] => Stmt::Allocate { access, loc: MemoryType::Auto, condition: None, data: () },
-            [access_expr(access), memory_type(loc)] => Stmt::Allocate { access, loc, condition: None, data: () },
-            [access_expr(access), expr(expr)] => Stmt::Allocate {
-                access,
+            [identifier(name), identifier(typ), expr(extents)..] => Stmt::Allocate {
+                name,
+                typ,
+                extents: extents.collect(),
                 loc: MemoryType::Auto,
-                condition: Some(expr),
+                condition: None,
                 data: ()
             },
-            [access_expr(access), memory_type(loc), expr(expr)] => Stmt::Allocate {
-                access,
+            [identifier(name), identifier(typ), expr(extents).., memory_type(loc)] => Stmt::Allocate {
+                name,
+                typ,
+                extents: extents.collect(),
                 loc,
-                condition: Some(expr),
+                condition: None,
+                data: ()
+            },
+            [identifier(name), identifier(typ), expr(extents).., expr(condition)] => Stmt::Allocate {
+                name,
+                typ,
+                extents: extents.collect(),
+                loc: MemoryType::Auto,
+                condition: Some(condition),
+                data: ()
+            },
+            [identifier(name), identifier(typ), expr(extents).., memory_type(loc), expr(condition)] => Stmt::Allocate {
+                name,
+                typ,
+                extents: extents.collect(),
+                loc,
+                condition: Some(condition),
                 data: ()
             },
         ))

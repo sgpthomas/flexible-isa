@@ -59,22 +59,13 @@ impl<'a, T> MineExpressions<'a, T> {
                 self.mine_expr(value)
             }
             ast::Stmt::Allocate {
-                access, condition, ..
-            } if self.should_mine => {
-                self.mine_expr(&access.idx);
-                if let Some(expr) = condition {
-                    self.mine_expr(expr)
-                }
-            }
+                condition: Some(expr),
+                ..
+            } if self.should_mine => self.mine_expr(expr),
             ast::Stmt::Free { .. } => (),
             ast::Stmt::For {
-                var,
-                low,
-                high,
-                body,
-                ..
+                low, high, body, ..
             } if self.should_mine => {
-                self.mine_expr(var);
                 self.mine_expr(low);
                 self.mine_expr(high);
                 self.mine_block(body);

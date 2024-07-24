@@ -1,11 +1,8 @@
 //! Use babble to learn common patterns in a list of expressions.
 
 use babble::Teachable;
-use egg::AstSize;
 
-use crate::rewrite_recexpr::RecExprRewriter;
-
-use super::{lang::HalideExprOp, AntiUnified, Init, InstructionState};
+use super::{cost::InstructionSelect, lang::HalideExprOp, AntiUnified, Init, InstructionState};
 
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
 
@@ -31,12 +28,19 @@ impl Instructions<Init> {
         self.roots.push(root);
     }
 
-    pub fn anti_unify(self) -> Instructions<AntiUnified> {
-        let learned_library = babble::LearnedLibraryBuilder::default()
+    pub fn anti_unify(mut self) -> Instructions<AntiUnified> {
+        // we need to rebuild the e-graph before learning a library
+        self.egraph.rebuild();
+
+        let mut learned_library = babble::LearnedLibraryBuilder::default()
             .learn_trivial(true)
             .ban_op(HalideExprOp::Cast(vec![]))
             .with_roots(self.roots.clone())
             .build(&self.egraph);
+
+        // finds patterns that can apply in the same places, and only keeps the smaller
+        // pattern
+        learned_library.deduplicate(&self.egraph);
 
         let Self {
             egraph,
@@ -62,66 +66,37 @@ impl Instructions<AntiUnified> {
             HalideExprOp::list(),
             self.roots.clone(),
         ));
-        let extractor = egg::Extractor::new(&egraph, AstSize);
+
+        let rewrites = self.instructions().collect::<Vec<_>>();
+
+        let runner = egg::Runner::default().with_egraph(egraph).run(&rewrites);
+
+        let extractor = egg::Extractor::new(&runner.egraph, InstructionSelect);
         let (_, best) = extractor.find_best(root);
 
-        // extract list of rewrites from learned_lib
-        let rewrites: Vec<egg::Rewrite<_, ()>> =
-            self.state.learned_lib.rewrites().collect::<Vec<_>>();
-
-        // lift the instructions to the top of the program
-        babble::extract::lift_libs(&best.destructively_rewrite(rewrites))
+        best
     }
 
-    pub fn instructions(&self) -> impl Iterator<Item = LibraryPattern> + '_ {
-        self.state.learned_lib.libs()
+    pub fn instructions(
+        &self,
+    ) -> impl Iterator<Item = egg::Rewrite<babble::AstNode<HalideExprOp>, ()>> + '_ {
+        self.state
+            .learned_lib
+            .anti_unifications()
+            .enumerate()
+            .map(|(i, au)| {
+                let pattern: egg::Pattern<_> = au.clone().into();
+
+                let searcher: egg::Pattern<_> = pattern.clone();
+
+                let head = HalideExprOp::Instruction(i as u64);
+                let vars = pattern.vars().into_iter().map(babble::PartialExpr::Hole);
+                let applier_partial_expr: babble::PartialExpr<_, _> =
+                    babble::PartialExpr::Node(babble::AstNode::new(head, vars));
+                let applier: egg::Pattern<_> = applier_partial_expr.into();
+
+                let name = format!("instruction {i}");
+                egg::rewrite!(name; searcher => applier)
+            })
     }
-
-    // pub fn learn(&mut self) -> Vec<LibraryPattern> {
-    //     // log::info!("Deduplicating patterns...");
-    //     // learned_lib.deduplicate(&self.egraph);
-
-    //     let lib_rewrites: Vec<_> = self
-    //         .state
-    //         .learned_lib
-    //         .rewrites()
-    //         .inspect(|rw| log::info!("{rw:?}"))
-    //         .collect();
-
-    //     log::info!("Adding libs and running beam search... ");
-    //     let runner = egg::Runner::<_, _, ()>::new(PartialLibCost::new(
-    //         400, 400, // beams
-    //         1,   // the number of libs to learn at a time
-    //     ))
-    //     .with_egraph(self.egraph.clone())
-    //     .with_iter_limit(3) // set to 1 in babble experiments
-    //     .with_time_limit(Duration::from_secs(60))
-    //     .with_node_limit(1_000_000)
-    //     .run(lib_rewrites.iter());
-
-    //     let mut egraph = runner.egraph;
-    //     let root = egraph.add(babble::AstNode::new(
-    //         HalideExprOp::list(),
-    //         self.roots.clone(),
-    //     ));
-    //     let mut cs = egraph[egraph.find(root)].data.clone();
-    //     cs.set.sort_unstable_by_key(|elem| elem.full_cost);
-
-    //     log::info!("learned libs");
-    //     let all_libs: Vec<_> = self.state.learned_lib.libs().collect();
-    //     let mut chosen_rewrites = Vec::new();
-    //     for lib in &cs.set[0].libs {
-    //         log::info!("{}: {}", lib.0, &all_libs[lib.0 .0]);
-    //         chosen_rewrites.push(lib_rewrites[lib.0 .0].clone());
-    //     }
-
-    //     log::info!("Extracting... ");
-    //     let lifted =
-    //         babble::extract::apply_libs(self.egraph.clone(), &self.roots, &chosen_rewrites);
-
-    //     println!("final: {}", lifted.pretty(80));
-    //     println!("== end ==");
-
-    //     self.state.learned_lib.libs().collect()
-    // }
 }

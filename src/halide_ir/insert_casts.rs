@@ -1,6 +1,7 @@
 use super::{
-    ast::{self, Annotation},
+    ast::{self},
     type_annotator::HalideType,
+    Annotation,
 };
 
 pub struct InsertCasts;
@@ -64,17 +65,24 @@ impl InsertCasts {
                 value,
                 data,
             } => ast::Stmt::Store {
-                access,
+                access: self.cast_access(access),
                 value: self.cast_expr(value, true),
                 data,
             },
             ast::Stmt::Allocate {
-                access,
+                name,
+                typ,
+                extents,
                 loc,
                 condition,
                 data,
             } => ast::Stmt::Allocate {
-                access: self.cast_access(access),
+                name,
+                typ,
+                extents: extents
+                    .into_iter()
+                    .map(|e| self.cast_expr(e, false))
+                    .collect(),
                 loc,
                 condition: condition.map(|e| self.cast_expr(e, true)),
                 data,
