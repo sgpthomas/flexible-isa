@@ -70,6 +70,8 @@ pub struct TypeAnnotator {
     context: HashMap<ast::Id, HalideType>,
 }
 
+// impl<T> Visitor<T, HalideType> for TypeAnnotator {}
+
 impl TypeAnnotator {
     pub fn check_module<T>(&mut self, module: ast::Module<T>) -> ast::Module<HalideType> {
         let ast::Module {
@@ -271,12 +273,13 @@ impl TypeAnnotator {
                 };
                 ast::Expr::Access(access, typ)
             }
-            ast::Expr::LetIn(id, binding, body, _) => ast::Expr::LetIn(
-                id,
-                Box::new(self.check_expr(*binding)),
-                Box::new(self.check_expr(*body)),
-                HalideType::Unknown,
-            ),
+            ast::Expr::LetIn(id, binding, body, _) => {
+                let binding = self.check_expr(*binding);
+                self.context.insert(id.clone(), binding.data().clone());
+                let body = self.check_expr(*body);
+                let body_typ = body.data().clone();
+                ast::Expr::LetIn(id, Box::new(binding), Box::new(body), body_typ)
+            }
         }
     }
 

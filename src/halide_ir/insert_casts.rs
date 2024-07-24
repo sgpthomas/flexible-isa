@@ -189,7 +189,12 @@ impl InsertCasts {
                 ast::Expr::PtrCast(typs, Box::new(self.cast_expr(*expr, false)), data)
             }
             ast::Expr::Access(access, data) => ast::Expr::Access(self.cast_access(access), data),
-            ast::Expr::LetIn(_, _, _, _) => todo!(),
+            ast::Expr::LetIn(id, binding, body, data) => ast::Expr::LetIn(
+                id,
+                Box::new(self.cast_expr(*binding, true)),
+                Box::new(self.cast_expr(*body, true)),
+                data,
+            ),
             x => Self::wrap_cast(x, cast_children),
         }
     }

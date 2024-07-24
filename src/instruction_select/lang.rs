@@ -18,6 +18,8 @@ pub enum BabbleOp {
     LibVar(babble::LibId),
 }
 
+pub type HalideLang = babble::AstNode<HalideExprOp>;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HalideExprOp {
     // Base cases

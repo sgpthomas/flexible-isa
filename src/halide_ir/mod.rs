@@ -7,6 +7,7 @@ mod mine_exprs;
 mod parser;
 mod printer;
 mod type_annotator;
+mod visitor;
 
 pub use annotation::Annotation;
 pub use insert_casts::InsertCasts;

@@ -35,15 +35,6 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    // ast.stdout();
-    // println!();
-
-    // let mut type_annot = TypeAnnotator::default();
-    // let ast_tmp = ast.clone();
-    // type_annot.check_module(&ast_tmp);
-
-    // let ast = type_annot.annotate(ast);
-
     let mut exprs = MineExpressions::default();
     for ast in &asts {
         exprs.mine_module(ast);

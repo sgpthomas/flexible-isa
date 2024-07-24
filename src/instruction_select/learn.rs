@@ -71,7 +71,9 @@ impl Instructions<AntiUnified> {
 
         let runner = egg::Runner::default().with_egraph(egraph).run(&rewrites);
 
-        let extractor = egg::Extractor::new(&runner.egraph, InstructionSelect);
+        let cost = InstructionSelect::new(&runner.egraph);
+        println!("head occurences in graph: {cost:#?}");
+        let extractor = egg::Extractor::new(&runner.egraph, cost);
         let (_, best) = extractor.find_best(root);
 
         best
