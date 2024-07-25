@@ -17,6 +17,10 @@ impl<T> From<ast::Expr<T>> for babble::Expr<HalideExprOp> {
             ast::Expr::If(lhs, rhs, _) => {
                 babble::AstNode::new(HalideExprOp::If, [lhs.into(), rhs.into()])
             }
+            ast::Expr::StructMember(struct_expr, thing, _) => babble::AstNode::new(
+                HalideExprOp::StructMember,
+                [struct_expr.into(), thing.into()],
+            ),
             ast::Expr::FunCall(id, args, _) => babble::AstNode::new(
                 HalideExprOp::FunCall(id),
                 args.into_iter().map(babble::Expr::from),

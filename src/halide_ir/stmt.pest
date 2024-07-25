@@ -18,7 +18,7 @@ file = {
 
 module = {
     "module"
-    ~ (module_kv ~ ("," ~ module_kv)*)? ~ NEWLINE
+    ~ (module_kv ~ ("," ~ module_kv)*)? ~ NEWLINE+
     ~ funcs
 }
 
@@ -27,7 +27,7 @@ module_kv = {
 }
 
 funcs = {
-    func+
+    func ~ (NEWLINE+ ~ func)*
 }
 
 func = {
@@ -160,22 +160,24 @@ infix = _{
     add | sub | mul | div | modulo
   | lte | lt | eq | neq | gte | gt
   | and | or
-  | if_infx
+  | if_infx | struct_member
 }
-add     = { "+" }
-sub     = { "-" }
-mul     = { "*" }
-div     = { "/" }
-modulo  = { "%" }
-lt      = { "<" }
-lte     = { "<=" }
-eq      = { "==" }
-neq     = { "!=" }
-gte     = { ">=" }
-gt      = { ">" }
-and     = { "&&" }
-or      = { "||" }
-if_infx = { "if" }
+add           = { "+" }
+sub           = { "-" }
+mul           = { "*" }
+div           = { "/" }
+modulo        = { "%" }
+lt            = { "<" }
+lte           = { "<=" }
+eq            = { "==" }
+neq           = { "!=" }
+gte           = { ">=" }
+gt            = { ">" }
+and           = { "&&" }
+or            = { "||" }
+if_infx       = { "if" }
+struct_member = { "::" }
+
 primary = _{
     reinterpret
   | funcall

@@ -33,6 +33,7 @@ lazy_static::lazy_static! {
         .op(Op::infix(Rule::and, Assoc::Left))
         .op(Op::infix(Rule::or, Assoc::Left))
         .op(Op::infix(Rule::if_infx, Assoc::Left))
+        .op(Op::infix(Rule::struct_member, Assoc::Left))
         .op(Op::prefix(Rule::neg));
 }
 
@@ -84,7 +85,7 @@ impl StmtParser {
                     Rule::gt => Expr::gt(lhs?, rhs?),
                     Rule::and => Expr::and(lhs?, rhs?),
                     Rule::or => Expr::or(lhs?, rhs?),
-                    Rule::if_infx => Expr::If(Box::new(lhs?), Box::new(rhs?), ()),
+                    Rule::struct_member => Expr::StructMember(Box::new(lhs?), Box::new(rhs?), ()),
                     x => unreachable!("Unexpected infix operator: `{x:?}`"),
                 })
             })

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{ast, Annotation};
+use super::{ast, Annotation, Visitor};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HalideType {
@@ -16,15 +16,26 @@ pub enum HalideType {
 impl HalideType {
     fn union(&mut self, other: &mut Self) -> Self {
         use HalideType::*;
+        let mut update = false;
         let union = match (&*self, &*other) {
             (&Unknown, _) | (_, &Unknown) => Unknown,
-            (&AnyNumber, x @ &Unsigned(_)) | (x @ &Unsigned(_), &AnyNumber) => x.clone(),
+            (&AnyNumber, x @ &Unsigned(_)) | (x @ &Unsigned(_), &AnyNumber) => {
+                update = true;
+                x.clone()
+            }
+            (&AnyNumber, x @ &Signed(_)) | (x @ &Signed(_), &AnyNumber) => {
+                update = true;
+                x.clone()
+            }
             (x, y) if x == y => x.clone(),
             _ => Unknown,
         };
 
-        *self = union.clone();
-        *other = union.clone();
+        if update {
+            *self = union.clone();
+            *other = union.clone();
+        }
+
         union
     }
 
@@ -70,230 +81,154 @@ pub struct TypeAnnotator {
     context: HashMap<ast::Id, HalideType>,
 }
 
-// impl<T> Visitor<T, HalideType> for TypeAnnotator {}
-
-impl TypeAnnotator {
-    pub fn check_module<T>(&mut self, module: ast::Module<T>) -> ast::Module<HalideType> {
-        let ast::Module {
-            params,
-            funcs,
-            data: _,
-        } = module;
-
-        ast::Module {
-            params,
-            funcs: funcs.into_iter().map(|f| self.check_func(f)).collect(),
-            data: HalideType::Unknown,
-        }
+impl<T> Visitor<T, HalideType> for TypeAnnotator {
+    fn default_u(&mut self, _data: T) -> HalideType {
+        HalideType::Unknown
     }
 
-    pub fn check_func<T>(&mut self, func: ast::Func<T>) -> ast::Func<HalideType> {
-        let ast::Func {
-            metadata,
-            name,
-            args,
-            stmts,
-            data: _,
-        } = func;
-
-        ast::Func {
-            metadata,
-            name,
-            args,
-            stmts: self.check_block(stmts),
-            data: HalideType::Unknown,
-        }
-    }
-
-    pub fn check_block<T>(&mut self, block: ast::Block<T>) -> ast::Block<HalideType> {
-        block.into_iter().map(|s| self.check_stmt(s)).collect()
-    }
-
-    pub fn check_stmt<T>(&mut self, stmt: ast::Stmt<T>) -> ast::Stmt<HalideType> {
-        match stmt {
-            ast::Stmt::Let { var, expr, .. } => {
-                let expr = self.check_expr(expr);
-                let typ = expr.data().clone();
-                self.context.insert(var.clone(), typ.clone());
-                ast::Stmt::Let {
-                    var,
-                    expr,
-                    data: typ,
-                }
-            }
-            ast::Stmt::Produce { var, body, data: _ } => ast::Stmt::Produce {
-                var,
-                body: self.check_block(body),
-                data: HalideType::Unknown,
-            },
-            ast::Stmt::Consume { var, body, data: _ } => ast::Stmt::Consume {
-                var,
-                body: self.check_block(body),
-                data: HalideType::Unknown,
-            },
-            ast::Stmt::Store {
-                access,
-                value,
-                data: _,
-            } => ast::Stmt::Store {
-                access: self.check_access(access),
-                value: self.check_expr(value),
-                data: HalideType::Unknown,
-            },
-            ast::Stmt::Allocate {
-                name,
-                typ,
-                extents,
-                loc,
-                condition,
-                data: _,
-            } => {
-                let data = HalideType::from_id(&typ);
-                self.context.insert(name.clone(), data.clone());
-                ast::Stmt::Allocate {
-                    name,
-                    typ: typ.clone(),
-                    extents: self.check_exprs(extents),
-                    loc,
-                    condition: condition.map(|expr| self.check_expr(expr)),
-                    data,
-                }
-            }
-            ast::Stmt::Free { var, data: _ } => ast::Stmt::Free {
-                var,
-                data: HalideType::Unknown,
-            },
-            ast::Stmt::For {
-                var,
-                low,
-                high,
-                device,
-                body,
-                data: _,
-            } => {
-                let mut low = self.check_expr(low);
-                let mut high = self.check_expr(high);
-                let typ = low.data_mut().union(high.data_mut());
-                self.context.insert(var.clone(), typ);
-                ast::Stmt::For {
-                    var,
-                    low,
-                    high,
-                    device,
-                    body: self.check_block(body),
-                    data: HalideType::Unknown,
-                }
-            }
-            ast::Stmt::If {
-                cond,
-                tru,
-                fls,
-                data: _,
-            } => ast::Stmt::If {
-                cond: self.check_expr(cond),
-                tru: self.check_block(tru),
-                fls: fls.map(|block| self.check_block(block)),
-                data: HalideType::Unknown,
-            },
-            ast::Stmt::Predicate {
-                cond,
-                stmt,
-                data: _,
-            } => ast::Stmt::Predicate {
-                cond: self.check_expr(cond),
-                stmt: Box::new(self.check_stmt(*stmt)),
-                data: HalideType::Unknown,
-            },
-            ast::Stmt::Expr(expr, _) => ast::Stmt::Expr(self.check_expr(expr), HalideType::Unknown),
-        }
-    }
-
-    /// Calculate types for `expr`
-    pub fn check_expr<T>(&mut self, expr: ast::Expr<T>) -> ast::Expr<HalideType> {
-        match expr {
-            ast::Expr::Number(n, _) => ast::Expr::Number(n, HalideType::AnyNumber),
-            ast::Expr::Ident(id, _) => {
-                let typ = self
-                    .context
-                    .get(&id)
-                    .cloned()
-                    .unwrap_or(HalideType::Unknown);
-                ast::Expr::Ident(id, typ)
-            }
-            ast::Expr::Unop(op, inner, _) => {
-                let expr = self.check_expr(*inner);
-                let typ = expr.data().clone();
-                ast::Expr::Unop(op, Box::new(expr), typ)
-            }
-            ast::Expr::ArithBinop(op, lhs, rhs, _) => {
-                let mut lhs = self.check_expr(*lhs);
-                let mut rhs = self.check_expr(*rhs);
-                let typ = lhs.data_mut().union(rhs.data_mut());
-                ast::Expr::ArithBinop(op, Box::new(lhs), Box::new(rhs), typ)
-            }
-            ast::Expr::CompBinop(op, lhs, rhs, _) => {
-                let mut lhs = self.check_expr(*lhs);
-                let mut rhs = self.check_expr(*rhs);
-                lhs.data_mut().union(rhs.data_mut());
-                ast::Expr::CompBinop(op, Box::new(lhs), Box::new(rhs), HalideType::Bool)
-            }
-            ast::Expr::If(expr, cond, _) => ast::Expr::If(
-                Box::new(self.check_expr(*expr)),
-                Box::new(self.check_expr(*cond)),
-                HalideType::Unknown,
-            ),
-            ast::Expr::FunCall(id, args, _) => {
-                let args = self.check_exprs(args);
-                let typ = halide_intrinsic_type(&id, &args);
-                ast::Expr::FunCall(id, args, typ)
-            }
-            ast::Expr::Reinterpret(typs, args, _) => {
-                ast::Expr::Reinterpret(typs, self.check_exprs(args), HalideType::Unknown)
-            }
-            ast::Expr::Cast(typ_id, expr, _) => {
-                let typ = HalideType::from_id(&typ_id);
-                ast::Expr::Cast(typ_id, Box::new(self.check_expr(*expr)), typ)
-            }
-            ast::Expr::PtrCast(typs, expr, _) => {
-                let typ = HalideType::Ptr(typs.clone());
-                ast::Expr::PtrCast(typs, Box::new(self.check_expr(*expr)), typ)
-            }
-            ast::Expr::Access(access, _) => {
-                let access = self.check_access(access);
-                // when the var is a pointer, the type of the access is the pointer type
-                let typ = if let HalideType::Ptr(typs) = &self.context[&access.var] {
-                    match typs.as_slice() {
-                        [t] if t.name == "void" => HalideType::Unknown,
-                        [t] => HalideType::from_id(t),
-                        _ => HalideType::Unknown,
-                    }
-                } else {
-                    // otherwise we just say we don't know what the type of this is
-                    HalideType::Unknown
-                };
-                ast::Expr::Access(access, typ)
-            }
-            ast::Expr::LetIn(id, binding, body, _) => {
-                let binding = self.check_expr(*binding);
-                self.context.insert(id.clone(), binding.data().clone());
-                let body = self.check_expr(*body);
-                let body_typ = body.data().clone();
-                ast::Expr::LetIn(id, Box::new(binding), Box::new(body), body_typ)
-            }
-        }
-    }
-
-    pub fn check_access<T>(&mut self, access: ast::Access<T>) -> ast::Access<HalideType> {
-        let ast::Access { var, idx, align } = access;
-        ast::Access {
+    fn let_stmt(
+        &mut self,
+        var: ast::Id,
+        expr: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Stmt<HalideType> {
+        let typ = expr.data().clone();
+        self.context.insert(var.clone(), typ.clone());
+        ast::Stmt::Let {
             var,
-            idx: Box::new(self.check_expr(*idx)),
-            align,
+            expr,
+            data: typ,
         }
     }
 
-    pub fn check_exprs<T>(&mut self, exprs: Vec<ast::Expr<T>>) -> Vec<ast::Expr<HalideType>> {
-        exprs.into_iter().map(|e| self.check_expr(e)).collect()
+    fn allocate_stmt(
+        &mut self,
+        name: ast::Id,
+        typ: ast::Id,
+        extents: Vec<ast::Expr<HalideType>>,
+        loc: ast::MemoryType,
+        condition: Option<ast::Expr<HalideType>>,
+        _data: T,
+    ) -> ast::Stmt<HalideType> {
+        let data = HalideType::from_id(&typ);
+        self.context.insert(name.clone(), data.clone());
+        ast::Stmt::Allocate {
+            name,
+            typ,
+            extents,
+            loc,
+            condition,
+            data,
+        }
+    }
+
+    fn start_for_stmt(
+        &mut self,
+        var: &ast::Id,
+        low: &mut ast::Expr<HalideType>,
+        high: &mut ast::Expr<HalideType>,
+        _device: &ast::DeviceApi,
+        _data: &T,
+    ) {
+        let typ = low.data_mut().union(high.data_mut());
+        self.context.insert(var.clone(), typ);
+    }
+
+    fn make_number_expr(&mut self, number: ast::Number, _data: T) -> ast::Expr<HalideType> {
+        ast::Expr::Number(number, HalideType::AnyNumber)
+    }
+
+    fn make_ident_expr(&mut self, id: ast::Id, _data: T) -> ast::Expr<HalideType> {
+        let typ = self
+            .context
+            .get(&id)
+            .cloned()
+            .unwrap_or(HalideType::Unknown);
+        ast::Expr::Ident(id, typ)
+    }
+
+    fn make_unop_expr(
+        &mut self,
+        op: ast::Unop,
+        inner: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = inner.data().clone();
+        ast::Expr::Unop(op, Box::new(inner), typ)
+    }
+
+    fn make_arith_binop_expr(
+        &mut self,
+        op: ast::ArithBinop,
+        mut lhs: ast::Expr<HalideType>,
+        mut rhs: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = lhs.data_mut().union(rhs.data_mut());
+        ast::Expr::ArithBinop(op, Box::new(lhs), Box::new(rhs), typ)
+    }
+
+    fn make_comp_binop_expr(
+        &mut self,
+        op: ast::CompBinop,
+        mut lhs: ast::Expr<HalideType>,
+        mut rhs: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        lhs.data_mut().union(rhs.data_mut());
+        ast::Expr::CompBinop(op, Box::new(lhs), Box::new(rhs), HalideType::Bool)
+    }
+
+    fn make_funcall_expr(
+        &mut self,
+        id: ast::Id,
+        args: Vec<ast::Expr<HalideType>>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = halide_intrinsic_type(&id, &args);
+        ast::Expr::FunCall(id, args, typ)
+    }
+
+    fn make_cast_expr(
+        &mut self,
+        typ_id: ast::Id,
+        mut expr: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = HalideType::from_id(&typ_id);
+        *expr.data_mut() = typ.clone();
+        expr
+        // ast::Expr::Cast(typ_id, Box::new(expr), typ)
+    }
+
+    fn make_ptrcast_expr(
+        &mut self,
+        typs: Vec<ast::Id>,
+        mut expr: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = HalideType::Ptr(typs);
+        *expr.data_mut() = typ;
+        expr
+    }
+
+    fn make_access_expr(
+        &mut self,
+        access: ast::Access<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        // when the var is a pointer, the type of the access is the pointer type
+        let typ = if let HalideType::Ptr(typs) = &self.context[&access.var] {
+            match typs.as_slice() {
+                [t] if t.name == "void" => HalideType::Unknown,
+                [t] => HalideType::from_id(t),
+                _ => HalideType::Unknown,
+            }
+        } else {
+            // otherwise we just say we don't know what the type of this is
+            HalideType::Unknown
+        };
+        ast::Expr::Access(access, typ)
     }
 }
 

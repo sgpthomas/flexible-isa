@@ -10,6 +10,13 @@ pub trait Visitor<T, U> {
     // base cases (non-recursive cases)
     fn default_u(&mut self, _data: T) -> U;
 
+    fn do_pass(&mut self, ast: Module<T>) -> Module<U>
+    where
+        Self: Sized,
+    {
+        ast.visit(self)
+    }
+
     fn module(&mut self, params: HashMap<Id, Id>, funcs: Vec<Func<U>>, data: T) -> Module<U> {
         Module {
             params,
@@ -26,6 +33,10 @@ pub trait Visitor<T, U> {
             stmts,
             data: self.default_u(data),
         }
+    }
+
+    fn stmt(&mut self, stmt: Stmt<U>) -> Stmt<U> {
+        stmt
     }
 
     fn let_stmt(&mut self, var: Id, expr: Expr<U>, data: T) -> Stmt<U> {
@@ -86,7 +97,17 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn for_stmt(
+    fn start_for_stmt(
+        &mut self,
+        _var: &Id,
+        _low: &mut Expr<U>,
+        _high: &mut Expr<U>,
+        _device: &DeviceApi,
+        _data: &T,
+    ) {
+    }
+
+    fn make_for_stmt(
         &mut self,
         var: Id,
         low: Expr<U>,
@@ -126,51 +147,114 @@ pub trait Visitor<T, U> {
         Stmt::Expr(expr, self.default_u(data))
     }
 
-    fn number_expr(&mut self, number: Number, data: T) -> Expr<U> {
+    fn start_expr(&mut self, _expr: &Expr<T>) {}
+
+    fn make_expr(&mut self, expr: Expr<U>) -> Expr<U> {
+        expr
+    }
+
+    fn make_number_expr(&mut self, number: Number, data: T) -> Expr<U> {
         Expr::Number(number, self.default_u(data))
     }
 
-    fn ident_expr(&mut self, id: Id, data: T) -> Expr<U> {
+    fn make_ident_expr(&mut self, id: Id, data: T) -> Expr<U> {
         Expr::Ident(id, self.default_u(data))
     }
 
-    fn unop_expr(&mut self, op: Unop, inner: Expr<U>, data: T) -> Expr<U> {
+    fn start_unop_expr(&mut self, _op: &Unop, _inner: &Expr<T>, _data: &T) {}
+
+    fn make_unop_expr(&mut self, op: Unop, inner: Expr<U>, data: T) -> Expr<U> {
         Expr::Unop(op, Box::new(inner), self.default_u(data))
     }
 
-    fn arith_binop_expr(&mut self, op: ArithBinop, lhs: Expr<U>, rhs: Expr<U>, data: T) -> Expr<U> {
+    fn start_arith_binop_expr(
+        &mut self,
+        _op: &ArithBinop,
+        _lhs: &Expr<T>,
+        _rhs: &Expr<T>,
+        _data: &T,
+    ) {
+    }
+
+    fn make_arith_binop_expr(
+        &mut self,
+        op: ArithBinop,
+        lhs: Expr<U>,
+        rhs: Expr<U>,
+        data: T,
+    ) -> Expr<U> {
         Expr::ArithBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
-    fn comp_binop_expr(&mut self, op: CompBinop, lhs: Expr<U>, rhs: Expr<U>, data: T) -> Expr<U> {
+    fn start_comp_binop_expr(
+        &mut self,
+        _op: &CompBinop,
+        _lhs: &Expr<T>,
+        _rhs: &Expr<T>,
+        _data: &T,
+    ) {
+    }
+
+    fn make_comp_binop_expr(
+        &mut self,
+        op: CompBinop,
+        lhs: Expr<U>,
+        rhs: Expr<U>,
+        data: T,
+    ) -> Expr<U> {
         Expr::CompBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
-    fn if_expr(&mut self, cond: Expr<U>, expr: Expr<U>, data: T) -> Expr<U> {
+    fn start_if_expr(&mut self, _cond: &Expr<T>, _expr: &Expr<T>, _data: &T) {}
+
+    fn make_if_expr(&mut self, cond: Expr<U>, expr: Expr<U>, data: T) -> Expr<U> {
         Expr::If(Box::new(cond), Box::new(expr), self.default_u(data))
     }
 
-    fn funcall_expr(&mut self, id: Id, args: Vec<Expr<U>>, data: T) -> Expr<U> {
+    fn start_struct_member_expr(&mut self, _struct_expr: &Expr<T>, _thing: &Expr<T>, _data: &T) {}
+
+    fn make_struct_member_expr(
+        &mut self,
+        struct_expr: Expr<U>,
+        thing: Expr<U>,
+        data: T,
+    ) -> Expr<U> {
+        Expr::StructMember(Box::new(struct_expr), Box::new(thing), self.default_u(data))
+    }
+
+    fn start_funcall_expr(&mut self, _id: &Id, _args: &[Expr<T>], _data: &T) {}
+
+    fn make_funcall_expr(&mut self, id: Id, args: Vec<Expr<U>>, data: T) -> Expr<U> {
         Expr::FunCall(id, args, self.default_u(data))
     }
 
-    fn reinterpret_expr(&mut self, typs: Vec<Id>, args: Vec<Expr<U>>, data: T) -> Expr<U> {
+    fn start_reinterpret_expr(&mut self, _typs: &[Id], _args: &[Expr<T>], _data: &T) {}
+
+    fn make_reinterpret_expr(&mut self, typs: Vec<Id>, args: Vec<Expr<U>>, data: T) -> Expr<U> {
         Expr::Reinterpret(typs, args, self.default_u(data))
     }
 
-    fn cast_expr(&mut self, typ: Id, expr: Expr<U>, data: T) -> Expr<U> {
+    fn start_cast_expr(&mut self, _typ: &Id, _expr: &Expr<T>, _data: &T) {}
+
+    fn make_cast_expr(&mut self, typ: Id, expr: Expr<U>, data: T) -> Expr<U> {
         Expr::Cast(typ, Box::new(expr), self.default_u(data))
     }
 
-    fn ptr_cast_expr(&mut self, typs: Vec<Id>, expr: Expr<U>, data: T) -> Expr<U> {
+    fn start_ptrcast_expr(&mut self, _typs: &[Id], _expr: &Expr<T>, _data: &T) {}
+
+    fn make_ptrcast_expr(&mut self, typs: Vec<Id>, expr: Expr<U>, data: T) -> Expr<U> {
         Expr::PtrCast(typs, Box::new(expr), self.default_u(data))
     }
 
-    fn access_expr(&mut self, access: Access<U>, data: T) -> Expr<U> {
+    fn start_access_expr(&mut self, _access: &Access<T>, _data: &T) {}
+
+    fn make_access_expr(&mut self, access: Access<U>, data: T) -> Expr<U> {
         Expr::Access(access, self.default_u(data))
     }
 
-    fn letin_expr(&mut self, var: Id, binding: Expr<U>, body: Expr<U>, data: T) -> Expr<U> {
+    fn start_letin_expr(&mut self, _var: &Id, _binding: &Expr<T>, _body: &Expr<T>, _data: &T) {}
+
+    fn make_letin_expr(&mut self, var: Id, binding: Expr<U>, body: Expr<U>, data: T) -> Expr<U> {
         Expr::LetIn(var, Box::new(binding), Box::new(body), self.default_u(data))
     }
 }
@@ -216,7 +300,7 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
     type Res = Stmt<U>;
 
     fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
-        match self {
+        let stmt = match self {
             Stmt::Let { var, expr, data } => {
                 let expr = expr.visit(visitor);
                 visitor.let_stmt(var, expr, data)
@@ -259,10 +343,11 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
                 body,
                 data,
             } => {
-                let low = low.visit(visitor);
-                let high = high.visit(visitor);
+                let mut low = low.visit(visitor);
+                let mut high = high.visit(visitor);
+                visitor.start_for_stmt(&var, &mut low, &mut high, &device, &data);
                 let body = body.visit(visitor);
-                visitor.for_stmt(var, low, high, device, body, data)
+                visitor.make_for_stmt(var, low, high, device, body, data)
             }
             Stmt::If {
                 cond,
@@ -284,7 +369,8 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
                 let expr = expr.visit(visitor);
                 visitor.expr_stmt(expr, data)
             }
-        }
+        };
+        visitor.stmt(stmt)
     }
 }
 
@@ -306,54 +392,72 @@ impl<T, U> Visitable<T, U> for Expr<T> {
     type Res = Expr<U>;
 
     fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
-        match self {
-            Expr::Number(number, data) => visitor.number_expr(number, data),
-            Expr::Ident(id, data) => visitor.ident_expr(id, data),
+        visitor.start_expr(&self);
+        let expr = match self {
+            Expr::Number(number, data) => visitor.make_number_expr(number, data),
+            Expr::Ident(id, data) => visitor.make_ident_expr(id, data),
             Expr::Unop(op, inner, data) => {
+                visitor.start_unop_expr(&op, &*inner, &data);
                 let inner = inner.visit(visitor);
-                visitor.unop_expr(op, inner, data)
+                visitor.make_unop_expr(op, inner, data)
             }
             Expr::ArithBinop(op, lhs, rhs, data) => {
+                visitor.start_arith_binop_expr(&op, &lhs, &rhs, &data);
                 let lhs = lhs.visit(visitor);
                 let rhs = rhs.visit(visitor);
-                visitor.arith_binop_expr(op, lhs, rhs, data)
+                visitor.make_arith_binop_expr(op, lhs, rhs, data)
             }
             Expr::CompBinop(op, lhs, rhs, data) => {
+                visitor.start_comp_binop_expr(&op, &lhs, &rhs, &data);
                 let lhs = lhs.visit(visitor);
                 let rhs = rhs.visit(visitor);
-                visitor.comp_binop_expr(op, lhs, rhs, data)
+                visitor.make_comp_binop_expr(op, lhs, rhs, data)
             }
             Expr::If(cond, expr, data) => {
+                visitor.start_if_expr(&cond, &expr, &data);
                 let cond = cond.visit(visitor);
                 let expr = expr.visit(visitor);
-                visitor.if_expr(cond, expr, data)
+                visitor.make_if_expr(cond, expr, data)
+            }
+            Expr::StructMember(struct_expr, thing, data) => {
+                visitor.start_struct_member_expr(&struct_expr, &thing, &data);
+                let struct_expr = struct_expr.visit(visitor);
+                let thing = thing.visit(visitor);
+                visitor.make_struct_member_expr(struct_expr, thing, data)
             }
             Expr::FunCall(name, args, data) => {
+                visitor.start_funcall_expr(&name, &args, &data);
                 let args = args.visit(visitor);
-                visitor.funcall_expr(name, args, data)
+                visitor.make_funcall_expr(name, args, data)
             }
             Expr::Reinterpret(typs, args, data) => {
+                visitor.start_reinterpret_expr(&typs, &args, &data);
                 let args = args.visit(visitor);
-                visitor.reinterpret_expr(typs, args, data)
+                visitor.make_reinterpret_expr(typs, args, data)
             }
             Expr::Cast(typ, expr, data) => {
+                visitor.start_cast_expr(&typ, &expr, &data);
                 let expr = expr.visit(visitor);
-                visitor.cast_expr(typ, expr, data)
+                visitor.make_cast_expr(typ, expr, data)
             }
             Expr::PtrCast(typs, expr, data) => {
+                visitor.start_ptrcast_expr(&typs, &expr, &data);
                 let expr = expr.visit(visitor);
-                visitor.ptr_cast_expr(typs, expr, data)
+                visitor.make_ptrcast_expr(typs, expr, data)
             }
             Expr::Access(access, data) => {
+                visitor.start_access_expr(&access, &data);
                 let access = access.visit(visitor);
-                visitor.access_expr(access, data)
+                visitor.make_access_expr(access, data)
             }
             Expr::LetIn(var, binding, body, data) => {
+                visitor.start_letin_expr(&var, &binding, &body, &data);
                 let binding = binding.visit(visitor);
                 let body = body.visit(visitor);
-                visitor.letin_expr(var, binding, body, data)
+                visitor.make_letin_expr(var, binding, body, data)
             }
-        }
+        };
+        visitor.make_expr(expr)
     }
 }
 

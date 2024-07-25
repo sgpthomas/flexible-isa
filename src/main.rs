@@ -6,7 +6,7 @@ use instruction_select::Simplify;
 use halide_ir::{MineExpressions, StmtParser};
 use instruction_select::Instructions;
 
-use crate::halide_ir::{InsertCasts, TypeAnnotator};
+use crate::halide_ir::{InsertCasts, TypeAnnotator, Visitor};
 
 #[doc(hidden)]
 #[allow(clippy::single_component_path_imports)]
@@ -26,8 +26,8 @@ fn main() -> anyhow::Result<()> {
         .iter()
         .map(|file| {
             StmtParser::parse_file(file)
-                .map(|ast| TypeAnnotator::default().check_module(ast))
-                .map(|ast| InsertCasts.cast_module(ast))
+                .map(|ast| TypeAnnotator::default().do_pass(ast))
+                .map(|ast| InsertCasts.do_pass(ast))
                 .inspect(|ast| {
                     ast.stdout();
                     println!()

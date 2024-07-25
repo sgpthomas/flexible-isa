@@ -158,6 +158,7 @@ pub enum Expr<T = ()> {
 
     // Not sure what the semantics of this are
     If(Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
+    StructMember(Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
 
     // function calls
     FunCall(Id, Vec<Expr<T>>, #[deftly(data)] T),

@@ -15,3 +15,4 @@ pub use mine_exprs::MineExpressions;
 pub use parser::StmtParser;
 pub use printer::Printer;
 pub use type_annotator::TypeAnnotator;
+pub use visitor::Visitor;

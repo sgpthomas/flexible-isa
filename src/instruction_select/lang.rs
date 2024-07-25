@@ -43,7 +43,10 @@ pub enum HalideExprOp {
     Gt,
     And,
     Or,
+
+    // other operators
     If,
+    StructMember,
 
     // function calls
     FunCall(ast::Id),
@@ -85,7 +88,10 @@ impl FromStr for HalideExprOp {
             ">" => Self::Gt,
             "&&" => Self::And,
             "||" => Self::Or,
+
+            // other operators
             "if" => Self::If,
+            "::" => Self::StructMember,
 
             // function calls
             // "call" => Self::FunCall,
@@ -148,6 +154,7 @@ impl Display for HalideExprOp {
             HalideExprOp::And => f.write_str("&&"),
             HalideExprOp::Or => f.write_str("||"),
             HalideExprOp::If => f.write_str("if"),
+            HalideExprOp::StructMember => f.write_str("::"),
             HalideExprOp::FunCall(ast::Id { name }) => write!(f, "call[{name}]"),
             HalideExprOp::Reinterpret(ids) => {
                 write!(
@@ -217,7 +224,8 @@ impl babble::Arity for HalideExprOp {
             | HalideExprOp::Gt
             | HalideExprOp::And
             | HalideExprOp::Or
-            | HalideExprOp::If => 2,
+            | HalideExprOp::If
+            | HalideExprOp::StructMember => 2,
             HalideExprOp::FunCall(_) => 1,
             HalideExprOp::Reinterpret(_) => 1,
             HalideExprOp::Cast(_) => 1,

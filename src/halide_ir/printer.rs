@@ -230,7 +230,10 @@ impl<T> Printer for ast::Module<T> {
         Doc::text("module")
             .highlight(|cs| cs.set_bold(true).keyword())
             .space_then(self.params.intersperse("="))
-            .line_then(self.funcs.intersperse(Doc::hardline()))
+            .line_then(
+                self.funcs
+                    .intersperse(Doc::hardline().append(Doc::hardline())),
+            )
     }
 }
 
@@ -416,6 +419,12 @@ impl<T> Printer for ast::Expr<T> {
                 .space_then(rhs.to_doc())
                 .group()
                 .enclose("(", ")"),
+            ast::Expr::StructMember(struct_expr, thing, _) => struct_expr
+                .to_doc()
+                .enclose("(", ")")
+                .append("::")
+                .append(thing.to_doc())
+                .group(),
             ast::Expr::FunCall(fn_name, args, _) => fn_name
                 .to_doc()
                 .highlight(|cs| cs.funcall())
@@ -425,6 +434,7 @@ impl<T> Printer for ast::Expr<T> {
                 .highlight(|cs| cs.funcall())
                 .append(
                     cast.intersperse(Doc::space())
+                        .space_then("*")
                         .enclose("<(", ")>")
                         .highlight(|cs| cs.typcast()),
                 )
