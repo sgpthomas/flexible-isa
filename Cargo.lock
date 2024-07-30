@@ -327,7 +327,7 @@ checksum = "f95373dad6030dd671aef44ae435801d651021402718eb36c6596218ddf8a66d"
 dependencies = [
  "heck",
  "indexmap 2.2.6",
- "itertools 0.11.0",
+ "itertools 0.13.0",
  "proc-macro-crate",
  "proc-macro2",
  "quote",
@@ -440,11 +440,14 @@ dependencies = [
  "derive-deftly",
  "egg",
  "env_logger 0.11.3",
+ "itertools 0.13.0",
  "lazy_static",
  "log",
  "pest",
  "pest_consume",
  "pretty",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -585,6 +588,15 @@ name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -971,11 +983,12 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.120"
+version = "1.0.121"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e0d21c9a8cae1235ad58a00c11cb40d4b1e5c784f1ef2c537876ed6ffd8b7c5"
+checksum = "4ab380d7d9f22ef3f21ad3e6c1ebe8e4fc7a2000ccba2e4d71fc96f15b2cb609"
 dependencies = [
  "itoa",
+ "memchr",
  "ryu",
  "serde",
 ]

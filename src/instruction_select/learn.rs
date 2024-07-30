@@ -2,6 +2,8 @@
 
 use babble::Teachable;
 
+use crate::halide_ir::ast;
+
 use super::{cost::InstructionSelect, lang::HalideExprOp, AntiUnified, Init, InstructionState};
 
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
@@ -33,13 +35,15 @@ impl Instructions<Init> {
         self.egraph.rebuild();
 
         let mut learned_library = babble::LearnedLibraryBuilder::default()
-            .learn_trivial(true)
+            .learn_trivial(false)
             .ban_op(HalideExprOp::Cast(vec![]))
+            .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
             .with_roots(self.roots.clone())
             .build(&self.egraph);
 
         // finds patterns that can apply in the same places, and only keeps the smaller
         // pattern
+        println!("Deduplicating");
         learned_library.deduplicate(&self.egraph);
 
         let Self {
@@ -72,7 +76,6 @@ impl Instructions<AntiUnified> {
         let runner = egg::Runner::default().with_egraph(egraph).run(&rewrites);
 
         let cost = InstructionSelect::new(&runner.egraph);
-        println!("head occurences in graph: {cost:#?}");
         let extractor = egg::Extractor::new(&runner.egraph, cost);
         let (_, best) = extractor.find_best(root);
 

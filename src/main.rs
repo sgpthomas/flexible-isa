@@ -1,16 +1,18 @@
+use std::{fs::File, path::PathBuf};
+
 #[allow(unused)]
 use halide_ir::Printer;
 #[allow(unused)]
 use instruction_select::Simplify;
 
-use halide_ir::{MineExpressions, StmtParser};
-use instruction_select::Instructions;
-
-use crate::halide_ir::{InsertCasts, TypeAnnotator, Visitor};
+use halide_ir::{Inline, InsertCasts, MineExpressions, StmtParser, TypeAnnotator, Visitor};
+use instruction_select::{InstructionSelect, Instructions};
 
 #[doc(hidden)]
 #[allow(clippy::single_component_path_imports)]
 use derive_deftly;
+
+use crate::halide_ir::HalideGeneratorParser;
 
 mod cli;
 mod halide_ir;
@@ -21,11 +23,33 @@ fn main() -> anyhow::Result<()> {
 
     let args = cli::cli();
 
+    if args.generator_types {
+        // generate type metadata files from a generator file
+        // this way, we have access to the types of input / output buffers
+        for file in &args.input {
+            let io = HalideGeneratorParser::parse_file(file)?;
+            let mut output_path = PathBuf::from(
+                file.file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .strip_suffix("_generator")
+                    .unwrap(),
+            );
+            output_path.set_extension("json");
+            let mut file = File::create(output_path)?;
+            serde_json::to_writer_pretty(&mut file, &io)?;
+        }
+
+        return Ok(());
+    }
+
     let asts = args
         .input
         .iter()
         .map(|file| {
             StmtParser::parse_file(file)
+                .map(|ast| Inline::default().do_pass(ast))
                 .map(|ast| TypeAnnotator::default().do_pass(ast))
                 .map(|ast| InsertCasts.do_pass(ast))
                 .inspect(|ast| {
@@ -35,19 +59,22 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    let mut exprs = MineExpressions::default();
+    // gather expressions from all the asts
+    let mut miner = MineExpressions::default();
     for ast in &asts {
-        exprs.mine_module(ast);
+        miner.mine_module(ast);
     }
 
+    // perform instruction selection
     let mut inst_sel = Instructions::default();
 
-    exprs.into_iter().for_each(|expr| {
+    miner.into_iter().for_each(|expr| {
         let rec_expr = egg::RecExpr::from(expr.clone());
         inst_sel.add_expr(&rec_expr);
     });
 
     // run anti-unification to discover patterns
+    println!("Learning instructions...");
     let instrs = inst_sel.anti_unify();
 
     println!("== Learned Patterns ==");
@@ -61,7 +88,9 @@ fn main() -> anyhow::Result<()> {
     });
 
     println!("== Final Program ==");
-    println!("{}", instrs.apply().pretty(80));
+    let prog = instrs.apply();
+    println!("{}", prog.pretty(80));
+    println!("{}", InstructionSelect::from_recexpr(&prog));
 
     Ok(())
 }

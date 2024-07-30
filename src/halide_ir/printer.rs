@@ -440,6 +440,11 @@ impl<T> Printer for ast::Expr<T> {
                 )
                 .append(args.intersperse(Doc::text(",").line_()).parens())
                 .group(),
+            ast::Expr::Cast(typ, expr, _) if typ.name == "unknown" => typ
+                .to_doc()
+                .enclose("(", ")")
+                .highlight(|cs| cs.keyword())
+                .append(expr.to_doc()),
             ast::Expr::Cast(typ, expr, _) => typ
                 .to_doc()
                 .enclose("(", ")")

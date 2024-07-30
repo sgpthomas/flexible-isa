@@ -25,7 +25,24 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn func(&mut self, metadata: Id, name: Id, args: Vec<Id>, stmts: Block<U>, data: T) -> Func<U> {
+    fn start_func(
+        &mut self,
+        _metadata: &Id,
+        _name: &Id,
+        _args: &[Id],
+        _stmts: &Block<T>,
+        _data: &T,
+    ) {
+    }
+
+    fn make_func(
+        &mut self,
+        metadata: Id,
+        name: Id,
+        args: Vec<Id>,
+        stmts: Block<U>,
+        data: T,
+    ) -> Func<U> {
         Func {
             metadata,
             name,
@@ -290,9 +307,9 @@ impl<T, U> Visitable<T, U> for Func<T> {
             data,
         } = self;
 
+        visitor.start_func(&metadata, &name, &args, &stmts, &data);
         let stmts = stmts.visit(visitor);
-
-        visitor.func(metadata, name, args, stmts, data)
+        visitor.make_func(metadata, name, args, stmts, data)
     }
 }
 

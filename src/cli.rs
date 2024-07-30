@@ -6,6 +6,10 @@ pub struct Args {
     /// input .stmt file
     #[argh(positional)]
     pub input: Vec<PathBuf>,
+
+    /// generate input / output types from halide generators
+    #[argh(switch)]
+    pub generator_types: bool,
 }
 
 pub fn cli() -> Args {

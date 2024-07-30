@@ -32,3 +32,7 @@ cmake --install build --prefix .
 #+begin_src async-shell :results none :name flex-isa
 bisa --from benchmark --to isa benchmarks/l2norm
 #+end_src
+
+#+begin_src async-shell :results none :name flex-isa
+cargo run -- l2norm.stmt
+#+end_src

@@ -4,6 +4,7 @@ mod learn;
 mod simplify;
 mod typestate;
 
+pub use cost::InstructionSelect;
 pub use lang::{HalideExprOp, HalideLang};
 pub use learn::Instructions;
 pub use simplify::Simplify;
