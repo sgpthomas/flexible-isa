@@ -160,6 +160,16 @@ impl<T> Visitor<T, HalideType> for TypeAnnotator {
         expr
     }
 
+    fn make_reinterpret_expr(
+        &mut self,
+        typs: Vec<ast::Id>,
+        args: Vec<ast::Expr<HalideType>>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = HalideType::Ptr(typs.clone());
+        ast::Expr::Reinterpret(typs, args, typ)
+    }
+
     fn make_access_expr(
         &mut self,
         access: ast::Access<HalideType>,
@@ -313,6 +323,11 @@ fn halide_intrinsic_type(id: &ast::Id, args: &[ast::Expr<HalideType>]) -> Halide
         }
         ("bitwise_and", [a, _b]) => a.data().clone(),
         ("saturating_cast", [a]) => a.data().clone(),
+        ("min", [a, _b]) => a.data().clone(),
+        ("max", [a, _b]) => a.data().clone(),
+
+        // some random loading functions
+        ("load_typed_struct_member", _) => HalideType::Ptr(vec![ast::Id::new("void")]),
 
         // try parsing the function name as a normal HalideType
         (x_lanes, [arg]) if x_lanes.starts_with('x') => x_lanes

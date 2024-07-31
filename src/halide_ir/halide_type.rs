@@ -16,37 +16,24 @@ pub enum HalideType {
 impl HalideType {
     pub fn union(&mut self, other: &mut Self) -> Self {
         use HalideType::*;
-        // let mut update = false;
-        let union = match (&*self, &*other) {
+        match (&*self, &*other) {
             (&Unknown, _) | (_, &Unknown) => Unknown,
-            // (&AnyNumber, x @ &Unsigned(_)) | (x @ &Unsigned(_), &AnyNumber) => {
-            //     update = true;
-            //     x.clone()
-            // }
-            // (&AnyNumber, x @ &Signed(_)) | (x @ &Signed(_), &AnyNumber) => {
-            //     update = true;
-            //     x.clone()
-            // }
             (x, y) if x == y => x.clone(),
             _ => Unknown,
-        };
-
-        // if update {
-        //     *self = union.clone();
-        //     *other = union.clone();
-        // }
-
-        union
+        }
     }
 
     pub fn from_str(typ: &str) -> Self {
         use HalideType::*;
         match typ {
+            "uint1" => Unsigned(1),
             "uint8" => Unsigned(8),
             "uint16" => Unsigned(16),
             "uint32" => Unsigned(32),
             "uint64" => Unsigned(64),
             "uint128" => Unsigned(128),
+            "int" => Signed(32),
+            "int1" => Signed(1),
             "int8" => Signed(8),
             "int16" => Signed(16),
             "int32" => Signed(32),

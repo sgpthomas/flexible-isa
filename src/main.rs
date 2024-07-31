@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
         // generate type metadata files from a generator file
         // this way, we have access to the types of input / output buffers
         for file in &args.input {
-            HalideGeneratorParser::write_json(file)?;
+            HalideGeneratorParser::output_json(file)?;
         }
 
         // return early

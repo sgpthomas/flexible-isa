@@ -7,7 +7,7 @@ use std::{
     collections::HashMap,
     fs::{self, File},
     io::BufReader,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -98,23 +98,15 @@ impl HalideGeneratorParser {
             "int16_t" => HalideType::Signed(16),
             "int32_t" => HalideType::Signed(32),
             "int64_t" => HalideType::Signed(64),
+            "int" => HalideType::Signed(32),
             _ => HalideType::Unknown,
         }
     }
 
-    pub fn write_json(path: &Path) -> anyhow::Result<()> {
+    pub fn output_json(path: &Path) -> anyhow::Result<()> {
         let io = Self::parse_file(path)?;
-        let mut output_path = PathBuf::from(
-            path.file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .strip_suffix("_generator")
-                .unwrap(),
-        );
-        output_path.set_extension("json");
-        let mut file = File::create(output_path)?;
-        serde_json::to_writer_pretty(&mut file, &io)?;
+        let output = serde_json::to_string_pretty(&io)?;
+        println!("{output}");
         Ok(())
     }
 
@@ -165,9 +157,9 @@ impl HalideGeneratorParser {
     fn var_info(input: Node) -> ParseResult<(ast::Id, u64)> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(_), string_lit(s), num(dim)] => (ast::Id::new(s), dim),
             [identifier(_), string_lit(s)] => (ast::Id::new(s), 1),
-            [identifier(_), string_lit(_), num(_)..] => todo!("not sure if this is allowed yet"),
+            [identifier(_), string_lit(s), num(dim)] => (ast::Id::new(s), dim),
+            [identifier(_), string_lit(s), num(nums)..] => (ast::Id::new(s), nums.into_iter().next().unwrap_or(1)),
         ))
     }
 

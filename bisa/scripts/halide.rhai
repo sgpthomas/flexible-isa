@@ -9,6 +9,7 @@ export const generator_state = state("generator", ["gen"]);
 
 /// halide IR state
 export const stmt_state = state("halide-ir", ["stmt"]);
+export const metadata_state = state("metadata", ["json"]);
 
 /// assembly state
 export const asm_state = state("asm", ["s"]);
@@ -65,10 +66,23 @@ fn generate_build(e, input, output, type, ext) {
     e.arg("output_ext", ext);
 }
 
+
+fn project_setup(e) {
+  e.config_var("proj_src", "proj.src");
+  e.var_("flex_isa", "$proj_src/target/debug/flexible-isa")
+}
+
 fn isa_setup(e) {
   e.rule(
     "run-isa",
-    "cargo run -- $in > $out"
+    "$flex_isa $in > $out"
+  );
+}
+
+fn metadata_setup(e) {
+  e.rule(
+    "gen-metadata",
+    "$flex_isa $in --generator-types > $out"
   );
 }
 
@@ -122,8 +136,15 @@ op(
 );
 
 rule(
-  [isa_setup],
+  [project_setup, isa_setup],
   stmt_state,
   flex_isa_state,
   "run-isa"
+);
+
+rule(
+  [project_setup, metadata_setup],
+  halide_state,
+  metadata_state,
+  "gen-metadata"
 );
