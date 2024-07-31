@@ -5,9 +5,10 @@ use super::ast::{
     Stmt, Unop,
 };
 
-/// Implements a bottom up visitor over the Halide IR.
+/// Implements a visitor over the Halide IR.
 pub trait Visitor<T, U> {
-    // base cases (non-recursive cases)
+    /// The default value of `U` to be used when a method is not overridden
+    /// in the trait definition.
     fn default_u(&mut self, _data: T) -> U;
 
     fn do_pass(&mut self, ast: Module<T>) -> Module<U>
@@ -224,8 +225,8 @@ pub trait Visitor<T, U> {
 
     fn start_if_expr(&mut self, _cond: &Expr<T>, _expr: &Expr<T>, _data: &T) {}
 
-    fn make_if_expr(&mut self, cond: Expr<U>, expr: Expr<U>, data: T) -> Expr<U> {
-        Expr::If(Box::new(cond), Box::new(expr), self.default_u(data))
+    fn make_if_expr(&mut self, expr: Expr<U>, cond: Expr<U>, data: T) -> Expr<U> {
+        Expr::If(Box::new(expr), Box::new(cond), self.default_u(data))
     }
 
     fn start_struct_member_expr(&mut self, _struct_expr: &Expr<T>, _thing: &Expr<T>, _data: &T) {}
@@ -430,11 +431,11 @@ impl<T, U> Visitable<T, U> for Expr<T> {
                 let rhs = rhs.visit(visitor);
                 visitor.make_comp_binop_expr(op, lhs, rhs, data)
             }
-            Expr::If(cond, expr, data) => {
-                visitor.start_if_expr(&cond, &expr, &data);
-                let cond = cond.visit(visitor);
+            Expr::If(expr, cond, data) => {
+                visitor.start_if_expr(&expr, &cond, &data);
                 let expr = expr.visit(visitor);
-                visitor.make_if_expr(cond, expr, data)
+                let cond = cond.visit(visitor);
+                visitor.make_if_expr(expr, cond, data)
             }
             Expr::StructMember(struct_expr, thing, data) => {
                 visitor.start_struct_member_expr(&struct_expr, &thing, &data);

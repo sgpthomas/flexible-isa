@@ -4,28 +4,36 @@ use super::{ast, Annotation, HalideType, MatchWidth, Visitor};
 
 #[derive(Default)]
 pub struct TypeAnnotator {
+    func_signature: HashMap<ast::Id, HalideType>,
     context: HashMap<ast::Id, HalideType>,
+}
+
+impl TypeAnnotator {
+    fn bind_var(&mut self, var: ast::Id, typ: HalideType) -> Option<HalideType> {
+        self.context.insert(var, typ)
+    }
+
+    fn lookup(&self, var: &ast::Id) -> Option<HalideType> {
+        self.func_signature
+            .get(var)
+            .or_else(|| self.context.get(var))
+            .cloned()
+    }
+}
+
+impl From<HashMap<ast::Id, HalideType>> for TypeAnnotator {
+    fn from(func_signature: HashMap<ast::Id, HalideType>) -> Self {
+        Self {
+            func_signature,
+            context: HashMap::default(),
+        }
+    }
 }
 
 impl<T> Visitor<T, HalideType> for TypeAnnotator {
     fn default_u(&mut self, _data: T) -> HalideType {
         HalideType::Unknown
     }
-
-    // fn start_func(
-    //     &mut self,
-    //     _metadata: &ast::Id,
-    //     _name: &ast::Id,
-    //     args: &[ast::Id],
-    //     _stmts: &ast::Block<T>,
-    //     _data: &T,
-    // ) {
-    //     for arg in args {
-    //         println!("adding {arg:?} to context");
-    //         self.context
-    //             .insert(arg.clone(), HalideType::Ptr(vec![ast::Id::new("uint8")]));
-    //     }
-    // }
 
     fn let_stmt(
         &mut self,
@@ -34,7 +42,7 @@ impl<T> Visitor<T, HalideType> for TypeAnnotator {
         _data: T,
     ) -> ast::Stmt<HalideType> {
         let typ = expr.data().clone();
-        self.context.insert(var.clone(), typ.clone());
+        self.bind_var(var.clone(), typ.clone());
         ast::Stmt::Let {
             var,
             expr,
@@ -51,8 +59,8 @@ impl<T> Visitor<T, HalideType> for TypeAnnotator {
         condition: Option<ast::Expr<HalideType>>,
         _data: T,
     ) -> ast::Stmt<HalideType> {
-        let data = HalideType::from_id(&typ);
-        self.context.insert(name.clone(), data.clone());
+        let data = HalideType::Ptr(vec![typ.clone()]);
+        self.bind_var(name.clone(), data.clone());
         ast::Stmt::Allocate {
             name,
             typ,
@@ -72,19 +80,15 @@ impl<T> Visitor<T, HalideType> for TypeAnnotator {
         _data: &T,
     ) {
         let typ = low.data_mut().union(high.data_mut());
-        self.context.insert(var.clone(), typ);
+        self.bind_var(var.clone(), typ);
     }
 
     fn make_number_expr(&mut self, number: ast::Number, _data: T) -> ast::Expr<HalideType> {
-        ast::Expr::Number(number, HalideType::AnyNumber)
+        ast::Expr::Number(number, HalideType::Signed(32))
     }
 
     fn make_ident_expr(&mut self, id: ast::Id, _data: T) -> ast::Expr<HalideType> {
-        let typ = self
-            .context
-            .get(&id)
-            .cloned()
-            .unwrap_or(HalideType::Unknown);
+        let typ = self.lookup(&id).unwrap_or(HalideType::Unknown);
         ast::Expr::Ident(id, typ)
     }
 
@@ -140,6 +144,7 @@ impl<T> Visitor<T, HalideType> for TypeAnnotator {
         _data: T,
     ) -> ast::Expr<HalideType> {
         let typ = HalideType::from_id(&typ_id);
+        // assert_eq!(expr.data(), &typ, "{expr:#?}");
         *expr.data_mut() = typ.clone();
         expr
     }
@@ -177,12 +182,22 @@ impl<T> Visitor<T, HalideType> for TypeAnnotator {
 
         // if the idx expression results in a vec type, we want the type of this
         // access to be the same width as the child vector type
-        let child_typ_width = access.idx.data().width();
+        let child_typ_width = access.idx.data().lanes();
         if child_typ_width > 1 {
             ast::Expr::Access(access, HalideType::Vec(child_typ_width, Box::new(typ)))
         } else {
             ast::Expr::Access(access, typ)
         }
+    }
+
+    fn make_if_expr(
+        &mut self,
+        expr: ast::Expr<HalideType>,
+        cond: ast::Expr<HalideType>,
+        _data: T,
+    ) -> ast::Expr<HalideType> {
+        let typ = expr.data().clone();
+        ast::Expr::If(Box::new(expr), Box::new(cond), typ)
     }
 }
 
@@ -219,16 +234,20 @@ fn halide_intrinsic_type(id: &ast::Id, args: &[ast::Expr<HalideType>]) -> Halide
                 HalideType::Unknown
             }
         }
-        ("int8", _) => HalideType::Signed(8),
-        ("int16", _) => HalideType::Signed(16),
-        ("int32", _) => HalideType::Signed(32),
-        ("int64", _) => HalideType::Signed(64),
-        ("int128", _) => HalideType::Signed(128),
-        ("x8", [arg]) => HalideType::Vec(8, Box::new(arg.data().clone())),
-        ("x16", [arg]) => HalideType::Vec(16, Box::new(arg.data().clone())),
-        ("x32", [arg]) => HalideType::Vec(32, Box::new(arg.data().clone())),
-        ("x64", [arg]) => HalideType::Vec(64, Box::new(arg.data().clone())),
-        ("x128", [arg]) => HalideType::Vec(128, Box::new(arg.data().clone())),
+        // ("int8", [_arg]) => HalideType::Signed(8),
+        // ("int16", [_arg]) => HalideType::Signed(16),
+        // ("int32", [_arg]) => HalideType::Signed(32),
+        // ("int64", [_arg]) => HalideType::Signed(64),
+        // ("int128", [_arg]) => HalideType::Signed(128),
+        // (vec_constructor, [arg]) if vec_constructor.contains('x') => vec_constructor
+        //     .split_once('x')
+        //     .map(|(typ, lanes)| todo!())
+        //     .unwrap_or(HalideType::Unknown),
+        // ("x8", [arg]) => HalideType::Vec(8, Box::new(arg.data().clone())),
+        // ("x16", [arg]) => HalideType::Vec(16, Box::new(arg.data().clone())),
+        // ("x32", [arg]) => HalideType::Vec(32, Box::new(arg.data().clone())),
+        // ("x64", [arg]) => HalideType::Vec(64, Box::new(arg.data().clone())),
+        // ("x128", [arg]) => HalideType::Vec(128, Box::new(arg.data().clone())),
 
         // halide intrinsic functions. comments taken from `IROperator.h`
         // compute a + widen(b)
@@ -243,23 +262,15 @@ fn halide_intrinsic_type(id: &ast::Id, args: &[ast::Expr<HalideType>]) -> Halide
         // compute widen(a) * widen(b). a and b may have difference signedness,
         // in which case the result is signed
         ("widening_mul", [a, b]) if a.match_sign(b) => a.data().widen(),
-        ("widening_mul", [a, _b]) => HalideType::Signed(a.data().widen().width()),
+        ("widening_mul", [a, _b]) => a.data().widen().signed(),
         // compute widen(a) - widen(b). The result is always signed
-        ("widening_sub", [a, b]) if a.data().width() == b.data().width() => {
-            let x = a.data().widen();
-            println!(
-                "yay! widening_sub(a: {:?}, b: {:?}) -> {x:?}",
-                a.data(),
-                b.data()
-            );
-            x
-        }
-        ("widening_sub", [a, b]) => {
-            println!("widening_sub(a: {:?}, b: {:?})", a.data(), b.data());
-            HalideType::Unknown
+        ("widening_sub", [a, b]) if a.match_width(b, |aw, bw| aw == bw) => {
+            a.data().widen().signed()
         }
         ("widening_shift_left", [a, _b]) => a.data().widen(),
         ("widening_shift_right", [a, _b]) => a.data().widen(),
+        ("shift_left", [a, _b]) => a.data().clone(),
+        ("shift_right", [a, _b]) => a.data().clone(),
 
         // Compute saturating_narrow(widening_add(a, (1 >> min(b, 0)) / 2) << b).
         // When b is positive indicating a left shift, the rounding term is zero.
@@ -283,10 +294,42 @@ fn halide_intrinsic_type(id: &ast::Id, args: &[ast::Expr<HalideType>]) -> Halide
         // Compute saturating_narrow(shift_right(widening_mul(a, b), q))
         ("mul_shift_right", [a, _b]) => a.data().clone(),
         // Compute saturating_narrow(rounding_shift_right(widening_mul(a, b), q))
-        ("rounding_mul_shift_right", [a, _b]) => a.data().clone(),
+        ("rounding_mul_shift_right", [a, _b, _c]) => a.data().clone(),
 
-        (x, _) => {
-            println!("unknown intrinsic: {x}");
+        ("vector_reduce_add", [a]) => {
+            if let HalideType::Vec(_, typ) = a.data() {
+                (**typ).clone()
+            } else {
+                HalideType::Unknown
+            }
+        }
+
+        // utility functions
+        ("count_leading_zeros", [a]) if matches!(a.data(), HalideType::Unsigned(_)) => {
+            a.data().clone()
+        }
+        ("count_leading_zeros", [a]) if matches!(a.data(), HalideType::Signed(_)) => {
+            a.data().clone()
+        }
+        ("bitwise_and", [a, _b]) => a.data().clone(),
+        ("saturating_cast", [a]) => a.data().clone(),
+
+        // try parsing the function name as a normal HalideType
+        (x_lanes, [arg]) if x_lanes.starts_with('x') => x_lanes
+            .strip_prefix('x')
+            .and_then(|lanes| lanes.parse::<u64>().ok())
+            .map(|lanes| HalideType::Vec(lanes, Box::new(arg.data().clone())))
+            .unwrap_or(HalideType::Unknown),
+        (typ_x_lanes, [_arg]) => HalideType::from_str(typ_x_lanes),
+
+        (x, args) => {
+            println!(
+                "unknown intrinsic: {x}({})",
+                args.iter()
+                    .map(|a| a.data().to_id().name.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
             HalideType::Unknown
         }
     }

@@ -1,5 +1,3 @@
-use std::{fs::File, path::PathBuf};
-
 #[allow(unused)]
 use halide_ir::Printer;
 #[allow(unused)]
@@ -27,20 +25,10 @@ fn main() -> anyhow::Result<()> {
         // generate type metadata files from a generator file
         // this way, we have access to the types of input / output buffers
         for file in &args.input {
-            let io = HalideGeneratorParser::parse_file(file)?;
-            let mut output_path = PathBuf::from(
-                file.file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .strip_suffix("_generator")
-                    .unwrap(),
-            );
-            output_path.set_extension("json");
-            let mut file = File::create(output_path)?;
-            serde_json::to_writer_pretty(&mut file, &io)?;
+            HalideGeneratorParser::write_json(file)?;
         }
 
+        // return early
         return Ok(());
     }
 
@@ -48,9 +36,11 @@ fn main() -> anyhow::Result<()> {
         .input
         .iter()
         .map(|file| {
+            let func_sig = HalideGeneratorParser::read_json(file)?;
             StmtParser::parse_file(file)
                 .map(|ast| Inline::default().do_pass(ast))
-                .map(|ast| TypeAnnotator::default().do_pass(ast))
+                .map(|ast| TypeAnnotator::from(func_sig).do_pass(ast))
+                // .inspect(|ast| println!("{ast:#?}"))
                 .map(|ast| InsertCasts.do_pass(ast))
                 .inspect(|ast| {
                     ast.stdout();
@@ -59,38 +49,42 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    // gather expressions from all the asts
-    let mut miner = MineExpressions::default();
-    for ast in &asts {
-        miner.mine_module(ast);
+    if !args.dont_learn {
+        // gather expressions from all the asts
+        let mut miner = MineExpressions::default();
+        for ast in &asts {
+            miner.mine_module(ast);
+        }
+
+        // perform instruction selection
+        let mut inst_sel = Instructions::default();
+
+        miner.into_iter().for_each(|expr| {
+            let rec_expr = egg::RecExpr::from(expr.clone());
+            inst_sel.add_expr(&rec_expr);
+        });
+
+        // run anti-unification to discover patterns
+        println!("Learning instructions...");
+        let instrs = inst_sel.anti_unify();
+
+        println!("== Learned Patterns ==");
+        instrs.instructions().for_each(|pat| {
+            println!(
+                "{}: {} => {}",
+                pat.name,
+                pat.searcher.get_pattern_ast().unwrap().pretty(80),
+                pat.applier.get_pattern_ast().unwrap().pretty(80)
+            );
+        });
+
+        println!("== Final Program ==");
+        let prog = instrs.apply();
+        println!("{}", prog.pretty(80));
+        println!("{}", InstructionSelect::from_recexpr(&prog));
+
+        return Ok(());
     }
-
-    // perform instruction selection
-    let mut inst_sel = Instructions::default();
-
-    miner.into_iter().for_each(|expr| {
-        let rec_expr = egg::RecExpr::from(expr.clone());
-        inst_sel.add_expr(&rec_expr);
-    });
-
-    // run anti-unification to discover patterns
-    println!("Learning instructions...");
-    let instrs = inst_sel.anti_unify();
-
-    println!("== Learned Patterns ==");
-    instrs.instructions().for_each(|pat| {
-        println!(
-            "{}: {} => {}",
-            pat.name,
-            pat.searcher.get_pattern_ast().unwrap().pretty(80),
-            pat.applier.get_pattern_ast().unwrap().pretty(80)
-        );
-    });
-
-    println!("== Final Program ==");
-    let prog = instrs.apply();
-    println!("{}", prog.pretty(80));
-    println!("{}", InstructionSelect::from_recexpr(&prog));
 
     Ok(())
 }

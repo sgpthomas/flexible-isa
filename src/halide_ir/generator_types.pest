@@ -1,0 +1,28 @@
+ident_syms = _{ "_" | "." | "-" | "$" }
+identifier = @{ ("_" | ASCII_ALPHA)+ ~ (ident_syms | ASCII_ALPHA | ASCII_DIGIT)* }
+char = { !"\"" ~ ANY }
+string_lit = ${ "\"" ~ char* ~ "\"" }
+num = @{ ASCII_DIGIT+ }
+
+line = {
+    SOI ~ gen_io ~ var_info ~ ";" ~ EOI
+}
+
+var_info = {
+    identifier ~ "{" ~ string_lit ~ ("," ~ num)* ~ "}"
+}
+
+gen_io = {
+    (input | output) ~ "<" ~ halide_type ~ ">"
+}
+input = { "Input" }
+output = { "Output" }
+
+halide_type = {
+    (buffer ~ "<" ~ identifier ~ ">")
+  | identifier
+}
+buffer = { "Buffer" }
+
+WHITESPACE = _{ " " | "\t" }
+COMMENT = _{ ("//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE) | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }

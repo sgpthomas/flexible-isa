@@ -10,6 +10,10 @@ pub struct Args {
     /// generate input / output types from halide generators
     #[argh(switch)]
     pub generator_types: bool,
+
+    /// don't learn new instructions
+    #[argh(switch)]
+    pub dont_learn: bool,
 }
 
 pub fn cli() -> Args {
