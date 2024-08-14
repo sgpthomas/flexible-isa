@@ -7,6 +7,20 @@ impl Visitor<HalideType, HalideType> for InsertCasts {
         data
     }
 
+    fn expr_stmt(
+        &mut self,
+        expr: ast::Expr<HalideType>,
+        data: HalideType,
+    ) -> ast::Stmt<HalideType> {
+        let expr = match expr {
+            ast::Expr::Cast(_, inner, _) => *inner,
+            ast::Expr::PtrCast(_, inner, _) => *inner,
+            x => x,
+        };
+
+        ast::Stmt::Expr(expr, data)
+    }
+
     fn make_expr(&mut self, expr: ast::Expr<HalideType>) -> ast::Expr<HalideType> {
         let typ = expr.data().clone();
 

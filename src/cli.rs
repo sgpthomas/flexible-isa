@@ -14,6 +14,10 @@ pub struct Args {
     /// don't learn new instructions
     #[argh(switch)]
     pub dont_learn: bool,
+
+    /// output halide ir
+    #[argh(switch)]
+    pub output_ir: bool,
 }
 
 pub fn cli() -> Args {

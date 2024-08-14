@@ -1,0 +1,122 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        4
+      ]
+    }
+  ],
+  [
+    {
+      "name": "stride_x"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "stride_y"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "filter_width"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "filter_height"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_max"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        4
+      ]
+    }
+  ]
+]

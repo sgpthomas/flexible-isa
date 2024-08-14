@@ -86,6 +86,10 @@ where
         head.for_each(|id| count(expr, &mut op_count, id));
         Self { op_count }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&Op, &usize)> {
+        self.op_count.iter()
+    }
 }
 
 impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {

@@ -1,0 +1,348 @@
+module name=camera_pipe, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+internal func camera_pipe_par_for_processed_s0_v1_v3_v4 (__user_context, processed.s0.v1.v3.v4, closure_arg) {
+let closure_prototype = (void *)make_struct(reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+let curve = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 0)
+let f26 = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 1)
+let input = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 2)
+let processed = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 3)
+let sharpen_strength_x32 = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 4)
+let input.min.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 5)
+let input.min.1.required.s = load_typed_struct_member((void *)closure_arg, closure_prototype, 6)
+let input.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 7)
+let processed.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 8)
+let processed.stride.2 = load_typed_struct_member((void *)closure_arg, closure_prototype, 9)
+let t2674 = load_typed_struct_member((void *)closure_arg, closure_prototype, 10)
+let t2678 = load_typed_struct_member((void *)closure_arg, closure_prototype, 11)
+let t2679 = load_typed_struct_member((void *)closure_arg, closure_prototype, 12)
+let t2680 = load_typed_struct_member((void *)closure_arg, closure_prototype, 13)
+let t2682 = load_typed_struct_member((void *)closure_arg, closure_prototype, 14)
+let t2687 = load_typed_struct_member((void *)closure_arg, closure_prototype, 15)
+let t2694 = load_typed_struct_member((void *)closure_arg, closure_prototype, 16)
+let t2695 = load_typed_struct_member((void *)closure_arg, closure_prototype, 17)
+let t2696 = load_typed_struct_member((void *)closure_arg, closure_prototype, 18)
+let t2697 = load_typed_struct_member((void *)closure_arg, closure_prototype, 19)
+let t2698 = load_typed_struct_member((void *)closure_arg, closure_prototype, 20)
+let t2714 = load_typed_struct_member((void *)closure_arg, closure_prototype, 21)
+let t2715 = load_typed_struct_member((void *)closure_arg, closure_prototype, 22)
+let t2716 = load_typed_struct_member((void *)closure_arg, closure_prototype, 23)
+let processed.s0.v1.v3.v3.base = min(processed.s0.v1.v3.v4*t2674, input.min.1.required.s)
+allocate f1[int16 * (t2716*64) * 4]
+allocate deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head[int32 * 1] in Stack
+deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head[0] = processed.s0.v1.v3.v3.base + -2
+allocate deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head_next[int32 * 1] in Stack
+deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head_next[0] = processed.s0.v1.v3.v3.base + -2
+allocate deinterleaved[int16 * (t2714*64) * 4 * 4]
+allocate f7[int16 * (t2715*64) * 4]
+allocate f13[int16 * (t2715*64) * 4]
+allocate f28[uint8 * (t2695 + 128) * 4 * 3]
+for (processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased, 0, t2674 + 4) {
+ produce f1 {
+  if (let t2814 = (processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base) in (((input.min.1 + -6) <= (t2814*2)) && (((t2814*2) + 12) <= t2678))) {
+   (uint16)prefetch(input, (((((processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base) + -4)*input.stride.1)*2) + t2679) + -110, t2680 + 12, 1, 6, input.stride.1)
+  }
+  let t2733 = processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base
+  let t2734 = t2733*2
+  let t2732 = ((t2734 + 1) % 4)*t2716
+  let t2730 = (t2733 % 2)*t2716
+  let t2726 = (t2733 + -4)*input.stride.1
+  let t2729 = input.stride.1*18
+  let t2727 = input.stride.1*16
+  let t2728 = input.stride.1*14
+  let t2731 = ((t2734 + -7)*input.stride.1) - t2682
+  for (f1.s0.v0.v0, 0, t2694) {
+   let t2538 = (((f1.s0.v0.v0*64) + t2726)*2) - t2682
+   let t2646 = t2538 + t2727
+   f1[ramp((f1.s0.v0.v0 + t2730)*128, 1, 128) aligned(128, 0)] = max(min(max(max(max(int16x128(input[ramp((t2538 + t2728) + 12, 1, 128)]), int16x128(input[ramp((t2538 + t2729) + 12, 1, 128)])), int16x128(input[ramp(t2646 + 14, 1, 128)])), int16x128(input[ramp(t2646 + 10, 1, 128)])), int16x128(input[ramp(t2646 + 12, 1, 128)])), x128((int16)0))
+   let t2541 = (f1.s0.v0.v0*128) + t2731
+   let t2647 = t2541 + t2727
+   f1[ramp(((f1.s0.v0.v0*2) + t2732)*64, 1, 128) aligned(64, 0)] = max(min(max(max(max(int16x128(input[ramp((t2541 + t2728) + 12, 1, 128)]), int16x128(input[ramp((t2541 + t2729) + 12, 1, 128)])), int16x128(input[ramp(t2647 + 14, 1, 128)])), int16x128(input[ramp(t2647 + 10, 1, 128)])), int16x128(input[ramp(t2647 + 12, 1, 128)])), x128((int16)0))
+  }
+  let t2544 = (((((processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base) + -4)*input.stride.1) + t2698)*2) - t2682
+  let t2648 = (input.stride.1*16) + t2544
+  f1[ramp((((((processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base) % 2)*t2716)*128) + t2680) + -120, 1, 128) aligned(8, 0)] = max(min(max(max(max(int16x128(input[ramp(((input.stride.1*14) + t2544) + -108, 1, 128)]), int16x128(input[ramp(((input.stride.1*18) + t2544) + -108, 1, 128)])), int16x128(input[ramp(t2648 + -106, 1, 128)])), int16x128(input[ramp(t2648 + -110, 1, 128)])), int16x128(input[ramp(t2648 + -108, 1, 128)])), x128((int16)0))
+  let t2547 = ((((processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base)*2) + -7)*input.stride.1) + t2687
+  let t2649 = (input.stride.1*16) + t2547
+  f1[ramp((((((((processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base)*2) + 1) % 4)*t2716)*64) + t2680) + -120, 1, 128) aligned(8, 0)] = max(min(max(max(max(int16x128(input[ramp(((input.stride.1*14) + t2547) + -108, 1, 128)]), int16x128(input[ramp(((input.stride.1*18) + t2547) + -108, 1, 128)])), int16x128(input[ramp(t2649 + -106, 1, 128)])), int16x128(input[ramp(t2649 + -110, 1, 128)])), int16x128(input[ramp(t2649 + -108, 1, 128)])), x128((int16)0))
+ }
+ produce deinterleaved {
+  consume f1 {
+   let t2059 = max(deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head_next[0], (processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base) + -2)
+   deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head[0] = t2059
+   deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head_next[0] = t2059
+   let t2735 = processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base
+   for (deinterleaved.s0.v0.v0, 0, t2697 + 1) {
+    deinterleaved[ramp(((((t2735 + 2) % 4)*t2714) + (deinterleaved.s0.v0.v0*2))*64, 1, 128) aligned(64, 0)] = slice_vectors(f1[ramp(((deinterleaved.s0.v0.v0*256) + ((((t2735 % 2)*t2716)*128) - t2696)) + 120, 1, 256) aligned(8, 0)], 0, 2, 128)
+    deinterleaved[ramp((((((t2735 + 2) % 4) + 4)*t2714) + (deinterleaved.s0.v0.v0*2))*64, 1, 128) aligned(64, 0)] = slice_vectors(f1[ramp(((deinterleaved.s0.v0.v0*256) + ((((t2735 % 2)*t2716)*128) - t2696)) + 120, 1, 256) aligned(8, 0)], 1, 2, 128)
+    deinterleaved[ramp((((((t2735 + 2) % 4) + 8)*t2714) + (deinterleaved.s0.v0.v0*2))*64, 1, 128) aligned(64, 0)] = slice_vectors(f1[ramp(((deinterleaved.s0.v0.v0*256) + ((((((t2735*2) + 1) % 4)*t2716)*64) - t2696)) + 120, 1, 256) aligned(8, 0)], 0, 2, 128)
+    deinterleaved[ramp((((((t2735 + 2) % 4) + 12)*t2714) + (deinterleaved.s0.v0.v0*2))*64, 1, 128) aligned(64, 0)] = slice_vectors(f1[ramp(((deinterleaved.s0.v0.v0*256) + ((((((t2735*2) + 1) % 4)*t2716)*64) - t2696)) + 120, 1, 256) aligned(8, 0)], 1, 2, 128)
+   }
+  }
+ }
+ if (1 <= processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased) {
+  consume deinterleaved {
+   produce f7 {
+    produce f13 {
+     let t2745 = processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base
+     let t2746 = (t2745 + 1) % 4
+     let t2747 = (t2745 + 2) % 4
+     let t2742 = t2715*t2747
+     let t2744 = t2715*t2746
+     let t2739 = t2714*t2747
+     let t2743 = t2714*t2746
+     let t2740 = (t2746 + 12)*t2714
+     let t2741 = t2714*12
+     for (f7.s0.v0.fused.v0, 0, t2697 + 1) {
+      let t2556 = (f7.s0.v0.fused.v0*2) + t2739
+      let t2557 = deinterleaved[ramp((t2556*64) + 1, 1, 128) aligned(64, 1)]
+      let t2558 = deinterleaved[ramp(t2556*64, 1, 128) aligned(64, 0)]
+      let t2559 = deinterleaved[ramp(((f7.s0.v0.fused.v0*2) + t2740)*64, 1, 128) aligned(64, 0)]
+      let t2560 = deinterleaved[ramp((t2556 + t2741)*64, 1, 128) aligned(64, 0)]
+      f7[ramp(((f7.s0.v0.fused.v0*2) + t2742)*64, 1, 128) aligned(64, 0)] = select((uint16x128)absd(t2557, t2558) < (uint16x128)absd(t2559, t2560), (int16x128)rounding_halving_add(t2557, t2558), (int16x128)rounding_halving_add(t2559, t2560))
+      let t2563 = (f7.s0.v0.fused.v0*2) + t2743
+      let t2565 = deinterleaved[ramp((t2563 + t2741)*64, 1, 128) aligned(64, 0)]
+      let t2566 = deinterleaved[ramp(((t2563 + t2741)*64) + 1, 1, 128) aligned(64, 1)]
+      let t2567 = deinterleaved[ramp((((f7.s0.v0.fused.v0*2) + t2739)*64) + 1, 1, 128) aligned(64, 1)]
+      let t2568 = deinterleaved[ramp((t2563*64) + 1, 1, 128) aligned(64, 1)]
+      f13[ramp(((f7.s0.v0.fused.v0*2) + t2744)*64, 1, 128) aligned(64, 0)] = select((uint16x128)absd(t2565, t2566) < (uint16x128)absd(t2567, t2568), (int16x128)rounding_halving_add(t2565, t2566), (int16x128)rounding_halving_add(t2567, t2568))
+     }
+    }
+   }
+   if (3 <= processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased) {
+    consume f13 {
+     consume f7 {
+      produce f28 {
+       let t2764 = t2694*512
+       let t2765 = processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base
+       let t2766 = t2765*2
+       let t2767 = t2695 + 128
+       let t2768 = ((t2766 + 1) % 4)*t2767
+       let t2769 = t2694*1024
+       let t2770 = ((t2766 + 2) % 4)*t2767
+       let t2771 = (t2765 + 1) % 4
+       let t2772 = t2765 % 4
+       let t2752 = (t2772 + 12)*t2714
+       let t2754 = (t2772 + 8)*t2714
+       let t2757 = (t2771 + 8)*t2714
+       let t2750 = (t2772 + 4)*t2714
+       let t2751 = (t2771 + 4)*t2714
+       let t2763 = t2769 + t2770
+       let t2762 = t2764 + t2770
+       let t2760 = t2768 + t2769
+       let t2759 = t2764 + t2768
+       for (f28.s0.v0.v0, 0, t2694 + 1) {
+        allocate output[int16 * 128 * 2 * 3]
+        produce output {
+         let t2784 = (t2715*t2771) + f28.s0.v0.v0
+         let t2785 = (t2715*t2772) + f28.s0.v0.v0
+         let t2783 = (f28.s0.v0.v0 + t2757)*64
+         let t2779 = (f28.s0.v0.v0 + t2754)*64
+         let t2777 = (f28.s0.v0.v0 + t2752)*64
+         let t2776 = (f28.s0.v0.v0 + t2751)*64
+         let t2775 = (f28.s0.v0.v0 + t2750)*64
+         let t2782 = ((t2714*t2771) + f28.s0.v0.v0)*64
+         let t2778 = (((t2772 + 12)*t2714) + f28.s0.v0.v0)*64
+         for<Hexagon> (output.s0.__outermost, 0, 1) {
+          let t2572.s = f7[ramp((t2785*64) + 1, 1, 64) aligned(64, 1)]
+          let t2575.s = f7[ramp((t2784*64) + 1, 1, 64) aligned(64, 1)]
+          let t2577 = deinterleaved[ramp(t2775 + 1, 1, 64) aligned(64, 1)]
+          let t2580 = deinterleaved[ramp(t2776 + 1, 1, 64) aligned(64, 1)]
+          let t2582 = deinterleaved[ramp(t2775 + 2, 1, 64) aligned(64, 2)]
+          let t2583 = deinterleaved[ramp(t2776 + 2, 1, 64) aligned(64, 2)]
+          let t2584 = f13[ramp((t2785*64) + 1, 1, 64) aligned(64, 1)]
+          output[ramp(0, 1, 128)] = interleave_vectors((deinterleaved[ramp(t2777 + 1, 1, 64) aligned(64, 1)] - (int16x64)rounding_halving_add(t2572.s, t2575.s)) + (int16x64)rounding_halving_add(t2577, t2580), select((uint16x64)absd(t2582, t2580) < (uint16x64)absd(t2577, t2583), (t2584 - (int16x64)rounding_halving_add(f7[ramp((t2785*64) + 2, 1, 64) aligned(64, 2)], t2575.s)) + (int16x64)rounding_halving_add(t2582, t2580), (t2584 - (int16x64)rounding_halving_add(t2572.s, f7[ramp((t2784*64) + 2, 1, 64) aligned(64, 2)])) + (int16x64)rounding_halving_add(t2577, t2583)))
+          output[ramp(256, 1, 128)] = interleave_vectors(deinterleaved[ramp(t2778 + 1, 1, 64) aligned(64, 1)], f13[ramp((t2785*64) + 1, 1, 64) aligned(64, 1)])
+          let t2589 = deinterleaved[ramp(t2779 + 2, 1, 64) aligned(64, 2)]
+          output[ramp(512, 1, 128)] = interleave_vectors((deinterleaved[ramp(t2777 + 1, 1, 64) aligned(64, 1)] - (int16x64)rounding_halving_add(f13[ramp(t2785*64, 1, 64) aligned(64, 0)], f13[ramp((t2785*64) + 1, 1, 64) aligned(64, 1)])) + (int16x64)rounding_halving_add(deinterleaved[ramp(t2779 + 1, 1, 64) aligned(64, 1)], t2589), t2589)
+          let t2592 = deinterleaved[ramp(t2776 + 1, 1, 64) aligned(64, 1)]
+          output[ramp(128, 1, 128)] = interleave_vectors(t2592, (deinterleaved[ramp(t2782 + 2, 1, 64) aligned(64, 2)] - (int16x64)rounding_halving_add(f7[ramp((t2784*64) + 2, 1, 64) aligned(64, 2)], f7[ramp((t2784*64) + 1, 1, 64) aligned(64, 1)])) + (int16x64)rounding_halving_add(t2592, deinterleaved[ramp(t2776 + 2, 1, 64) aligned(64, 2)]))
+          output[ramp(384, 1, 128)] = interleave_vectors(f7[ramp((t2784*64) + 1, 1, 64) aligned(64, 1)], deinterleaved[ramp(t2782 + 2, 1, 64) aligned(64, 2)])
+          let t2598 = deinterleaved[ramp(t2783 + 1, 1, 64) aligned(64, 1)]
+          let t2601 = deinterleaved[ramp(t2779 + 2, 1, 64) aligned(64, 2)]
+          let t2602 = deinterleaved[ramp(t2783 + 2, 1, 64) aligned(64, 2)]
+          let t2603 = deinterleaved[ramp(t2779 + 1, 1, 64) aligned(64, 1)]
+          let t2605 = f7[ramp((t2784*64) + 1, 1, 64) aligned(64, 1)]
+          let t2607.s = f13[ramp((t2785*64) + 1, 1, 64) aligned(64, 1)]
+          let t2609.s = f13[ramp((t2784*64) + 1, 1, 64) aligned(64, 1)]
+          output[ramp(640, 1, 128)] = interleave_vectors(select((uint16x64)absd(t2598, t2601) < (uint16x64)absd(t2602, t2603), (t2605 - (int16x64)rounding_halving_add(f13[ramp(t2784*64, 1, 64) aligned(64, 0)], t2607.s)) + (int16x64)rounding_halving_add(t2598, t2601), (t2605 - (int16x64)rounding_halving_add(t2609.s, f13[ramp(t2785*64, 1, 64) aligned(64, 0)])) + (int16x64)rounding_halving_add(t2602, t2603)), (deinterleaved[ramp(t2782 + 2, 1, 64) aligned(64, 2)] - (int16x64)rounding_halving_add(t2609.s, t2607.s)) + (int16x64)rounding_halving_add(t2602, t2601))
+         }
+        }
+        allocate f27[int16 * 128 * 2 * 3]
+        produce f27 {
+         consume output {
+          for (f27.s0.v1.rebased, 0, 2) {
+           f27[ramp(f27.s0.v1.rebased*128, 1, 128) aligned(128, 0)] = int16x128((int32x128)shift_right((int32x128)widening_mul(output[ramp(f27.s0.v1.rebased*128, 1, 128) aligned(128, 0)], x128(f26[0])) + ((int32x128)widening_mul(output[ramp((f27.s0.v1.rebased*128) + 256, 1, 128) aligned(128, 0)], x128(f26[1])) + (int32x128)widen_right_add((int32x128)widening_mul(output[ramp((f27.s0.v1.rebased*128) + 512, 1, 128) aligned(128, 0)], x128(f26[2])), x128(f26[3]))), x128((uint32)8)))
+           f27[ramp((f27.s0.v1.rebased*128) + 256, 1, 128) aligned(128, 0)] = int16x128((int32x128)shift_right((int32x128)widening_mul(output[ramp(f27.s0.v1.rebased*128, 1, 128) aligned(128, 0)], x128(f26[4])) + ((int32x128)widening_mul(output[ramp((f27.s0.v1.rebased*128) + 256, 1, 128) aligned(128, 0)], x128(f26[5])) + (int32x128)widen_right_add((int32x128)widening_mul(output[ramp((f27.s0.v1.rebased*128) + 512, 1, 128) aligned(128, 0)], x128(f26[6])), x128(f26[7]))), x128((uint32)8)))
+           f27[ramp((f27.s0.v1.rebased*128) + 512, 1, 128) aligned(128, 0)] = int16x128((int32x128)shift_right((int32x128)widening_mul(output[ramp(f27.s0.v1.rebased*128, 1, 128) aligned(128, 0)], x128(f26[8])) + ((int32x128)widening_mul(output[ramp((f27.s0.v1.rebased*128) + 256, 1, 128) aligned(128, 0)], x128(f26[9])) + (int32x128)widen_right_add((int32x128)widening_mul(output[ramp((f27.s0.v1.rebased*128) + 512, 1, 128) aligned(128, 0)], x128(f26[10])), x128(f26[11]))), x128((uint32)8)))
+          }
+         }
+        }
+        free output
+        consume f27 {
+         let t2611 = f27[ramp(0, 1, 128)]
+         let t2612 = curve[int32x128(max(min((int16x128)shift_right(t2611, x128((uint16)3)), x128((int16)127)), x128((int16)0)))]
+         f28[ramp((f28.s0.v0.v0*128) + t2768, 1, 128) aligned(128, 0)] = uint8x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((t2611 % x128((int16)8))), curve[int32x128(max(min((int16x128)widen_right_add((int16x128)shift_right(t2611, x128((uint16)3)), x128((int8)1)), x128((int16)127)), x128((int16)0)))] - t2612)) + int16x128((uint16x128)widening_shift_left(t2612, x128((uint8)3))), x128((uint16)3)))
+         let t2613 = f27[ramp(256, 1, 128)]
+         let t2614 = curve[int32x128(max(min((int16x128)shift_right(t2613, x128((uint16)3)), x128((int16)127)), x128((int16)0)))]
+         f28[ramp(((f28.s0.v0.v0*128) + t2759) + 512, 1, 128) aligned(128, 0)] = uint8x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((t2613 % x128((int16)8))), curve[int32x128(max(min((int16x128)widen_right_add((int16x128)shift_right(t2613, x128((uint16)3)), x128((int8)1)), x128((int16)127)), x128((int16)0)))] - t2614)) + int16x128((uint16x128)widening_shift_left(t2614, x128((uint8)3))), x128((uint16)3)))
+         let t2615 = f27[ramp(512, 1, 128)]
+         let t2616 = curve[int32x128(max(min((int16x128)shift_right(t2615, x128((uint16)3)), x128((int16)127)), x128((int16)0)))]
+         f28[ramp(((f28.s0.v0.v0*128) + t2760) + 1024, 1, 128) aligned(128, 0)] = uint8x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((t2615 % x128((int16)8))), curve[int32x128(max(min((int16x128)widen_right_add((int16x128)shift_right(t2615, x128((uint16)3)), x128((int8)1)), x128((int16)127)), x128((int16)0)))] - t2616)) + int16x128((uint16x128)widening_shift_left(t2616, x128((uint8)3))), x128((uint16)3)))
+         let t2617 = f27[ramp(128, 1, 128)]
+         let t2618 = curve[int32x128(max(min((int16x128)shift_right(t2617, x128((uint16)3)), x128((int16)127)), x128((int16)0)))]
+         f28[ramp((f28.s0.v0.v0*128) + t2770, 1, 128) aligned(128, 0)] = uint8x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((t2617 % x128((int16)8))), curve[int32x128(max(min((int16x128)widen_right_add((int16x128)shift_right(t2617, x128((uint16)3)), x128((int8)1)), x128((int16)127)), x128((int16)0)))] - t2618)) + int16x128((uint16x128)widening_shift_left(t2618, x128((uint8)3))), x128((uint16)3)))
+         let t2619 = f27[ramp(384, 1, 128)]
+         let t2620 = curve[int32x128(max(min((int16x128)shift_right(t2619, x128((uint16)3)), x128((int16)127)), x128((int16)0)))]
+         f28[ramp(((f28.s0.v0.v0*128) + t2762) + 512, 1, 128) aligned(128, 0)] = uint8x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((t2619 % x128((int16)8))), curve[int32x128(max(min((int16x128)widen_right_add((int16x128)shift_right(t2619, x128((uint16)3)), x128((int8)1)), x128((int16)127)), x128((int16)0)))] - t2620)) + int16x128((uint16x128)widening_shift_left(t2620, x128((uint8)3))), x128((uint16)3)))
+         let t2621 = f27[ramp(640, 1, 128)]
+         let t2622 = curve[int32x128(max(min((int16x128)shift_right(t2621, x128((uint16)3)), x128((int16)127)), x128((int16)0)))]
+         f28[ramp(((f28.s0.v0.v0*128) + t2763) + 1024, 1, 128) aligned(128, 0)] = uint8x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((t2621 % x128((int16)8))), curve[int32x128(max(min((int16x128)widen_right_add((int16x128)shift_right(t2621, x128((uint16)3)), x128((int8)1)), x128((int16)127)), x128((int16)0)))] - t2622)) + int16x128((uint16x128)widening_shift_left(t2622, x128((uint8)3))), x128((uint16)3)))
+         free f27
+        }
+       }
+      }
+      if (4 <= processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased) {
+       consume f28 {
+        let t2786 = (processed.s0.v1.v3.v3.$n.$n.$n.$n.rebased + processed.s0.v1.v3.v3.base)*2
+        for (processed.s0.v1.v5, 0, 2) {
+         let t2802 = processed.s0.v1.v5 + t2786
+         let t2803 = (t2802 + -8)*processed.stride.1
+         let t2804 = t2694*512
+         let t2805 = t2695 + 128
+         let t2806 = ((t2802 + 1) % 4)*t2805
+         let t2807 = t2694*1024
+         let t2808 = ((t2802 + 3) % 4)*t2805
+         let t2809 = (t2802 % 4)*t2805
+         let t2798 = t2807 + t2809
+         let t2794 = t2804 + t2809
+         let t2799 = t2807 + t2808
+         let t2795 = t2804 + t2808
+         let t2800 = t2806 + t2807
+         let t2796 = t2804 + t2806
+         let t2801 = (processed.stride.2*2) + t2803
+         let t2797 = processed.stride.2 + t2803
+         for (processed.s0.v0.v0, 0, t2694) {
+          let t2624 = (processed.s0.v0.v0*128) + t2809
+          let t2625 = f28[ramp(t2624 + 1, 1, 128) aligned(128, 1)]
+          let t2627 = (processed.s0.v0.v0*128) + t2808
+          let t2628 = (processed.s0.v0.v0*128) + t2806
+          processed[ramp((processed.s0.v0.v0*128) + t2803, 1, 128)] = (uint8x128)saturating_cast(int16x128((uint16x128)widen_right_add(uint16x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((int16x128)widening_sub(t2625, (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add((uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2627, 1, 128) aligned(128, 0)], f28[ramp(t2628, 1, 128) aligned(128, 0)]), f28[ramp(t2624, 1, 128) aligned(128, 0)]), (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2627 + 2, 1, 128) aligned(128, 2)], f28[ramp(t2628 + 2, 1, 128) aligned(128, 2)]), f28[ramp(t2624 + 2, 1, 128) aligned(128, 2)])), (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2627 + 1, 1, 128) aligned(128, 1)], f28[ramp(t2628 + 1, 1, 128) aligned(128, 1)]), t2625)))), x128(sharpen_strength_x32[0]))), x128((uint16)5))), t2625)))
+          let t2630 = (processed.s0.v0.v0*128) + t2794
+          let t2631 = f28[ramp(t2630 + 513, 1, 128) aligned(128, 1)]
+          let t2633 = (processed.s0.v0.v0*128) + t2795
+          let t2634 = (processed.s0.v0.v0*128) + t2796
+          processed[ramp((processed.s0.v0.v0*128) + t2797, 1, 128)] = (uint8x128)saturating_cast(int16x128((uint16x128)widen_right_add(uint16x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((int16x128)widening_sub(t2631, (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add((uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2633 + 512, 1, 128) aligned(128, 0)], f28[ramp(t2634 + 512, 1, 128) aligned(128, 0)]), f28[ramp(t2630 + 512, 1, 128) aligned(128, 0)]), (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2633 + 514, 1, 128) aligned(128, 2)], f28[ramp(t2634 + 514, 1, 128) aligned(128, 2)]), f28[ramp(t2630 + 514, 1, 128) aligned(128, 2)])), (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2633 + 513, 1, 128) aligned(128, 1)], f28[ramp(t2634 + 513, 1, 128) aligned(128, 1)]), t2631)))), x128(sharpen_strength_x32[0]))), x128((uint16)5))), t2631)))
+          let t2636 = (processed.s0.v0.v0*128) + t2798
+          let t2637 = f28[ramp(t2636 + 1025, 1, 128) aligned(128, 1)]
+          let t2639 = (processed.s0.v0.v0*128) + t2799
+          let t2640 = (processed.s0.v0.v0*128) + t2800
+          processed[ramp((processed.s0.v0.v0*128) + t2801, 1, 128)] = (uint8x128)saturating_cast(int16x128((uint16x128)widen_right_add(uint16x128((int16x128)shift_right(int16x128((uint16x128)widen_right_mul(uint16x128((int16x128)widening_sub(t2637, (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add((uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2639 + 1024, 1, 128) aligned(128, 0)], f28[ramp(t2640 + 1024, 1, 128) aligned(128, 0)]), f28[ramp(t2636 + 1024, 1, 128) aligned(128, 0)]), (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2639 + 1026, 1, 128) aligned(128, 2)], f28[ramp(t2640 + 1026, 1, 128) aligned(128, 2)]), f28[ramp(t2636 + 1026, 1, 128) aligned(128, 2)])), (uint8x128)rounding_halving_add((uint8x128)rounding_halving_add(f28[ramp(t2639 + 1025, 1, 128) aligned(128, 1)], f28[ramp(t2640 + 1025, 1, 128) aligned(128, 1)]), t2637)))), x128(sharpen_strength_x32[0]))), x128((uint16)5))), t2637)))
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
+free f1
+free deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head
+free deinterleaved.processed.s0.v1.v3.v3.$n.$n.$n.$n_4.head_next
+free deinterleaved
+free f7
+free f13
+free f28
+}
+
+
+external_plus_metadata func camera_pipe (input, matrix_3200, matrix_7000, color_temp, gamma, contrast, sharpen_strength, blackLevel, whiteLevel, processed) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let matrix_3200 = (void *)_halide_buffer_get_host((struct halide_buffer_t *)matrix_3200.buffer)
+let matrix_3200.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)matrix_3200.buffer, 0)
+let matrix_3200.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)matrix_3200.buffer, 1)
+let matrix_3200.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)matrix_3200.buffer, 1)
+let matrix_7000 = (void *)_halide_buffer_get_host((struct halide_buffer_t *)matrix_7000.buffer)
+let matrix_7000.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)matrix_7000.buffer, 0)
+let matrix_7000.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)matrix_7000.buffer, 1)
+let matrix_7000.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)matrix_7000.buffer, 1)
+let processed = (void *)_halide_buffer_get_host((struct halide_buffer_t *)processed.buffer)
+let processed.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)processed.buffer, 0)
+let processed.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)processed.buffer, 1)
+let processed.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)processed.buffer, 1)
+let processed.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)processed.buffer, 2)
+let processed.s0.v1.max_1.s = (processed.extent.1/((processed.extent.1/8)*2))*(processed.extent.1/8)
+let input.min.1.required.s = processed.s0.v1.max_1.s - (processed.extent.1/8)
+allocate curve[uint8 * 128]
+produce curve {
+ let t2664 = blackLevel/8
+ let t2665 = whiteLevel/8
+ let t2662 = (float32)pow_f32(2.000000f, (float32)contrast*0.010000f)
+ let t2661 = 1.000000f/(float32)gamma
+ let t2659 = 1.000000f/float32((t2665 - t2664))
+ for (curve.s0.v0, 0, 128) {
+  let t2534 = (float32)pow_f32(max(min(t2659*float32((curve.s0.v0 - t2664)), 1.000000f), 0.000000f), t2661)
+  curve[curve.s0.v0] = select(t2664 < curve.s0.v0, select(t2665 < curve.s0.v0, (uint8)255, uint8((max(min(select(0.500000f < t2534, 1.000000f - ((1.000000f - t2534)*((((1.000000f - t2534)*((t2662*2.000000f) + -2.000000f)) - t2662) + 2.000000f)), (((((t2662*2.000000f) + -2.000000f)*t2534) - t2662) + 2.000000f)*t2534)*255.000000f, 254.500000f), -0.500000f) + 0.500000f))), (uint8)0)
+ }
+}
+allocate f26[int16 * 12]
+produce f26 {
+ let t2670 = 1.000000f/(float32)color_temp
+ let t2667 = (t2670*-5894.736816f) + 1.842105f
+ let t2669 = (t2670*5894.736816f) + -0.842105f
+ let t2668 = (matrix_7000.min.1*matrix_7000.stride.1) + matrix_7000.min.0
+ let t2666 = (matrix_3200.min.1*matrix_3200.stride.1) + matrix_3200.min.0
+ for (f26.s0.v1, 0, 3) {
+  let t2673 = f26.s0.v1*4
+  let t2672 = (f26.s0.v1*matrix_7000.stride.1) - t2668
+  let t2671 = (f26.s0.v1*matrix_3200.stride.1) - t2666
+  for (f26.s0.v0, 0, 4) {
+   f26[f26.s0.v0 + t2673] = int16((((matrix_3200[f26.s0.v0 + t2671]*t2667) + (matrix_7000[f26.s0.v0 + t2672]*t2669))*256.000000f))
+  }
+ }
+}
+allocate sharpen_strength_x32[uint8 * 1]
+produce sharpen_strength_x32 {
+ sharpen_strength_x32[0] = (uint8)saturating_cast((float32)sharpen_strength*32.000000f)
+}
+let processed.s0.v1.v3.v4.loop_extent.s = (processed.s0.v1.max_1.s + -1)/(processed.extent.1/8)
+produce processed {
+ consume sharpen_strength_x32 {
+  consume f26 {
+   consume curve {
+    let t2693 = input.min.1*input.stride.1
+    let t2694 = processed.extent.0/128
+    let t2695 = t2694*128
+    let t2696 = min(t2695, 120)
+    let t2697 = processed.extent.0/256
+    let t2698 = t2694*64
+    let t2676 = max((t2697*128) + 62, t2698)
+    let t2680 = max(t2695, 120)
+    let t2674 = processed.extent.1/8
+    let t2675 = max((t2697*256) + 248, t2695) - t2696
+    let t2687 = (t2695 - t2693) - input.min.0
+    let t2679 = (((14 - input.min.1)*input.stride.1) + t2696) - input.min.0
+    let t2678 = input.extent.1 + input.min.1
+    let t2682 = input.min.0 + t2693
+    for<Hexagon> (processed.s0.__outermost, 0, 1) {
+     let t2714 = (t2676 + 130)/64
+     let t2715 = (t2676 + 129)/64
+     let t2716 = (t2675 + 191)/64
+     let parallel_closure = (void *)make_struct(curve, f26, input, processed, sharpen_strength_x32, input.min.1, input.min.1.required.s, input.stride.1, processed.stride.1, processed.stride.2, t2674, t2678, t2679, t2680, t2682, t2687, t2694, t2695, t2696, t2697, t2698, t2714, t2715, t2716)
+     let closure_result = halide_do_par_for((halide_task_t)::camera_pipe_par_for_processed_s0_v1_v3_v4, 0, processed.s0.v1.v3.v4.loop_extent.s + 1, (uint8_t *)(parallel_closure))
+     assert(closure_result == 0, closure_result)
+    }
+   }
+  }
+ }
+}
+free curve
+free f26
+free sharpen_strength_x32
+}
+
+

@@ -1,0 +1,152 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        4
+      ]
+    }
+  ],
+  [
+    {
+      "name": "c_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "c_extent"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "x_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "x_extent"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "y_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "y_extent"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "b_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "b_extent"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        4
+      ]
+    }
+  ]
+]

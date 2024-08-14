@@ -1,0 +1,275 @@
+module name=median3x3, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+internal func median3x3_par_for_output_s0_y_y_v1 (__user_context, output.s0.y.y.v1, closure_arg) {
+let closure_prototype = (void *)make_struct(reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (uint1)0, (uint1)0)
+let input = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 0)
+let output = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 1)
+let input.extent.0 = load_typed_struct_member((void *)closure_arg, closure_prototype, 2)
+let input.extent.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 3)
+let input.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 4)
+let output.extent.0 = load_typed_struct_member((void *)closure_arg, closure_prototype, 5)
+let output.extent.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 6)
+let output.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 7)
+let t1330 = load_typed_struct_member((void *)closure_arg, closure_prototype, 8)
+let t1332 = load_typed_struct_member((void *)closure_arg, closure_prototype, 9)
+let t1333 = load_typed_struct_member((void *)closure_arg, closure_prototype, 10)
+let t1334 = load_typed_struct_member((void *)closure_arg, closure_prototype, 11)
+let t1337 = load_typed_struct_member((void *)closure_arg, closure_prototype, 12)
+let t1340 = load_typed_struct_member((void *)closure_arg, closure_prototype, 13)
+let t1341 = load_typed_struct_member((void *)closure_arg, closure_prototype, 14)
+let t1342 = load_typed_struct_member((void *)closure_arg, closure_prototype, 15)
+let t1343 = load_typed_struct_member((void *)closure_arg, closure_prototype, 16)
+let t1346 = load_typed_struct_member((void *)closure_arg, closure_prototype, 17)
+let t1348 = load_typed_struct_member((void *)closure_arg, closure_prototype, 18)
+let t1349 = load_typed_struct_member((void *)closure_arg, closure_prototype, 19)
+let t1350 = load_typed_struct_member((void *)closure_arg, closure_prototype, 20)
+let t1356 = load_typed_struct_member((void *)closure_arg, closure_prototype, 21)
+let t1357 = load_typed_struct_member((void *)closure_arg, closure_prototype, 22)
+let t1358 = load_typed_struct_member((void *)closure_arg, closure_prototype, 23)
+let t1331 = (uint1)load_typed_struct_member((void *)closure_arg, closure_prototype, 24)
+let t1344 = (uint1)load_typed_struct_member((void *)closure_arg, closure_prototype, 25)
+let output.s0.y.y.y.base = min(output.s0.y.y.v1*128, t1330 + -128)
+let t1359 = min(output.s0.y.y.v1*128, t1330 + -128)
+for (output.s0.y.y.y, 0, 128) {
+ let output.s0.y.min_1 = min((output.s0.y.y.y + output.s0.y.y.y.base)*4, output.extent.1 + -4)
+ let output.s0.y.max_1.s = min(((output.s0.y.y.y + output.s0.y.y.y.base)*4) + 4, output.extent.1)
+ let bounded_input.s0.y.max_1.s = min(output.s0.y.max_1.s + 1, input.extent.1)
+ let bounded_input.s0.y.min_1 = min(max(min(input.extent.1 + -1, output.s0.y.min_1), 0), max(min(input.extent.1, output.s0.y.min_1), 1) + -1)
+ if ((max(bounded_input.s0.y.max_1.s, 1) <= input.extent.1) && t1331) {
+  let t1390 = (output.s0.y.y.y + t1359) in (uint8)prefetch(input, bounded_input.s0.y.min_1*input.stride.1, t1332, 1, max(min(min((t1390*4) + 4, output.extent.1) + 1, input.extent.1), 1) - min(max(min(t1390*4, t1333 + -4), 0), max(min(t1390*4, t1334), 1) + -1), input.stride.1)
+ }
+ let output.s0.y.yi.base = min((output.s0.y.y.y + output.s0.y.y.y.base)*4, output.extent.1 + -4)
+ let bounded_input.y.extent_realized = let t1391 = (output.s0.y.y.y + t1359) in (max(min(min((t1391*4) + 4, output.extent.1) + 1, input.extent.1), 1) - min(max(min(t1391*4, t1333 + -4), 0), max(min(t1391*4, t1334), 1) + -1))
+ allocate bounded_input[uint8 * t1350 * bounded_input.y.extent_realized]
+ produce bounded_input {
+  let t1365 = (output.s0.y.y.y + t1359)*4
+  let t1362 = max(min(min(t1365 + 4, output.extent.1) + 1, input.extent.1), 1) - min(max(min(t1333 + -4, t1365), 0), max(min(t1334, t1365), 1) + -1)
+  for (bounded_input.s0.y.rebased, 0, t1362) {
+   let t1366 = (bounded_input.s0.y.min_1 + bounded_input.s0.y.rebased)*input.stride.1
+   let t1367 = ((bounded_input.s0.y.rebased*t1349)*128) - t1346
+   for (bounded_input.s0.x.x, 0, t1337 + 2) {
+    let bounded_input.s0.x.v0.base.s = (bounded_input.s0.x.x*128) + t1346
+    bounded_input[ramp(bounded_input.s0.x.v0.base.s + t1367, 1, 128)] = input[max(min(ramp(bounded_input.s0.x.v0.base.s + -129, 1, 128), x128(input.extent.0 + -1)), x128(0)) + x128(t1366)]
+   }
+   let t1369 = (bounded_input.s0.y.min_1 + bounded_input.s0.y.rebased)*input.stride.1
+   let t1370 = ((bounded_input.s0.y.rebased*t1349)*128) - t1346
+   let t1368 = t1358 - t1337
+   for (bounded_input.s0.x.x.rebased, 0, t1368 + -2) {
+    let bounded_input.s0.x.v0.base.s.s = (bounded_input.s0.x.x.rebased*128) - t1340
+    bounded_input[ramp((bounded_input.s0.x.v0.base.s.s + t1370) + 256, 1, 128)] = input[ramp((bounded_input.s0.x.v0.base.s.s + t1369) + 127, 1, 128)]
+   }
+   let t1372 = (bounded_input.s0.y.min_1 + bounded_input.s0.y.rebased)*input.stride.1
+   let t1371 = t1349 - t1358
+   let t1373 = ((bounded_input.s0.y.rebased*t1349)*128) - t1346
+   for (bounded_input.s0.x.x.rebased, 0, t1371) {
+    let bounded_input.s0.x.v0.base.s = ((bounded_input.s0.x.x.rebased + t1358)*128) + t1346
+    bounded_input[ramp(bounded_input.s0.x.v0.base.s + t1373, 1, 128)] = input[max(min(ramp(bounded_input.s0.x.v0.base.s + -129, 1, 128), x128(input.extent.0 + -1)), x128(0)) + x128(t1372)]
+   }
+  }
+ }
+ consume bounded_input {
+  let t1384 = (output.s0.y.y.y + t1359)*4
+  let t1385 = min(t1334, t1384)
+  let t1386 = min(output.extent.1 + -4, t1384)
+  let t1387 = min(t1333 + -4, t1384)
+  let t1381 = max(min(t1384 + 4, t1343), 1)
+  let t1376 = max(min(t1386 + 2, input.extent.1), 1)
+  let t1379 = min(max(t1387, 0), max(t1385, 1) + -1)
+  let t1383 = (output.s0.y.yi.base + 3)*output.stride.1
+  let t1382 = (output.s0.y.yi.base + 2)*output.stride.1
+  let t1380 = (output.s0.y.yi.base + 1)*output.stride.1
+  let t1377 = output.s0.y.yi.base*output.stride.1
+  for (output.s0.x.x, 0, t1341) {
+   let t1140.s = (max(max(t1387, 0) - max(t1385, 1), -1) + 1)*t1342
+   let t1141 = bounded_input[ramp((output.s0.x.x + t1140.s)*128, 1, 128) aligned(128, 0)]
+   let t1142 = (((t1376 - min(max(t1387, 0), max(t1385, 1) + -1)) + -1)*t1342) + output.s0.x.x
+   let t1143 = bounded_input[ramp(t1142*128, 1, 128) aligned(128, 0)]
+   let t1144 = ((max(max(t1385, 1) - max(t1387, 0), 1) + -1)*t1342) + output.s0.x.x
+   let t1145 = bounded_input[ramp(t1144*128, 1, 128) aligned(128, 0)]
+   let t1146 = bounded_input[ramp(((output.s0.x.x + t1140.s)*128) + 1, 1, 128) aligned(128, 1)]
+   let t1147 = bounded_input[ramp((t1142*128) + 1, 1, 128) aligned(128, 1)]
+   let t1148 = bounded_input[ramp((t1144*128) + 1, 1, 128) aligned(128, 1)]
+   let t1149 = bounded_input[ramp(((output.s0.x.x + t1140.s)*128) + 2, 1, 128) aligned(128, 2)]
+   let t1150 = bounded_input[ramp((t1142*128) + 2, 1, 128) aligned(128, 2)]
+   let t1151 = bounded_input[ramp((t1144*128) + 2, 1, 128) aligned(128, 2)]
+   let t1152 = min(max(max(t1141, t1143), t1145), min(max(max(t1146, t1147), t1148), max(max(t1149, t1150), t1151)))
+   let t1153 = max(max(min(min(t1146, t1147), t1148), min(min(t1149, t1150), t1151)), min(min(t1141, t1143), t1145))
+   let t1154 = max(min(max(t1141, t1145), t1143), min(t1141, t1145))
+   let t1155 = max(min(max(t1146, t1148), t1147), min(t1146, t1148))
+   output[ramp((output.s0.x.x*128) + t1377, 1, 128) aligned(128, 0)] = max(min(max(t1152, t1153), max(min(max(t1154, t1155), max(min(max(t1149, t1151), t1150), min(t1149, t1151))), min(t1154, t1155))), min(t1152, t1153))
+   let t1159.s = ((max(min(t1386 + 2, input.extent.1), 1) - t1379) + -1)*t1342
+   let t1160 = bounded_input[ramp((output.s0.x.x + t1159.s)*128, 1, 128) aligned(128, 0)]
+   let t1161 = (((max(min(t1386 + 3, input.extent.1), 1) - t1379) + -1)*t1342) + output.s0.x.x
+   let t1162 = bounded_input[ramp(t1161*128, 1, 128) aligned(128, 0)]
+   let t1163 = (((max(min(t1386 + 1, input.extent.1), 1) - t1379) + -1)*t1342) + output.s0.x.x
+   let t1164 = bounded_input[ramp(t1163*128, 1, 128) aligned(128, 0)]
+   let t1165 = bounded_input[ramp(((output.s0.x.x + t1159.s)*128) + 1, 1, 128) aligned(128, 1)]
+   let t1166 = bounded_input[ramp((t1161*128) + 1, 1, 128) aligned(128, 1)]
+   let t1167 = bounded_input[ramp((t1163*128) + 1, 1, 128) aligned(128, 1)]
+   let t1168 = bounded_input[ramp(((output.s0.x.x + t1159.s)*128) + 2, 1, 128) aligned(128, 2)]
+   let t1169 = bounded_input[ramp((t1161*128) + 2, 1, 128) aligned(128, 2)]
+   let t1170 = bounded_input[ramp((t1163*128) + 2, 1, 128) aligned(128, 2)]
+   let t1171 = min(max(max(t1160, t1162), t1164), min(max(max(t1165, t1166), t1167), max(max(t1168, t1169), t1170)))
+   let t1172 = max(max(min(min(t1165, t1166), t1167), min(min(t1168, t1169), t1170)), min(min(t1160, t1162), t1164))
+   let t1173 = max(min(max(t1160, t1164), t1162), min(t1160, t1164))
+   let t1174 = max(min(max(t1165, t1167), t1166), min(t1165, t1167))
+   output[ramp((output.s0.x.x*128) + t1380, 1, 128) aligned(128, 0)] = max(min(max(t1171, t1172), max(min(max(t1173, t1174), max(min(max(t1168, t1170), t1169), min(t1168, t1170))), min(t1173, t1174))), min(t1171, t1172))
+   let t1178.s = ((max(min(t1386 + 3, input.extent.1), 1) - t1379) + -1)*t1342
+   let t1179 = bounded_input[ramp((output.s0.x.x + t1178.s)*128, 1, 128) aligned(128, 0)]
+   let t1180 = (((t1381 - t1379) + -1)*t1342) + output.s0.x.x
+   let t1181 = bounded_input[ramp(t1180*128, 1, 128) aligned(128, 0)]
+   let t1182 = (((max(min(t1386 + 2, input.extent.1), 1) - t1379) + -1)*t1342) + output.s0.x.x
+   let t1183 = bounded_input[ramp(t1182*128, 1, 128) aligned(128, 0)]
+   let t1184 = bounded_input[ramp(((output.s0.x.x + t1178.s)*128) + 1, 1, 128) aligned(128, 1)]
+   let t1185 = bounded_input[ramp((t1180*128) + 1, 1, 128) aligned(128, 1)]
+   let t1186 = bounded_input[ramp((t1182*128) + 1, 1, 128) aligned(128, 1)]
+   let t1187 = bounded_input[ramp(((output.s0.x.x + t1178.s)*128) + 2, 1, 128) aligned(128, 2)]
+   let t1188 = bounded_input[ramp((t1180*128) + 2, 1, 128) aligned(128, 2)]
+   let t1189 = bounded_input[ramp((t1182*128) + 2, 1, 128) aligned(128, 2)]
+   let t1190 = min(max(max(t1179, t1181), t1183), min(max(max(t1184, t1185), t1186), max(max(t1187, t1188), t1189)))
+   let t1191 = max(max(min(min(t1184, t1185), t1186), min(min(t1187, t1188), t1189)), min(min(t1179, t1181), t1183))
+   let t1192 = max(min(max(t1179, t1183), t1181), min(t1179, t1183))
+   let t1193 = max(min(max(t1184, t1186), t1185), min(t1184, t1186))
+   output[ramp((output.s0.x.x*128) + t1382, 1, 128) aligned(128, 0)] = max(min(max(t1190, t1191), max(min(max(t1192, t1193), max(min(max(t1187, t1189), t1188), min(t1187, t1189))), min(t1192, t1193))), min(t1190, t1191))
+   let t1196.s = ((t1381 - t1379) + -1)*t1342
+   let t1197 = bounded_input[ramp((output.s0.x.x + t1196.s)*128, 1, 128) aligned(128, 0)]
+   let t1199 = (((max(min(t1386 + 5, input.extent.1), 1) - t1379) + -1)*t1342) + output.s0.x.x
+   let t1200 = bounded_input[ramp(t1199*128, 1, 128) aligned(128, 0)]
+   let t1201 = (((max(min(t1386 + 3, input.extent.1), 1) - t1379) + -1)*t1342) + output.s0.x.x
+   let t1202 = bounded_input[ramp(t1201*128, 1, 128) aligned(128, 0)]
+   let t1203 = bounded_input[ramp(((output.s0.x.x + t1196.s)*128) + 1, 1, 128) aligned(128, 1)]
+   let t1204 = bounded_input[ramp((t1199*128) + 1, 1, 128) aligned(128, 1)]
+   let t1205 = bounded_input[ramp((t1201*128) + 1, 1, 128) aligned(128, 1)]
+   let t1206 = bounded_input[ramp(((output.s0.x.x + t1196.s)*128) + 2, 1, 128) aligned(128, 2)]
+   let t1207 = bounded_input[ramp((t1199*128) + 2, 1, 128) aligned(128, 2)]
+   let t1208 = bounded_input[ramp((t1201*128) + 2, 1, 128) aligned(128, 2)]
+   let t1209 = min(max(max(t1197, t1200), t1202), min(max(max(t1203, t1204), t1205), max(max(t1206, t1207), t1208)))
+   let t1210 = max(max(min(min(t1203, t1204), t1205), min(min(t1206, t1207), t1208)), min(min(t1197, t1200), t1202))
+   let t1211 = max(min(max(t1197, t1202), t1200), min(t1197, t1202))
+   let t1212 = max(min(max(t1203, t1205), t1204), min(t1203, t1205))
+   output[ramp((output.s0.x.x*128) + t1383, 1, 128) aligned(128, 0)] = max(min(max(t1209, t1210), max(min(max(t1211, t1212), max(min(max(t1206, t1208), t1207), min(t1206, t1208))), min(t1211, t1212))), min(t1209, t1210))
+  }
+  if (t1344) {
+   let t1215.s = min((output.s0.y.y.y + t1359)*4, t1333 + -4)
+   let t1216.s = min((output.s0.y.y.y + t1359)*4, t1334)
+   let t1217 = (((max(max(t1215.s, 0) - max(t1216.s, 1), -1) + 1)*t1357)*128) + t1348
+   let t1218 = bounded_input[ramp(t1217 + -128, 1, 128)]
+   let t1219 = (((max(min(min((output.s0.y.y.y + t1359)*4, output.extent.1 + -4) + 2, input.extent.1), 1) - min(max(t1215.s, 0), max(t1216.s, 1) + -1))*t1357)*128) + t1356
+   let t1220 = bounded_input[ramp(t1219 + -128, 1, 128)]
+   let t1221 = ((max(max(t1216.s, 1) - max(t1215.s, 0), 1)*t1357)*128) + t1356
+   let t1222 = bounded_input[ramp(t1221 + -128, 1, 128)]
+   let t1223 = bounded_input[ramp(t1217 + -127, 1, 128)]
+   let t1224 = bounded_input[ramp(t1219 + -127, 1, 128)]
+   let t1225 = bounded_input[ramp(t1221 + -127, 1, 128)]
+   let t1226 = bounded_input[ramp(t1217 + -126, 1, 128)]
+   let t1227 = bounded_input[ramp(t1219 + -126, 1, 128)]
+   let t1228 = bounded_input[ramp(t1221 + -126, 1, 128)]
+   let t1229 = min(max(max(t1218, t1220), t1222), min(max(max(t1223, t1224), t1225), max(max(t1226, t1227), t1228)))
+   let t1230 = max(max(min(min(t1223, t1224), t1225), min(min(t1226, t1227), t1228)), min(min(t1218, t1220), t1222))
+   let t1231 = max(min(max(t1218, t1222), t1220), min(t1218, t1222))
+   let t1232 = max(min(max(t1223, t1225), t1224), min(t1223, t1225))
+   output[ramp(((output.s0.y.yi.base*output.stride.1) + output.extent.0) + -128, 1, 128)] = max(min(max(t1229, t1230), max(min(max(t1231, t1232), max(min(max(t1226, t1228), t1227), min(t1226, t1228))), min(t1231, t1232))), min(t1229, t1230))
+   let t1235 = min((output.s0.y.y.y + t1359)*4, output.extent.1 + -4)
+   let t1236 = let t1392 = (output.s0.y.y.y + t1359) in min(max(min(t1392*4, t1333 + -4), 0), max(min(t1392*4, t1334), 1) + -1)
+   let t1237 = ((((max(min(t1235 + 2, input.extent.1), 1) - t1236) + -1)*t1357)*128) + t1348
+   let t1238 = bounded_input[ramp(t1237 + -128, 1, 128)]
+   let t1239 = (((max(min(t1235 + 3, input.extent.1), 1) - t1236)*t1357)*128) + t1356
+   let t1240 = bounded_input[ramp(t1239 + -128, 1, 128)]
+   let t1241 = (((max(min(t1235 + 1, input.extent.1), 1) - t1236)*t1357)*128) + t1356
+   let t1242 = bounded_input[ramp(t1241 + -128, 1, 128)]
+   let t1243 = bounded_input[ramp(t1237 + -127, 1, 128)]
+   let t1244 = bounded_input[ramp(t1239 + -127, 1, 128)]
+   let t1245 = bounded_input[ramp(t1241 + -127, 1, 128)]
+   let t1246 = bounded_input[ramp(t1237 + -126, 1, 128)]
+   let t1247 = bounded_input[ramp(t1239 + -126, 1, 128)]
+   let t1248 = bounded_input[ramp(t1241 + -126, 1, 128)]
+   let t1249 = min(max(max(t1238, t1240), t1242), min(max(max(t1243, t1244), t1245), max(max(t1246, t1247), t1248)))
+   let t1250 = max(max(min(min(t1243, t1244), t1245), min(min(t1246, t1247), t1248)), min(min(t1238, t1240), t1242))
+   let t1251 = max(min(max(t1238, t1242), t1240), min(t1238, t1242))
+   let t1252 = max(min(max(t1243, t1245), t1244), min(t1243, t1245))
+   output[ramp((((output.s0.y.yi.base + 1)*output.stride.1) + output.extent.0) + -128, 1, 128)] = max(min(max(t1249, t1250), max(min(max(t1251, t1252), max(min(max(t1246, t1248), t1247), min(t1246, t1248))), min(t1251, t1252))), min(t1249, t1250))
+   let t1255 = min((output.s0.y.y.y + t1359)*4, output.extent.1 + -4)
+   let t1256 = let t1393 = (output.s0.y.y.y + t1359) in min(max(min(t1393*4, t1333 + -4), 0), max(min(t1393*4, t1334), 1) + -1)
+   let t1257 = ((((max(min(t1255 + 3, input.extent.1), 1) - t1256) + -1)*t1357)*128) + t1348
+   let t1258 = bounded_input[ramp(t1257 + -128, 1, 128)]
+   let t1259 = (((max(min(((output.s0.y.y.y + t1359)*4) + 4, t1343), 1) - t1256)*t1357)*128) + t1356
+   let t1260 = bounded_input[ramp(t1259 + -128, 1, 128)]
+   let t1261 = (((max(min(t1255 + 2, input.extent.1), 1) - t1256)*t1357)*128) + t1356
+   let t1262 = bounded_input[ramp(t1261 + -128, 1, 128)]
+   let t1263 = bounded_input[ramp(t1257 + -127, 1, 128)]
+   let t1264 = bounded_input[ramp(t1259 + -127, 1, 128)]
+   let t1265 = bounded_input[ramp(t1261 + -127, 1, 128)]
+   let t1266 = bounded_input[ramp(t1257 + -126, 1, 128)]
+   let t1267 = bounded_input[ramp(t1259 + -126, 1, 128)]
+   let t1268 = bounded_input[ramp(t1261 + -126, 1, 128)]
+   let t1269 = min(max(max(t1258, t1260), t1262), min(max(max(t1263, t1264), t1265), max(max(t1266, t1267), t1268)))
+   let t1270 = max(max(min(min(t1263, t1264), t1265), min(min(t1266, t1267), t1268)), min(min(t1258, t1260), t1262))
+   let t1271 = max(min(max(t1258, t1262), t1260), min(t1258, t1262))
+   let t1272 = max(min(max(t1263, t1265), t1264), min(t1263, t1265))
+   output[ramp((((output.s0.y.yi.base + 2)*output.stride.1) + output.extent.0) + -128, 1, 128)] = max(min(max(t1269, t1270), max(min(max(t1271, t1272), max(min(max(t1266, t1268), t1267), min(t1266, t1268))), min(t1271, t1272))), min(t1269, t1270))
+   let t1275 = let t1394 = (output.s0.y.y.y + t1359) in min(max(min(t1394*4, t1333 + -4), 0), max(min(t1394*4, t1334), 1) + -1)
+   let t1276 = ((((max(min(((output.s0.y.y.y + t1359)*4) + 4, t1343), 1) - t1275) + -1)*t1357)*128) + t1348
+   let t1277 = bounded_input[ramp(t1276 + -128, 1, 128)]
+   let t1278 = min((output.s0.y.y.y + t1359)*4, output.extent.1 + -4)
+   let t1279 = (((max(min(t1278 + 5, input.extent.1), 1) - t1275)*t1357)*128) + t1356
+   let t1280 = bounded_input[ramp(t1279 + -128, 1, 128)]
+   let t1281 = (((max(min(t1278 + 3, input.extent.1), 1) - t1275)*t1357)*128) + t1356
+   let t1282 = bounded_input[ramp(t1281 + -128, 1, 128)]
+   let t1283 = bounded_input[ramp(t1276 + -127, 1, 128)]
+   let t1284 = bounded_input[ramp(t1279 + -127, 1, 128)]
+   let t1285 = bounded_input[ramp(t1281 + -127, 1, 128)]
+   let t1286 = bounded_input[ramp(t1276 + -126, 1, 128)]
+   let t1287 = bounded_input[ramp(t1279 + -126, 1, 128)]
+   let t1288 = bounded_input[ramp(t1281 + -126, 1, 128)]
+   let t1289 = min(max(max(t1277, t1280), t1282), min(max(max(t1283, t1284), t1285), max(max(t1286, t1287), t1288)))
+   let t1290 = max(max(min(min(t1283, t1284), t1285), min(min(t1286, t1287), t1288)), min(min(t1277, t1280), t1282))
+   let t1291 = max(min(max(t1277, t1282), t1280), min(t1277, t1282))
+   let t1292 = max(min(max(t1283, t1285), t1284), min(t1283, t1285))
+   output[ramp((((output.s0.y.yi.base + 3)*output.stride.1) + output.extent.0) + -128, 1, 128)] = max(min(max(t1289, t1290), max(min(max(t1291, t1292), max(min(max(t1286, t1288), t1287), min(t1286, t1288))), min(t1291, t1292))), min(t1289, t1290))
+  }
+  free bounded_input
+ }
+}
+}
+
+
+external_plus_metadata func median3x3 (input, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 0)
+let input.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ let t1346 = min(output.extent.0, 128)
+ let t1347 = 0 - t1346
+ let t1348 = max(output.extent.0, 128)
+ let t1349 = (t1348 + 129)/128
+ let t1350 = t1349*128
+ let t1351 = t1346 + t1350
+ let t1331 = (max(min(input.extent.0 + 129, t1351), 130) + -129) <= input.extent.0
+ let t1344 = (output.extent.0 % 128) != 0
+ let t1336 = max(256 - t1346, min(input.extent.0 - t1346, t1348) + 129)
+ let t1333 = min(input.extent.1 + 3, output.extent.1)
+ let t1343 = min(input.extent.1, output.extent.1)
+ let t1334 = min(output.extent.1 + -4, input.extent.1)
+ let t1332 = min(t1351 + -129, input.extent.0)
+ let t1329 = (output.extent.1 + 511)/512
+ let t1337 = t1347/128
+ let t1342 = (output.extent.0 + 129)/128
+ let t1341 = output.extent.0/128
+ let t1330 = (output.extent.1 + 3)/4
+ let t1340 = t1347 % 128
+ for<Hexagon> (output.s0.__outermost, 0, 1) {
+  let t1357 = (t1348 + 129)/128
+  let t1358 = t1336/128
+  let t1356 = (t1357*-128) + t1348
+  let parallel_closure = (void *)make_struct(input, output, input.extent.0, input.extent.1, input.stride.1, output.extent.0, output.extent.1, output.stride.1, t1330, t1332, t1333, t1334, t1337, t1340, t1341, t1342, t1343, t1346, t1348, t1349, t1350, t1356, t1357, t1358, t1331, t1344)
+  let closure_result = halide_do_par_for((halide_task_t)::median3x3_par_for_output_s0_y_y_v1, 0, t1329, (uint8_t *)(parallel_closure))
+  assert(closure_result == 0, closure_result)
+ }
+}
+}
+
+

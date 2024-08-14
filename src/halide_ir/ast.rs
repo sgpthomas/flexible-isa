@@ -1,15 +1,11 @@
+use anyhow::anyhow;
 use derive_deftly::Deftly;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Id {
     pub name: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Number {
-    pub value: u64,
 }
 
 impl Id {
@@ -18,6 +14,34 @@ impl Id {
             name: name.to_string(),
         }
     }
+
+    pub fn with_prefix<S: ToString>(self, prefix: &Option<S>) -> Self {
+        if let Some(prefix) = prefix {
+            Id::new(format!("{}{}", prefix.to_string(), self.name))
+        } else {
+            self
+        }
+    }
+
+    pub fn strip_prefix<S: AsRef<str>>(self, prefix: &Option<S>) -> Self {
+        prefix
+            .as_ref()
+            .and_then(|prefix| self.name.strip_prefix(prefix.as_ref()))
+            .and_then(|id| id.strip_prefix('_'))
+            .map(Id::new)
+            .unwrap_or(self.clone())
+    }
+}
+
+impl Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Number {
+    pub value: u64,
 }
 
 impl Number {
@@ -33,6 +57,12 @@ pub struct Module<T = ()> {
     pub funcs: Vec<Func<T>>,
     #[deftly(data)]
     pub data: T,
+}
+
+impl<T> Module<T> {
+    pub fn get_param<S: AsRef<str>>(&self, s: S) -> Option<&Id> {
+        self.params.get(&Id::new(s.as_ref()))
+    }
 }
 
 #[derive(Debug, Clone, Deftly)]
@@ -77,7 +107,7 @@ pub enum Stmt<T = ()> {
         access: Access<T>,
         value: Expr<T>,
         #[deftly(data)]
-        data: T, // TODO: in halide, predicate is stored here
+        data: T, // TODO: in halide, predicate is stored here. that's what the if expressions are
     },
     // Halide Provide
     Allocate {
@@ -159,7 +189,7 @@ pub enum Expr<T = ()> {
 
     // Not sure what the semantics of this are
     If(Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
-    StructMember(Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
+    StructMember(Id, Id, #[deftly(data)] T),
 
     // function calls
     FunCall(Id, Vec<Expr<T>>, #[deftly(data)] T),
@@ -178,7 +208,7 @@ pub enum Expr<T = ()> {
 
 impl<T> Expr<T>
 where
-    T: Default,
+    T: Default + std::fmt::Debug,
 {
     pub fn neg(inner: Expr<T>) -> Expr<T> {
         Expr::Unop(Unop::Neg, Box::new(inner), T::default())
@@ -239,6 +269,13 @@ where
 
     pub fn or(lhs: Expr<T>, rhs: Expr<T>) -> Expr<T> {
         Expr::CompBinop(CompBinop::Or, Box::new(lhs), Box::new(rhs), T::default())
+    }
+
+    pub fn struct_member(lhs: Expr<T>, rhs: Expr<T>) -> anyhow::Result<Expr<T>> {
+        match (lhs, rhs) {
+            (Expr::Ident(x, _), Expr::Ident(y, _)) => Ok(Expr::StructMember(x, y, T::default())),
+            (lhs, rhs) => Err(anyhow!("{lhs:?} and {rhs:?} need to be idents")),
+        }
     }
 }
 

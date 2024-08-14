@@ -18,7 +18,9 @@ pub trait Visitor<T, U> {
         ast.visit(self)
     }
 
-    fn module(&mut self, params: HashMap<Id, Id>, funcs: Vec<Func<U>>, data: T) -> Module<U> {
+    fn start_module(&mut self, _module: &Module<T>) {}
+
+    fn make_module(&mut self, params: HashMap<Id, Id>, funcs: Vec<Func<U>>, data: T) -> Module<U> {
         Module {
             params,
             funcs,
@@ -229,15 +231,8 @@ pub trait Visitor<T, U> {
         Expr::If(Box::new(expr), Box::new(cond), self.default_u(data))
     }
 
-    fn start_struct_member_expr(&mut self, _struct_expr: &Expr<T>, _thing: &Expr<T>, _data: &T) {}
-
-    fn make_struct_member_expr(
-        &mut self,
-        struct_expr: Expr<U>,
-        thing: Expr<U>,
-        data: T,
-    ) -> Expr<U> {
-        Expr::StructMember(Box::new(struct_expr), Box::new(thing), self.default_u(data))
+    fn make_struct_member_expr(&mut self, struct_id: Id, thing: Id, data: T) -> Expr<U> {
+        Expr::StructMember(struct_id, thing, self.default_u(data))
     }
 
     fn start_funcall_expr(&mut self, _id: &Id, _args: &[Expr<T>], _data: &T) {}
@@ -285,6 +280,8 @@ pub trait Visitable<T, U> {
 impl<T, U> Visitable<T, U> for Module<T> {
     type Res = Module<U>;
     fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+        visitor.start_module(&self);
+
         let Module {
             params,
             funcs,
@@ -292,7 +289,7 @@ impl<T, U> Visitable<T, U> for Module<T> {
         } = self;
 
         let funcs = funcs.into_iter().map(|f| f.visit(visitor)).collect();
-        visitor.module(params, funcs, data)
+        visitor.make_module(params, funcs, data)
     }
 }
 
@@ -437,11 +434,8 @@ impl<T, U> Visitable<T, U> for Expr<T> {
                 let cond = cond.visit(visitor);
                 visitor.make_if_expr(expr, cond, data)
             }
-            Expr::StructMember(struct_expr, thing, data) => {
-                visitor.start_struct_member_expr(&struct_expr, &thing, &data);
-                let struct_expr = struct_expr.visit(visitor);
-                let thing = thing.visit(visitor);
-                visitor.make_struct_member_expr(struct_expr, thing, data)
+            Expr::StructMember(struct_id, thing, data) => {
+                visitor.make_struct_member_expr(struct_id, thing, data)
             }
             Expr::FunCall(name, args, data) => {
                 visitor.start_funcall_expr(&name, &args, &data);

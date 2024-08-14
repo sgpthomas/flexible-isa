@@ -1,0 +1,152 @@
+[
+  [
+    {
+      "name": "input1"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input1_zero"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input1_multiplier"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input2"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input2_zero"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input2_multiplier"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_zero"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_max"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ]
+]

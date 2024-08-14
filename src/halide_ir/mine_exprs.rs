@@ -3,6 +3,8 @@ use super::ast;
 pub struct MineExpressions<'a, T> {
     exprs: Vec<&'a ast::Expr<T>>,
 
+    var_prefix: Option<String>,
+
     /// signals whether or not we should mine the current expressions. this is false
     /// until we hit the first produce block
     should_mine: bool,
@@ -12,16 +14,25 @@ impl<'a, T> Default for MineExpressions<'a, T> {
     fn default() -> Self {
         Self {
             exprs: vec![],
+            var_prefix: None,
             should_mine: false,
         }
     }
 }
 
 impl<'a, T> MineExpressions<'a, T> {
+    pub fn set_var_prefix<S: ToString>(&mut self, prefix: S) -> &mut Self {
+        self.var_prefix = Some(prefix.to_string());
+        self
+    }
+
     pub fn mine_module<'s>(&'s mut self, module: &'a ast::Module<T>)
     where
         'a: 's,
     {
+        let module_name = module.get_param("name").expect("Module didn't have a name");
+        self.set_var_prefix(&module_name.name);
+
         for func in &module.funcs {
             self.mine_func(func);
         }

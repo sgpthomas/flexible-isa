@@ -1,0 +1,118 @@
+module name=softmax, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func softmax (input, beta_multiplier, beta_shift, output_zero, output_multiplier, output_shift, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 0)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 1)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ let t1299 = output.extent.0/128
+ let t1300 = t1299*128
+ let t1301 = input.min.1*input.stride.1
+ let t1302 = input.extent.0/128
+ let t1303 = output.min.1*output.stride.1
+ let t1304 = input.extent.0 % 128
+ let t1294 = (output.extent.0 % 128) != 0
+ let t1287 = t1304 != 0
+ let t1298 = t1300 - t1303
+ let t1293 = 0 - t1303
+ let t1289 = (t1302*128) - t1301
+ let t1292 = (output.min.0 - t1301) - input.min.0
+ let t1290 = (int16)15 - int16((uint16)beta_shift)
+ let t1295 = output.min.0 + t1300
+ let t1296 = output.extent.0 + output.min.0
+ for (output.s0.y.rebased, 0, output.extent.1) {
+  allocate max_x[uint8 * 1]
+  produce max_x {
+   max_x[0] = (uint8)0
+   let t1305 = ((output.min.1 + output.s0.y.rebased)*input.stride.1) - t1301
+   for (max_x.s1.r6$x.r6$x, 0, t1302) {
+    max_x[0] = max((uint8)vector_reduce_max((uint8x128)input[ramp((max_x.s1.r6$x.r6$x*128) + t1305, 1, 128)]), max_x[0])
+   }
+   if (t1287) {
+    let t1306 = ((output.min.1 + output.s0.y.rebased)*input.stride.1) + t1289
+    for (max_x.s1.r6$x.r22, 0, t1304) {
+     let t1225 = input[max_x.s1.r6$x.r22 + t1306]
+     max_x[0] = max(max_x[0], t1225)
+    }
+   }
+  }
+  allocate sum_exp_row[int32 * 1]
+  produce sum_exp_row {
+   consume max_x {
+    sum_exp_row[0] = 0
+    let t1307 = ((output.min.1 + output.s0.y.rebased)*input.stride.1) - t1301
+    for (sum_exp_row.s1.r6$x.r6$x, 0, t1302) {
+     let t26.widened.sum_exp_row.s1.r6$x.r24 = (int16x128)rounding_mul_shift_right((int16x128)shift_left(int16x128(input[ramp((sum_exp_row.s1.r6$x.r6$x*128) + t1307, 1, 128)]), x128((uint16)6)) - x128(int16(max_x[0])*(int16)64), x128((int16)beta_multiplier), x128((uint16)15))
+     let t27.widened.sum_exp_row.s1.r6$x.r24 = (int16x128)shift_right(t26.widened.sum_exp_row.s1.r6$x.r24, x128((uint16)beta_shift))
+     let t28.widened.sum_exp_row.s1.r6$x.r24 = (int16x128)saturating_cast((int32x128)widening_shift_left(x128((int16)1), (int16x128)widen_right_add(t27.widened.sum_exp_row.s1.r6$x.r24, x128((int8)15))))
+     let t29.widened.sum_exp_row.s1.r6$x.r24 = (int16x128)shift_left(t26.widened.sum_exp_row.s1.r6$x.r24 - (int16x128)shift_left(t27.widened.sum_exp_row.s1.r6$x.r24, x128((uint16)beta_shift)), x128(t1290))
+     let t30.widened.sum_exp_row.s1.r6$x.r24 = (int16x128)rounding_mul_shift_right(t29.widened.sum_exp_row.s1.r6$x.r24, t29.widened.sum_exp_row.s1.r6$x.r24, x128((uint16)15))
+     sum_exp_row[0] = (int32)vector_reduce_add(int32x128((int16x128)saturating_add((int16x128)t28.widened.sum_exp_row.s1.r6$x.r24, (int16x128)rounding_mul_shift_right((int16x128)t28.widened.sum_exp_row.s1.r6$x.r24, (int16x128)rounding_mul_shift_right(x128((int16)7363), (int16x128)t30.widened.sum_exp_row.s1.r6$x.r24, x128((uint16)15)) + ((int16x128)rounding_mul_shift_right(x128((int16)22812), (int16x128)t29.widened.sum_exp_row.s1.r6$x.r24, x128((uint16)15)) + (int16x128)rounding_mul_shift_right(x128((int16)2592), (int16x128)rounding_mul_shift_right((int16x128)t30.widened.sum_exp_row.s1.r6$x.r24, (int16x128)t29.widened.sum_exp_row.s1.r6$x.r24, x128((uint16)15)), x128((uint16)15))), x128((uint16)15))))) + sum_exp_row[0]
+    }
+    if (t1287) {
+     let t1308 = ((output.min.1 + output.s0.y.rebased)*input.stride.1) + t1289
+     for (sum_exp_row.s1.r6$x.r24, 0, t1304) {
+      let t26 = (int16)rounding_mul_shift_right((int16(input[sum_exp_row.s1.r6$x.r24 + t1308]) - int16(max_x[0]))*(int16)64, (int16)beta_multiplier, (uint16)15)
+      let t27 = (int16)shift_right(t26, (uint16)beta_shift)
+      let t28 = (int16)saturating_cast(shift_left(1, int32((t27 + (int16)15))))
+      let t29 = (int16)shift_left(t26 - (int16)shift_left(t27, (uint16)beta_shift), t1290)
+      let t30 = (int16)rounding_mul_shift_right(t29, t29, (uint16)15)
+      let t1226.s = (int16)saturating_add(t28, (int16)rounding_mul_shift_right(t28, (int16)rounding_mul_shift_right((int16)7363, t30, (uint16)15) + ((int16)rounding_mul_shift_right((int16)22812, t29, (uint16)15) + (int16)rounding_mul_shift_right((int16)2592, (int16)rounding_mul_shift_right(t30, t29, (uint16)15), (uint16)15)), (uint16)15))
+      sum_exp_row[0] = sum_exp_row[0] + int32(t1226.s)
+     }
+    }
+   }
+  }
+  allocate inv_sum_exp_row[int16 * 1]
+  produce inv_sum_exp_row {
+   consume sum_exp_row {
+    let t1264 = sum_exp_row[0]
+    let t1265 = int16(count_leading_zeros(t1264))
+    let t1266 = (int16)bitwise_and(int16(shift_left(t1264, int32((t1265 + (int16)-16)))), (int16)32767)
+    let t1267 = (int16)rounding_mul_shift_right(t1266, t1266, (uint16)15)
+    let t1268 = saturating_add(int32(((int16)31 - t1265))*32768, int32((((int16)rounding_mul_shift_right((int16)-9421, t1267, (uint16)15) + ((int16)rounding_mul_shift_right((int16)23249, t1266, (uint16)15) + (int16)rounding_mul_shift_right((int16)2555, (int16)rounding_mul_shift_right(t1267, t1266, (uint16)15), (uint16)15))) + (int16)5))*2)
+    let t1269 = (int16)saturating_cast(shift_left(1, int32((int16(((0 - t1268)/32768)) + (int16)30))))
+    let t1270 = int16(((0 - t1268) - (int32(int16(((0 - t1268)/32768)))*32768)))
+    let t1271 = (int16)rounding_mul_shift_right(t1270, t1270, (uint16)15)
+    inv_sum_exp_row[0] = (int16)saturating_add(t1269, (int16)rounding_mul_shift_right(t1269, (int16)rounding_mul_shift_right((int16)7363, t1271, (uint16)15) + ((int16)rounding_mul_shift_right((int16)22812, t1270, (uint16)15) + (int16)rounding_mul_shift_right((int16)2592, (int16)rounding_mul_shift_right(t1271, t1270, (uint16)15), (uint16)15)), (uint16)15))
+   }
+  }
+  free sum_exp_row
+  consume inv_sum_exp_row {
+   consume max_x {
+    let t1311 = output.min.1 + output.s0.y.rebased
+    let t1310 = (output.stride.1*t1311) + t1293
+    let t1309 = (input.stride.1*t1311) + t1292
+    for (output.s0.x.x, 0, t1299) {
+     let t1273 = (int16x128)rounding_mul_shift_right((int16x128)shift_left(int16x128(input[ramp((output.s0.x.x*128) + t1309, 1, 128)]), x128((uint16)6)) - x128(int16(max_x[0])*(int16)64), x128((int16)beta_multiplier), x128((uint16)15))
+     let t1274 = (int16x128)shift_right(t1273, x128((uint16)beta_shift))
+     let t1275 = (int16x128)saturating_cast((int32x128)widening_shift_left(x128((int16)1), (int16x128)widen_right_add(t1274, x128((int8)15))))
+     let t1276 = (int16x128)shift_left(t1273 - (int16x128)shift_left(t1274, x128((uint16)beta_shift)), x128(t1290))
+     let t1277 = (int16x128)rounding_mul_shift_right(t1276, t1276, x128((uint16)15))
+     output[ramp((output.s0.x.x*128) + t1310, 1, 128)] = (uint8x128)saturating_cast((int16x128)saturating_add((int16x128)rounding_shift_right((int16x128)rounding_mul_shift_right((int16x128)rounding_mul_shift_right((int16x128)saturating_add(t1275, (int16x128)rounding_mul_shift_right(t1275, (int16x128)rounding_mul_shift_right(x128((int16)7363), t1277, x128((uint16)15)) + ((int16x128)rounding_mul_shift_right(x128((int16)22812), t1276, x128((uint16)15)) + (int16x128)rounding_mul_shift_right(x128((int16)2592), (int16x128)rounding_mul_shift_right(t1277, t1276, x128((uint16)15)), x128((uint16)15))), x128((uint16)15))), x128(inv_sum_exp_row[0]), x128((uint16)15)), x128((int16)output_multiplier), x128((uint16)15)), x128((uint16)output_shift)), x128(int16((uint8)output_zero))))
+    }
+    if (t1294) {
+     let t1279 = (int16x128)rounding_mul_shift_right((int16x128)shift_left(int16x128((input[ramp(((output.min.1 + output.s0.y.rebased)*input.stride.1) + ((t1295 - t1301) - input.min.0), 1, 128)] if (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t1296, t1295 + 1)))))), x128((uint16)6)) - x128(int16(max_x[0])*(int16)64), x128((int16)beta_multiplier), x128((uint16)15))
+     let t1280 = (int16x128)shift_right(t1279, x128((uint16)beta_shift))
+     let t1281 = (int16x128)saturating_cast((int32x128)widening_shift_left(x128((int16)1), (int16x128)widen_right_add(t1280, x128((int8)15))))
+     let t1282 = (int16x128)shift_left(t1279 - (int16x128)shift_left(t1280, x128((uint16)beta_shift)), x128(t1290))
+     let t1283 = (int16x128)rounding_mul_shift_right(t1282, t1282, x128((uint16)15))
+     predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t1296, t1295 + 1))))
+      output[ramp(((output.min.1 + output.s0.y.rebased)*output.stride.1) + t1298, 1, 128)] = (uint8x128)saturating_cast((int16x128)saturating_add((int16x128)rounding_shift_right((int16x128)rounding_mul_shift_right((int16x128)rounding_mul_shift_right((int16x128)saturating_add(t1281, (int16x128)rounding_mul_shift_right(t1281, (int16x128)rounding_mul_shift_right(x128((int16)7363), t1283, x128((uint16)15)) + ((int16x128)rounding_mul_shift_right(x128((int16)22812), t1282, x128((uint16)15)) + (int16x128)rounding_mul_shift_right(x128((int16)2592), (int16x128)rounding_mul_shift_right(t1283, t1282, x128((uint16)15)), x128((uint16)15))), x128((uint16)15))), x128(inv_sum_exp_row[0]), x128((uint16)15)), x128((int16)output_multiplier), x128((uint16)15)), x128((uint16)output_shift)), x128(int16((uint8)output_zero))))
+    }
+    free max_x
+    free inv_sum_exp_row
+   }
+  }
+ }
+}
+}
+
+

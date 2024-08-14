@@ -1,0 +1,47 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input_zero"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ]
+]

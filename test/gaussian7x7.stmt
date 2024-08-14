@@ -1,0 +1,87 @@
+module name=gaussian7x7, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+internal func gaussian7x7_par_for_output_s0_y_y_v0 (__user_context, output.s0.y.y.v0, closure_arg) {
+let closure_prototype = (void *)make_struct(reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+let input = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 0)
+let output = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 1)
+let input.min.0 = load_typed_struct_member((void *)closure_arg, closure_prototype, 2)
+let input.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 3)
+let output.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 4)
+let t15 = load_typed_struct_member((void *)closure_arg, closure_prototype, 5)
+let t16 = load_typed_struct_member((void *)closure_arg, closure_prototype, 6)
+let t19 = load_typed_struct_member((void *)closure_arg, closure_prototype, 7)
+let t22 = load_typed_struct_member((void *)closure_arg, closure_prototype, 8)
+let t23 = load_typed_struct_member((void *)closure_arg, closure_prototype, 9)
+let t24 = load_typed_struct_member((void *)closure_arg, closure_prototype, 10)
+let t27 = load_typed_struct_member((void *)closure_arg, closure_prototype, 11)
+let output.s0.y.y.y.base = min(output.s0.y.y.v0*128, t15 + -128)
+for (output.s0.y.y.y, 0, 128) {
+ (uint8)prefetch(input, ((((output.s0.y.y.y + output.s0.y.y.y.base)*input.stride.1)*4) + t16) + -3, (t27*128) + 128, 1, 10, input.stride.1)
+ allocate rows[int32 * ((t27*128) + 128) * 4]
+ produce rows {
+  let t46 = output.s0.y.y.y + output.s0.y.y.y.base
+  let t47 = t46*4
+  let t38 = input.stride.1*t46
+  let t44 = (t47 + 3)*input.stride.1
+  let t42 = (t47 + 2)*input.stride.1
+  let t41 = (t47 + 1)*input.stride.1
+  let t39 = input.stride.1 - input.min.0
+  let t40 = input.min.0 + input.stride.1
+  for (rows.s0.x.x, 0, t27 + 1) {
+   let t4.s = (rows.s0.x.x*32) + t38
+   rows[ramp(rows.s0.x.x*128, 1, 128) aligned(128, 0)] = (int32x128)widen_right_add(((int32x128)widening_add((int16x128)widening_mul(input[ramp(((t4.s*4) + t19) + -3, 1, 128)], x128((int8)6)), (int16x128)widening_mul(input[ramp(((t4.s*4) + t39) + -3, 1, 128)], x128((int8)15))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp(((t4.s*4) - input.min.0) + -3, 1, 128)], x128((int8)20)), (int16x128)widening_mul(input[ramp(((t4.s*4) - t40) + -3, 1, 128)], x128((int8)15)))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp(((t4.s*4) + t22) + -3, 1, 128)], x128((int8)6)), int16x128(input[ramp(((t4.s*4) + t23) + -3, 1, 128)])), int16x128(input[ramp(((t4.s*4) + t24) + -3, 1, 128)]))
+   let t5.s = (rows.s0.x.x*128) + t41
+   rows[ramp(((rows.s0.x.x + t27)*128) + 128, 1, 128) aligned(128, 0)] = (int32x128)widen_right_add(((int32x128)widening_add((int16x128)widening_mul(input[ramp((t19 + t5.s) + -3, 1, 128)], x128((int8)6)), (int16x128)widening_mul(input[ramp((t39 + t5.s) + -3, 1, 128)], x128((int8)15))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp((t5.s - input.min.0) + -3, 1, 128)], x128((int8)20)), (int16x128)widening_mul(input[ramp((t5.s - t40) + -3, 1, 128)], x128((int8)15)))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp((t22 + t5.s) + -3, 1, 128)], x128((int8)6)), int16x128(input[ramp((t23 + t5.s) + -3, 1, 128)])), int16x128(input[ramp((t24 + t5.s) + -3, 1, 128)]))
+   let t6.s = (rows.s0.x.x*128) + t42
+   rows[ramp((((t27*2) + rows.s0.x.x)*128) + 256, 1, 128) aligned(128, 0)] = (int32x128)widen_right_add(((int32x128)widening_add((int16x128)widening_mul(input[ramp((t19 + t6.s) + -3, 1, 128)], x128((int8)6)), (int16x128)widening_mul(input[ramp((t39 + t6.s) + -3, 1, 128)], x128((int8)15))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp((t6.s - input.min.0) + -3, 1, 128)], x128((int8)20)), (int16x128)widening_mul(input[ramp((t6.s - t40) + -3, 1, 128)], x128((int8)15)))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp((t22 + t6.s) + -3, 1, 128)], x128((int8)6)), int16x128(input[ramp((t23 + t6.s) + -3, 1, 128)])), int16x128(input[ramp((t24 + t6.s) + -3, 1, 128)]))
+   let t7.s = (rows.s0.x.x*128) + t44
+   rows[ramp((((t27*3) + rows.s0.x.x)*128) + 384, 1, 128) aligned(128, 0)] = (int32x128)widen_right_add(((int32x128)widening_add((int16x128)widening_mul(input[ramp((t19 + t7.s) + -3, 1, 128)], x128((int8)6)), (int16x128)widening_mul(input[ramp((t39 + t7.s) + -3, 1, 128)], x128((int8)15))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp((t7.s - input.min.0) + -3, 1, 128)], x128((int8)20)), (int16x128)widening_mul(input[ramp((t7.s - t40) + -3, 1, 128)], x128((int8)15)))) + (int32x128)widening_add((int16x128)widening_mul(input[ramp((t22 + t7.s) + -3, 1, 128)], x128((int8)6)), int16x128(input[ramp((t23 + t7.s) + -3, 1, 128)])), int16x128(input[ramp((t24 + t7.s) + -3, 1, 128)]))
+  }
+ }
+ consume rows {
+  let t54 = output.s0.y.y.y + output.s0.y.y.y.base
+  let t55 = t54*4
+  let t48 = output.stride.1*t54
+  let t53 = (t55 + 3)*output.stride.1
+  let t51 = (t55 + 2)*output.stride.1
+  let t49 = (t55 + 1)*output.stride.1
+  for (output.s0.x.x, 0, t27) {
+   output[ramp(((output.s0.x.x*32) + t48)*4, 1, 128) aligned(128, 0)] = (uint8x128)saturating_cast((int32x128)shift_right((int32x128)widen_right_mul(rows[ramp((output.s0.x.x*128) + 1, 1, 128) aligned(128, 1)], x128((int16)6)) + (rows[ramp(output.s0.x.x*128, 1, 128) aligned(128, 0)] + ((int32x128)widen_right_mul(rows[ramp((output.s0.x.x*128) + 2, 1, 128) aligned(128, 2)], x128((int16)15)) + ((int32x128)widen_right_mul(rows[ramp((output.s0.x.x*128) + 3, 1, 128) aligned(128, 3)], x128((int16)20)) + ((int32x128)widen_right_mul(rows[ramp((output.s0.x.x*128) + 4, 1, 128) aligned(128, 4)], x128((int16)15)) + (rows[ramp((output.s0.x.x*128) + 6, 1, 128) aligned(128, 6)] + (int32x128)widen_right_mul(rows[ramp((output.s0.x.x*128) + 5, 1, 128) aligned(128, 5)], x128((int16)6))))))), x128((uint32)12)))
+   let t11 = output.s0.x.x + t27
+   output[ramp((output.s0.x.x*128) + t49, 1, 128) aligned(128, 0)] = (uint8x128)saturating_cast((int32x128)shift_right((int32x128)widen_right_mul(rows[ramp((t11*128) + 129, 1, 128) aligned(128, 1)], x128((int16)6)) + (rows[ramp((t11*128) + 128, 1, 128) aligned(128, 0)] + ((int32x128)widen_right_mul(rows[ramp((t11*128) + 130, 1, 128) aligned(128, 2)], x128((int16)15)) + ((int32x128)widen_right_mul(rows[ramp((t11*128) + 131, 1, 128) aligned(128, 3)], x128((int16)20)) + ((int32x128)widen_right_mul(rows[ramp((t11*128) + 132, 1, 128) aligned(128, 4)], x128((int16)15)) + (rows[ramp((t11*128) + 134, 1, 128) aligned(128, 6)] + (int32x128)widen_right_mul(rows[ramp((t11*128) + 133, 1, 128) aligned(128, 5)], x128((int16)6))))))), x128((uint32)12)))
+   let t12 = (t27*2) + output.s0.x.x
+   output[ramp((output.s0.x.x*128) + t51, 1, 128) aligned(128, 0)] = (uint8x128)saturating_cast((int32x128)shift_right((int32x128)widen_right_mul(rows[ramp((t12*128) + 257, 1, 128) aligned(128, 1)], x128((int16)6)) + (rows[ramp((t12*128) + 256, 1, 128) aligned(128, 0)] + ((int32x128)widen_right_mul(rows[ramp((t12*128) + 258, 1, 128) aligned(128, 2)], x128((int16)15)) + ((int32x128)widen_right_mul(rows[ramp((t12*128) + 259, 1, 128) aligned(128, 3)], x128((int16)20)) + ((int32x128)widen_right_mul(rows[ramp((t12*128) + 260, 1, 128) aligned(128, 4)], x128((int16)15)) + (rows[ramp((t12*128) + 262, 1, 128) aligned(128, 6)] + (int32x128)widen_right_mul(rows[ramp((t12*128) + 261, 1, 128) aligned(128, 5)], x128((int16)6))))))), x128((uint32)12)))
+   let t13 = (t27*3) + output.s0.x.x
+   output[ramp((output.s0.x.x*128) + t53, 1, 128) aligned(128, 0)] = (uint8x128)saturating_cast((int32x128)shift_right((int32x128)widen_right_mul(rows[ramp((t13*128) + 385, 1, 128) aligned(128, 1)], x128((int16)6)) + (rows[ramp((t13*128) + 384, 1, 128) aligned(128, 0)] + ((int32x128)widen_right_mul(rows[ramp((t13*128) + 386, 1, 128) aligned(128, 2)], x128((int16)15)) + ((int32x128)widen_right_mul(rows[ramp((t13*128) + 387, 1, 128) aligned(128, 3)], x128((int16)20)) + ((int32x128)widen_right_mul(rows[ramp((t13*128) + 388, 1, 128) aligned(128, 4)], x128((int16)15)) + (rows[ramp((t13*128) + 390, 1, 128) aligned(128, 6)] + (int32x128)widen_right_mul(rows[ramp((t13*128) + 389, 1, 128) aligned(128, 5)], x128((int16)6))))))), x128((uint32)12)))
+  }
+ }
+ free rows
+}
+}
+
+
+external_plus_metadata func gaussian7x7 (input, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ let t27 = (output.extent.0 + 127)/128
+ let t14 = (output.extent.1 + 511)/512
+ let t15 = (output.extent.1 + 3)/4
+ let t16 = (input.stride.1*5) - input.min.0
+ let t24 = (input.stride.1*3) - input.min.0
+ let t19 = (input.stride.1*2) - input.min.0
+ let t22 = (input.stride.1*-2) - input.min.0
+ let t23 = (input.stride.1*-3) - input.min.0
+ for<Hexagon> (output.s0.__outermost, 0, 1) {
+  let parallel_closure = (void *)make_struct(input, output, input.min.0, input.stride.1, output.stride.1, t15, t16, t19, t22, t23, t24, t27)
+  let closure_result = halide_do_par_for((halide_task_t)::gaussian7x7_par_for_output_s0_y_y_v0, 0, t14, (uint8_t *)(parallel_closure))
+  assert(closure_result == 0, closure_result)
+ }
+}
+}
+
+

@@ -1,0 +1,111 @@
+module name=mean, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func mean (input, c_min, c_extent, x_min, x_extent, y_min, y_extent, b_min, b_extent, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let input.min.2 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 2)
+let input.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 2)
+let input.min.3 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 3)
+let input.stride.3 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 3)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 1)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+let output.min.2 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 2)
+let output.extent.2 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 2)
+let output.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 2)
+let output.min.3 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 3)
+let output.extent.3 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 3)
+let output.stride.3 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 3)
+produce output {
+ let t181 = output.extent.0/128
+ let t182 = t181*128
+ let t183 = output.min.0 + t182
+ let t184 = input.min.3*input.stride.3
+ let t185 = input.min.2*input.stride.2
+ let t186 = input.min.1*input.stride.1
+ let t187 = output.min.3*output.stride.3
+ let t188 = output.min.2*output.stride.2
+ let t189 = output.min.1*output.stride.1
+ let t171 = (output.extent.0 % 128) != 0
+ let t176 = ((c_extent*x_extent)*y_extent)*b_extent
+ let t177 = (((output.min.0 - t187) - t188) - t189) - output.min.0
+ let t167 = ((((c_min + output.min.0) - t184) - t185) - t186) - input.min.0
+ let t175 = ((((c_min + t183) - t184) - t185) - t186) - input.min.0
+ let t169 = output.min.2 + y_min
+ let t170 = output.min.1 + x_min
+ let t168 = b_min + output.min.3
+ for (output.s0.b.rebased, 0, output.extent.3) {
+  let t195 = (output.min.3 + output.s0.b.rebased)*output.stride.3
+  let t192 = t176/2
+  let t194 = ((((t183 - t187) - t188) - t189) - output.min.0) + t195
+  let t193 = t177 + t195
+  let t190 = output.s0.b.rebased + t168
+  let t191 = output.extent.0 + output.min.0
+  for (output.s0.y.rebased, 0, output.extent.2) {
+   let t199 = (output.min.2 + output.s0.y.rebased)*output.stride.2
+   let t198 = t194 + t199
+   let t197 = t193 + t199
+   let t196 = output.s0.y.rebased + t169
+   for (output.s0.x.rebased, 0, output.extent.1) {
+    allocate sum[uint32 * output.extent.0 * 1 * 1 * 1]
+    produce sum {
+     for (sum.s0.c.rebased, 0, output.extent.0) {
+      sum[sum.s0.c.rebased] = (uint32)0
+     }
+     let t200 = output.s0.x.rebased + t170
+     for (sum.s1.c.c, 0, t181) {
+      let t203 = sum.s1.c.c*128
+      let t202 = t167 + t203
+      for (sum.s1.r8$w.rebased, 0, b_extent) {
+       let t204 = ((sum.s1.r8$w.rebased + t190)*input.stride.3) + t202
+       for (sum.s1.r8$x.rebased, 0, c_extent) {
+        let t205 = sum.s1.r8$x.rebased + t204
+        for (sum.s1.r8$z.rebased, 0, y_extent) {
+         let t206 = ((sum.s1.r8$z.rebased + t196)*input.stride.2) + t205
+         for (sum.s1.r8$y.rebased, 0, x_extent) {
+          sum[ramp(t203, 1, 128) aligned(128, 0)] = (uint32x128)widen_right_add(sum[ramp(t203, 1, 128) aligned(128, 0)], uint16x128(input[ramp(((sum.s1.r8$y.rebased + t200)*input.stride.1) + t206, 1, 128)]))
+         }
+        }
+       }
+      }
+     }
+     if (t171) {
+      let t207 = output.s0.x.rebased + t170
+      for (sum.s1.r8$w.rebased, 0, b_extent) {
+       let t208 = ((sum.s1.r8$w.rebased + t190)*input.stride.3) + t175
+       for (sum.s1.r8$x.rebased, 0, c_extent) {
+        let t209 = sum.s1.r8$x.rebased + t208
+        for (sum.s1.r8$z.rebased, 0, y_extent) {
+         let t210 = ((sum.s1.r8$z.rebased + t196)*input.stride.2) + t209
+         for (sum.s1.r8$y.rebased, 0, x_extent) {
+          let t151 = ramp(t183 + 1, 1, 128) <= x128(t191)
+          predicate (ramp(t183 + 1, 1, 128) <= x128(t191))
+           sum[ramp(t182, 1, 128) aligned(128, 0)] = (uint32x128)widen_right_add(sum[ramp(t182, 1, 128) aligned(128, 0)] if t151, uint16x128((input[ramp(((sum.s1.r8$y.rebased + t207)*input.stride.1) + t210, 1, 128)] if t151)))
+         }
+        }
+       }
+      }
+     }
+    }
+    consume sum {
+     let t211 = ((output.min.1 + output.s0.x.rebased)*output.stride.1) + t197
+     for (output.s0.c.c, 0, t181) {
+      output[ramp((output.s0.c.c*128) + t211, 1, 128)] = uint8x128(((int32x128(sum[ramp(output.s0.c.c*128, 1, 128) aligned(128, 0)]) + x128(t192))/x128(t176)))
+     }
+     if (t171) {
+      predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t191, t183 + 1))))
+       output[ramp(((output.min.1 + output.s0.x.rebased)*output.stride.1) + t198, 1, 128)] = uint8x128(((int32x128((sum[ramp(t182, 1, 128) aligned(128, 0)] if (ramp(t183 + 1, 1, 128) <= x128(t191)))) + x128(t192))/x128(t176)))
+     }
+     free sum
+    }
+   }
+  }
+ }
+}
+}
+
+

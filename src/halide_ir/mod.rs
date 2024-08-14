@@ -10,6 +10,7 @@ mod mine_exprs;
 mod parser;
 mod printer;
 mod type_annotator;
+mod unique_idents;
 mod visitor;
 
 pub use annotation::Annotation;
@@ -21,4 +22,5 @@ pub use mine_exprs::MineExpressions;
 pub use parser::StmtParser;
 pub use printer::Printer;
 pub use type_annotator::TypeAnnotator;
+pub use unique_idents::UniqueIdents;
 pub use visitor::Visitor;

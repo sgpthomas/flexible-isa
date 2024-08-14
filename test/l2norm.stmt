@@ -1,0 +1,77 @@
+module name=l2norm, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func l2norm (input, input_zero, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 0)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 1)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ let t116 = output.extent.0/128
+ let t117 = input.min.1*input.stride.1
+ let t118 = input.extent.0/128
+ let t119 = output.min.1*output.stride.1
+ let t120 = input.extent.0 % 128
+ let t111 = (output.extent.0 % 128) != 0
+ let t105 = t120 != 0
+ let t107 = (t118*128) - t117
+ let t109 = (output.min.0 - t117) - input.min.0
+ let t112 = (t116*128) + output.min.0
+ let t113 = output.extent.0 + output.min.0
+ for (output.s0.y.rebased, 0, output.extent.1) {
+  allocate sum_input_sq[int32 * 1]
+  produce sum_input_sq {
+   sum_input_sq[0] = 0
+   let t121 = ((output.min.1 + output.s0.y.rebased)*input.stride.1) - t117
+   for (sum_input_sq.s1.r8$x.r8$x, 0, t118) {
+    let t125 = input[ramp((sum_input_sq.s1.r8$x.r8$x*128) + t121, 1, 128)]
+    let t126 = (int16x128)widening_sub(t125, x128((uint8)input_zero))
+    sum_input_sq[0] = (int32)vector_reduce_add((int32x128)widening_mul((int16x128)t126, (int16x128)t126)) + sum_input_sq[0]
+   }
+   if (t105) {
+    let t122 = ((output.min.1 + output.s0.y.rebased)*input.stride.1) + t107
+    for (sum_input_sq.s1.r8$x.r21, 0, t120) {
+     let t15.s = int16(input[sum_input_sq.s1.r8$x.r21 + t122]) - int16((uint8)input_zero)
+     let t80 = int32(t15.s)*int32(t15.s)
+     sum_input_sq[0] = sum_input_sq[0] + t80
+    }
+   }
+  }
+  allocate inv_sqrt[int32 * 1]
+  produce inv_sqrt {
+   consume sum_input_sq {
+    let t90 = sum_input_sq[0]
+    let t91 = int16(count_leading_zeros(t90))
+    let t92 = (int16)bitwise_and(int16(shift_left(t90, int32((t91 + (int16)-16)))), (int16)32767)
+    let t93 = (int16)rounding_mul_shift_right(t92, t92, (uint16)15)
+    let t94 = saturating_add(int32(((int16)31 - t91))*16384, int32((((int16)rounding_mul_shift_right((int16)-9421, t93, (uint16)15) + ((int16)rounding_mul_shift_right((int16)23249, t92, (uint16)15) + (int16)rounding_mul_shift_right((int16)2555, (int16)rounding_mul_shift_right(t93, t92, (uint16)15), (uint16)15))) + (int16)5)))
+    let t95 = saturating_cast(shift_left(1, ((0 - t94)/32768) + 15))
+    let t96 = int16(((0 - t94) % 32768))
+    let t97 = (int16)rounding_mul_shift_right(t96, t96, (uint16)15)
+    inv_sqrt[0] = saturating_add(t95, rounding_mul_shift_right(t95, int32(((int16)rounding_mul_shift_right((int16)7363, t97, (uint16)15) + ((int16)rounding_mul_shift_right((int16)22812, t96, (uint16)15) + (int16)rounding_mul_shift_right((int16)2592, (int16)rounding_mul_shift_right(t97, t96, (uint16)15), (uint16)15))))*65536, (uint32)31))
+   }
+  }
+  free sum_input_sq
+  consume inv_sqrt {
+   let t124 = 0 - t119
+   let t123 = output.min.1 + output.s0.y.rebased
+   for (output.s0.x.x, 0, t116) {
+    output[ramp((output.s0.x.x*128) + ((output.stride.1*t123) + t124), 1, 128)] = (uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)widen_right_mul(x128(inv_sqrt[0]), (int16x128)widening_sub(input[ramp((output.s0.x.x*128) + ((input.stride.1*t123) + t109), 1, 128)], x128((uint8)input_zero))), x128((uint32)8))), x128((int16)128)))
+   }
+   if (t111) {
+    let t102 = output.min.1 + output.s0.y.rebased
+    predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t113, t112 + 1))))
+     output[ramp((output.stride.1*t102) + ((t112 - t119) - output.min.0), 1, 128)] = (uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)widen_right_mul(x128(inv_sqrt[0]), (int16x128)widening_sub(input[ramp((input.stride.1*t102) + ((t112 - t117) - input.min.0), 1, 128)] if (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t113, t112 + 1)))), x128((uint8)input_zero))), x128((uint32)8))), x128((int16)128)))
+   }
+   free inv_sqrt
+  }
+ }
+}
+}
+
+

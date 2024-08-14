@@ -1,0 +1,32 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ]
+]

@@ -1,0 +1,32 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 16
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "blur_y"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 16
+          }
+        },
+        2
+      ]
+    }
+  ]
+]

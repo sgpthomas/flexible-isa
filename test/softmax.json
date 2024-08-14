@@ -1,0 +1,107 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "beta_multiplier"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "beta_shift"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_zero"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_multiplier"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_shift"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ]
+]

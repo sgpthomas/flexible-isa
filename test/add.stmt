@@ -1,0 +1,70 @@
+module name=add, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func add (input1, input1_zero, input1_multiplier, input2, input2_zero, input2_multiplier, output_zero, output_min, output_max, output) {
+let input1 = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input1.buffer)
+let input1.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input1.buffer, 0)
+let input1.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input1.buffer, 1)
+let input1.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input1.buffer, 1)
+let input2 = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input2.buffer)
+let input2.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input2.buffer, 0)
+let input2.stride.0 = _halide_buffer_get_stride((struct halide_buffer_t *)input2.buffer, 0)
+let input2.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input2.buffer, 1)
+let input2.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input2.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 1)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ if (input2.stride.0 == 1) {
+  let t3893 = output.extent.0/128
+  let t3894 = input1.min.1*input1.stride.1
+  let t3895 = input2.min.1*input2.stride.1
+  let t3896 = output.min.1*output.stride.1
+  let t3887 = (output.extent.0 % 128) != 0
+  let t3885 = (output.min.0 - t3895) - input2.min.0
+  let t3884 = (output.min.0 - t3894) - input1.min.0
+  let t3888 = (t3893*128) + output.min.0
+  let t3889 = output.extent.0 + output.min.0
+  for (output.s0.y.rebased, 0, output.extent.1) {
+   let t3898 = 0 - t3896
+   let t3897 = output.min.1 + output.s0.y.rebased
+   for (output.s0.x.x, 0, t3893) {
+    output[ramp((output.s0.x.x*128) + ((output.stride.1*t3897) + t3898), 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)widening_mul((int16x128)shift_left(int16x128(input1[ramp((output.s0.x.x*128) + ((input1.stride.1*t3897) + t3884), 1, 128)]), x128((uint16)6)) - x128(int16((uint8)input1_zero)*(int16)64), x128((int16)input1_multiplier)) + (int32x128)widening_mul((int16x128)shift_left(int16x128(input2[ramp((output.s0.x.x*128) + ((input2.stride.1*t3897) + t3885), 1, 128)]), x128((uint16)6)) - x128(int16((uint8)input2_zero)*(int16)64), x128((int16)input2_multiplier)), x128((uint32)16))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+   }
+   if (t3887) {
+    let t3874 = ramp(t3888 + 1, 1, 128) <= x128(t3889)
+    let t3879 = output.min.1 + output.s0.y.rebased
+    predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t3889, t3888 + 1))))
+     output[ramp((output.stride.1*t3879) + ((t3888 - t3896) - output.min.0), 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)widening_mul((int16x128)shift_left(int16x128((input1[ramp((input1.stride.1*t3879) + ((t3888 - t3894) - input1.min.0), 1, 128)] if t3874)), x128((uint16)6)) - x128(int16((uint8)input1_zero)*(int16)64), x128((int16)input1_multiplier)) + (int32x128)widening_mul((int16x128)shift_left(int16x128((input2[ramp((input2.stride.1*t3879) + ((t3888 - t3895) - input2.min.0), 1, 128)] if t3874)), x128((uint16)6)) - x128(int16((uint8)input2_zero)*(int16)64), x128((int16)input2_multiplier)), x128((uint32)16))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+   }
+  }
+ } else if (input2.stride.0 == 0) {
+  let t3908 = output.extent.0/128
+  let t3909 = input1.min.1*input1.stride.1
+  let t3910 = output.min.1*output.stride.1
+  let t3903 = (output.extent.0 % 128) != 0
+  let t3900 = output.min.1 - input2.min.1
+  let t3901 = (output.min.0 - t3909) - input1.min.0
+  let t3904 = (t3908*128) + output.min.0
+  let t3905 = output.extent.0 + output.min.0
+  for (output.s0.y.rebased, 0, output.extent.1) {
+   let t3912 = (output.s0.y.rebased + t3900)*input2.stride.1
+   let t3913 = 0 - t3910
+   let t3911 = output.min.1 + output.s0.y.rebased
+   for (output.s0.x.x, 0, t3908) {
+    output[ramp((output.s0.x.x*128) + ((output.stride.1*t3911) + t3913), 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)widening_mul((int16x128)shift_left(int16x128(input1[ramp((output.s0.x.x*128) + ((input1.stride.1*t3911) + t3901), 1, 128)]), x128((uint16)6)) - x128(int16((uint8)input1_zero)*(int16)64), x128((int16)input1_multiplier)) + x128(widening_mul((int16(input2[t3912]) - int16((uint8)input2_zero))*(int16)64, (int16)input2_multiplier)), x128((uint32)16))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+   }
+   if (t3903) {
+    let t3882 = output.min.1 + output.s0.y.rebased
+    predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t3905, t3904 + 1))))
+     output[ramp((output.stride.1*t3882) + ((t3904 - t3910) - output.min.0), 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)widening_mul((int16x128)shift_left(int16x128((input1[ramp((input1.stride.1*t3882) + ((t3904 - t3909) - input1.min.0), 1, 128)] if (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(t3905, t3904 + 1)))))), x128((uint16)6)) - x128(int16((uint8)input1_zero)*(int16)64), x128((int16)input1_multiplier)) + x128(widening_mul((int16(input2[(output.s0.y.rebased + t3900)*input2.stride.1]) - int16((uint8)input2_zero))*(int16)64, (int16)input2_multiplier)), x128((uint32)16))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+   }
+  }
+ } else {
+  0
+ }
+}
+}
+
+

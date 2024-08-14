@@ -1,0 +1,137 @@
+[
+  [
+    {
+      "name": "mat_a"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "mat_b"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "bias"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_multiplier"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_shift"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_offset"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        0
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_min"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output_max"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 8
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "output"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        2
+      ]
+    }
+  ]
+]

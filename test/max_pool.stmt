@@ -1,0 +1,230 @@
+module name=max_pool, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func max_pool (input, stride_x, stride_y, filter_width, filter_height, output_min, output_max, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 0)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let input.min.2 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 2)
+let input.extent.2 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 2)
+let input.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 2)
+let input.min.3 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 3)
+let input.extent.3 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 3)
+let input.stride.3 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 3)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 1)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+let output.min.2 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 2)
+let output.extent.2 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 2)
+let output.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 2)
+let output.stride.3 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 3)
+produce output {
+ if (512 <= input.extent.0) {
+  let t256 = (input.extent.0 + 511)/512
+  let t260 = (((input.min.0 - (input.min.3*output.stride.3)) - (output.min.2*output.stride.2)) - (output.min.1*output.stride.1)) - input.min.0
+  let t259 = (((input.min.0 - (input.min.3*input.stride.3)) - (input.min.2*input.stride.2)) - (input.min.1*input.stride.1)) - input.min.0
+  let t257 = input.extent.2 + input.min.2
+  let t258 = input.extent.1 + input.min.1
+  for (output.s0.b.rebased, 0, input.extent.3) {
+   let t263 = input.min.3 + output.s0.b.rebased
+   let t262 = (output.stride.3*t263) + t260
+   let t261 = (input.stride.3*t263) + t259
+   for (output.s0.y.rebased, 0, output.extent.2) {
+    let t268 = output.min.2 + output.s0.y.rebased
+    let t269 = stride_y*t268
+    let t265 = min(t257 - t269, filter_height)
+    let t264 = min(input.min.2 - t269, filter_height)
+    let t267 = (output.stride.2*t268) + t262
+    for (output.s0.x.rebased, 0, output.extent.1) {
+     let t277 = output.min.1 + output.s0.x.rebased
+     let t278 = max(t264, 0)
+     let t279 = stride_x*t277
+     let t270 = max(t264, t265)
+     let t273 = min(t258 - t279, filter_width)
+     let t272 = min(input.min.1 - t279, filter_width)
+     let t274 = t269 + t278
+     let t276 = (output.stride.1*t277) + t267
+     for (output.s0.c.c, 0, t256) {
+      let output.s0.c.v2.base.s = min(output.s0.c.c*512, input.extent.0 + -512)
+      allocate maximum[uint8 * 512 * 1 * 1 * 1 * 1]
+      produce maximum {
+       maximum[ramp(0, 1, 512)] = x512((uint8)output_min)
+       let t285 = max(t272, 0)
+       let t281 = max(t272, t273)
+       let t280 = max(t270, 0) - t278
+       let t284 = t279 + t285
+       let t283 = output.s0.c.v2.base.s + t261
+       for (maximum.s1.r12$y.rebased, 0, t280) {
+        let t286 = max(t281, 0) - t285
+        let t287 = ((maximum.s1.r12$y.rebased + t274)*input.stride.2) + t283
+        for (maximum.s1.r12$x.rebased, 0, t286) {
+         maximum[ramp(0, 1, 512)] = max(maximum[ramp(0, 1, 512)], input[ramp(((maximum.s1.r12$x.rebased + t284)*input.stride.1) + t287, 1, 512)])
+        }
+       }
+      }
+      consume maximum {
+       output[ramp(output.s0.c.v2.base.s + t276, 1, 512)] = min(maximum[ramp(0, 1, 512)], x512((uint8)output_max))
+      }
+      free maximum
+     }
+    }
+   }
+  }
+ } else if (256 <= input.extent.0) {
+  let t288 = (input.extent.0 + 255)/256
+  let t292 = (((input.min.0 - (input.min.3*output.stride.3)) - (output.min.2*output.stride.2)) - (output.min.1*output.stride.1)) - input.min.0
+  let t291 = (((input.min.0 - (input.min.3*input.stride.3)) - (input.min.2*input.stride.2)) - (input.min.1*input.stride.1)) - input.min.0
+  let t289 = input.extent.2 + input.min.2
+  let t290 = input.extent.1 + input.min.1
+  for (output.s0.b.rebased, 0, input.extent.3) {
+   let t295 = input.min.3 + output.s0.b.rebased
+   let t294 = (output.stride.3*t295) + t292
+   let t293 = (input.stride.3*t295) + t291
+   for (output.s0.y.rebased, 0, output.extent.2) {
+    let t300 = output.min.2 + output.s0.y.rebased
+    let t301 = stride_y*t300
+    let t297 = min(t289 - t301, filter_height)
+    let t296 = min(input.min.2 - t301, filter_height)
+    let t299 = (output.stride.2*t300) + t294
+    for (output.s0.x.rebased, 0, output.extent.1) {
+     let t309 = output.min.1 + output.s0.x.rebased
+     let t310 = max(t296, 0)
+     let t311 = stride_x*t309
+     let t302 = max(t296, t297)
+     let t305 = min(t290 - t311, filter_width)
+     let t304 = min(input.min.1 - t311, filter_width)
+     let t306 = t301 + t310
+     let t308 = (output.stride.1*t309) + t299
+     for (output.s0.c.c, 0, t288) {
+      let output.s0.c.v3.base.s = min(output.s0.c.c*256, input.extent.0 + -256)
+      allocate maximum[uint8 * 256 * 1 * 1 * 1 * 1]
+      produce maximum {
+       maximum[ramp(0, 1, 256)] = x256((uint8)output_min)
+       let t317 = max(t304, 0)
+       let t313 = max(t304, t305)
+       let t312 = max(t302, 0) - t310
+       let t316 = t311 + t317
+       let t315 = output.s0.c.v3.base.s + t293
+       for (maximum.s1.r12$y.rebased, 0, t312) {
+        let t318 = max(t313, 0) - t317
+        let t319 = ((maximum.s1.r12$y.rebased + t306)*input.stride.2) + t315
+        for (maximum.s1.r12$x.rebased, 0, t318) {
+         maximum[ramp(0, 1, 256)] = max(maximum[ramp(0, 1, 256)], input[ramp(((maximum.s1.r12$x.rebased + t316)*input.stride.1) + t319, 1, 256)])
+        }
+       }
+      }
+      consume maximum {
+       output[ramp(output.s0.c.v3.base.s + t308, 1, 256)] = min(maximum[ramp(0, 1, 256)], x256((uint8)output_max))
+      }
+      free maximum
+     }
+    }
+   }
+  }
+ } else if (128 <= input.extent.0) {
+  let t320 = (input.extent.0 + 127)/128
+  let t324 = (((input.min.0 - (input.min.3*output.stride.3)) - (output.min.2*output.stride.2)) - (output.min.1*output.stride.1)) - input.min.0
+  let t323 = (((input.min.0 - (input.min.3*input.stride.3)) - (input.min.2*input.stride.2)) - (input.min.1*input.stride.1)) - input.min.0
+  let t321 = input.extent.2 + input.min.2
+  let t322 = input.extent.1 + input.min.1
+  for (output.s0.b.rebased, 0, input.extent.3) {
+   let t327 = input.min.3 + output.s0.b.rebased
+   let t326 = (output.stride.3*t327) + t324
+   let t325 = (input.stride.3*t327) + t323
+   for (output.s0.y.rebased, 0, output.extent.2) {
+    let t332 = output.min.2 + output.s0.y.rebased
+    let t333 = stride_y*t332
+    let t329 = min(t321 - t333, filter_height)
+    let t328 = min(input.min.2 - t333, filter_height)
+    let t331 = (output.stride.2*t332) + t326
+    for (output.s0.x.rebased, 0, output.extent.1) {
+     let t341 = output.min.1 + output.s0.x.rebased
+     let t342 = max(t328, 0)
+     let t343 = stride_x*t341
+     let t334 = max(t328, t329)
+     let t337 = min(t322 - t343, filter_width)
+     let t336 = min(input.min.1 - t343, filter_width)
+     let t338 = t333 + t342
+     let t340 = (output.stride.1*t341) + t331
+     for (output.s0.c.c, 0, t320) {
+      let output.s0.c.v4.base.s = min(output.s0.c.c*128, input.extent.0 + -128)
+      allocate maximum[uint8 * 128]
+      produce maximum {
+       maximum[ramp(0, 1, 128)] = x128((uint8)output_min)
+       let t349 = max(t336, 0)
+       let t345 = max(t336, t337)
+       let t344 = max(t334, 0) - t342
+       let t348 = t343 + t349
+       let t347 = output.s0.c.v4.base.s + t325
+       for (maximum.s1.r12$y.rebased, 0, t344) {
+        let t350 = max(t345, 0) - t349
+        let t351 = ((maximum.s1.r12$y.rebased + t338)*input.stride.2) + t347
+        for (maximum.s1.r12$x.rebased, 0, t350) {
+         maximum[ramp(0, 1, 128)] = max(maximum[ramp(0, 1, 128)], input[ramp(((maximum.s1.r12$x.rebased + t348)*input.stride.1) + t351, 1, 128)])
+        }
+       }
+      }
+      consume maximum {
+       output[ramp(output.s0.c.v4.base.s + t340, 1, 128)] = min(maximum[ramp(0, 1, 128)], x128((uint8)output_max))
+      }
+      free maximum
+     }
+    }
+   }
+  }
+ } else {
+  let t355 = (((input.min.0 - (input.min.3*output.stride.3)) - (output.min.2*output.stride.2)) - (output.min.1*output.stride.1)) - input.min.0
+  let t354 = (((input.min.0 - (input.min.3*input.stride.3)) - (input.min.2*input.stride.2)) - (input.min.1*input.stride.1)) - input.min.0
+  let t352 = input.extent.2 + input.min.2
+  let t353 = input.extent.1 + input.min.1
+  for (output.s0.b.rebased, 0, input.extent.3) {
+   let t358 = input.min.3 + output.s0.b.rebased
+   let t357 = (output.stride.3*t358) + t355
+   let t356 = (input.stride.3*t358) + t354
+   for (output.s0.y.rebased, 0, output.extent.2) {
+    let t363 = output.min.2 + output.s0.y.rebased
+    let t364 = stride_y*t363
+    let t360 = min(t352 - t364, filter_height)
+    let t359 = min(input.min.2 - t364, filter_height)
+    let t362 = (output.stride.2*t363) + t357
+    for (output.s0.x.rebased, 0, output.extent.1) {
+     let t372 = output.min.1 + output.s0.x.rebased
+     let t373 = max(t359, 0)
+     let t374 = stride_x*t372
+     let t365 = max(t359, t360)
+     let t368 = min(t353 - t374, filter_width)
+     let t367 = min(input.min.1 - t374, filter_width)
+     let t369 = t364 + t373
+     let t371 = (output.stride.1*t372) + t362
+     for (output.s0.c.rebased, 0, input.extent.0) {
+      allocate maximum[uint8 * 1]
+      produce maximum {
+       maximum[0] = (uint8)output_min
+       let t380 = max(t367, 0)
+       let t376 = max(t367, t368)
+       let t375 = max(t365, 0) - t373
+       let t379 = t374 + t380
+       let t378 = output.s0.c.rebased + t356
+       for (maximum.s1.r12$y.rebased, 0, t375) {
+        let t381 = max(t376, 0) - t380
+        let t382 = ((maximum.s1.r12$y.rebased + t369)*input.stride.2) + t378
+        for (maximum.s1.r12$x.rebased, 0, t381) {
+         maximum[0] = max(maximum[0], input[((maximum.s1.r12$x.rebased + t379)*input.stride.1) + t382])
+        }
+       }
+      }
+      consume maximum {
+       output[output.s0.c.rebased + t371] = min(maximum[0], (uint8)output_max)
+      }
+      free maximum
+     }
+    }
+   }
+  }
+ }
+}
+}
+
+

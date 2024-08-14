@@ -1,0 +1,121 @@
+module name=conv3x3a32, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+internal func conv3x3a32_par_for_output_s0_y_y_v1 (__user_context, output.s0.y.y.v1, closure_arg) {
+let closure_prototype = (void *)make_struct(reinterpret<(void *)>((uint64)0), reinterpret<(void *)>((uint64)0), 0, 0, 0, 0, 0, 0, 0, 0, 0, (uint1)0)
+let input = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 0)
+let output = (void *)load_typed_struct_member((void *)closure_arg, closure_prototype, 1)
+let input.extent.0 = load_typed_struct_member((void *)closure_arg, closure_prototype, 2)
+let input.extent.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 3)
+let input.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 4)
+let output.stride.1 = load_typed_struct_member((void *)closure_arg, closure_prototype, 5)
+let t146 = load_typed_struct_member((void *)closure_arg, closure_prototype, 6)
+let t156 = load_typed_struct_member((void *)closure_arg, closure_prototype, 7)
+let t157 = load_typed_struct_member((void *)closure_arg, closure_prototype, 8)
+let t158 = load_typed_struct_member((void *)closure_arg, closure_prototype, 9)
+let t165 = load_typed_struct_member((void *)closure_arg, closure_prototype, 10)
+let t147 = (uint1)load_typed_struct_member((void *)closure_arg, closure_prototype, 11)
+let output.s0.y.y.y.base = min(output.s0.y.y.v1*128, t146 + -128)
+let t166 = min(output.s0.y.y.v1*128, t146 + -128)
+for (output.s0.y.y.y, 0, 128) {
+ if ((max(min(((output.s0.y.y.y + output.s0.y.y.y.base)*4) + 13, input.extent.1), 1) <= input.extent.1) && t147) {
+  let t204 = (output.s0.y.y.y + t166) in (uint8)prefetch(input, (max(min(((output.s0.y.y.y + output.s0.y.y.y.base)*4) + 8, input.extent.1), 1) + -1)*input.stride.1, t158, 1, max(min((t204*4) + 13, input.extent.1) - max(min((t204*4) + 8, input.extent.1), 1), 0) + 1, input.stride.1)
+ }
+ allocate input_bounded[uint8 * (t157 + 128) * 6]
+ produce input_bounded {
+  let input_bounded.s0.y.prologue.s = let t205 = (output.s0.y.y.y + output.s0.y.y.y.base) in min(max(t205*4, 1), (t205*4) + 6)
+  let input_bounded.s0.y.epilogue = let t206 = (output.s0.y.y.y + output.s0.y.y.y.base) in max(min((t206*4) + 5, input.extent.1), min(max(t206*4, 1), (t206*4) + 6) + -1)
+  let t173 = (output.s0.y.y.y + output.s0.y.y.y.base)*4
+  let t172 = 1 - max(min((output.s0.y.y.y + t166)*4, 1), -5)
+  for (input_bounded.s0.y.rebased, 0, t172) {
+   let t175 = (t157 + 128)*input_bounded.s0.y.rebased
+   let t174 = (max(min(input_bounded.s0.y.rebased + t173, input.extent.1), 1) + -1)*input.stride.1
+   for (input_bounded.s0.x.x, 0, t156 + 1) {
+    input_bounded[ramp((input_bounded.s0.x.x*128) + t175, 1, 128) aligned(128, 0)] = input[max(min(ramp((input_bounded.s0.x.x*128) + -1, 1, 128), x128(input.extent.0 + -1)), x128(0)) + x128(t174)]
+   }
+  }
+  let t179 = output.s0.y.y.y + t166
+  let t180 = t179*4
+  let t178 = t156 - t165
+  let t176 = max(min(t180 + 5, input.extent.1) - min(max(t180, 1), t180 + 6), -1) + 1
+  for (input_bounded.s0.y.rebased, 0, t176) {
+   input_bounded[ramp(((input_bounded.s0.y.rebased - max(min(t179*4, 1), -5)) + 1)*(t157 + 128), 1, 128) aligned(128, 0)] = input[max(min(ramp(-1, 1, 128), x128(input.extent.0 + -1)), x128(0)) + x128(((input_bounded.s0.y.prologue.s + input_bounded.s0.y.rebased) + -1)*input.stride.1)]
+   let t182 = ((input_bounded.s0.y.rebased - max(min(t179*4, 1), -5)) + 1)*(t157 + 128)
+   let t181 = ((input_bounded.s0.y.prologue.s + input_bounded.s0.y.rebased) + -1)*input.stride.1
+   for (input_bounded.s0.x.x.rebased, 0, t165) {
+    input_bounded[ramp(((input_bounded.s0.x.x.rebased*128) + t182) + 128, 1, 128) aligned(128, 0)] = input[ramp(((input_bounded.s0.x.x.rebased*128) + t181) + 127, 1, 128) aligned(128, 127)]
+   }
+   let t184 = ((input_bounded.s0.y.rebased - max(min(t179*4, 1), -5)) + 1)*(t157 + 128)
+   let t183 = ((input_bounded.s0.y.prologue.s + input_bounded.s0.y.rebased) + -1)*input.stride.1
+   for (input_bounded.s0.x.x.rebased, 0, t178) {
+    let t136 = input_bounded.s0.x.x.rebased + t165
+    input_bounded[ramp(((t136*128) + t184) + 128, 1, 128) aligned(128, 0)] = input[max(min(ramp((t136*128) + 127, 1, 128), x128(input.extent.0 + -1)), x128(0)) + x128(t183)]
+   }
+  }
+  let t187 = output.s0.y.y.y + t166
+  let t188 = t187*4
+  let t185 = (t188 - max(min(t188 + 5, input.extent.1), min(max(t188, 1), t188 + 6) + -1)) + 5
+  for (input_bounded.s0.y.rebased, 0, t185) {
+   let t191 = t187*4
+   let t190 = (((max(min(t191 + 5, input.extent.1), min(max(t191, 1), t191 + 6) + -1) - t191) + input_bounded.s0.y.rebased) + 1)*(t157 + 128)
+   let t189 = max(min(input.extent.1 + -1, input_bounded.s0.y.epilogue + input_bounded.s0.y.rebased), 0)*input.stride.1
+   for (input_bounded.s0.x.x, 0, t156 + 1) {
+    input_bounded[ramp((input_bounded.s0.x.x*128) + t190, 1, 128) aligned(128, 0)] = input[max(min(ramp((input_bounded.s0.x.x*128) + -1, 1, 128), x128(input.extent.0 + -1)), x128(0)) + x128(t189)]
+   }
+  }
+ }
+ consume input_bounded {
+  let t200 = output.s0.y.y.y + output.s0.y.y.y.base
+  let t201 = t200*4
+  let t193 = output.stride.1*t200
+  let t199 = (t201 + 3)*output.stride.1
+  let t197 = (t201 + 2)*output.stride.1
+  let t195 = (t201 + 1)*output.stride.1
+  for (output.s0.x.x, 0, t156) {
+   let t105 = (t156*2) + output.s0.x.x
+   let t141 = output.s0.x.x + t156
+   output[ramp(((output.s0.x.x*32) + t193)*4, 1, 128) aligned(128, 0)] = uint8x128(min((int32x128)shift_right((int32x128)widen_right_add((((int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp(output.s0.x.x*128, 1, 128) aligned(128, 0)]), x128((uint16)2)), (int16x128)widening_mul(input_bounded[ramp((output.s0.x.x*128) + 1, 1, 128) aligned(128, 1)], x128((int8)7))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((output.s0.x.x*128) + 2, 1, 128) aligned(128, 2)], x128((int8)10)), (int16x128)widening_mul(input_bounded[ramp((t141*128) + 128, 1, 128) aligned(128, 0)], x128((int8)5)))) + (int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t141*128) + 129, 1, 128) aligned(128, 1)]), x128((uint16)3)), (int16x128)widening_mul(input_bounded[ramp((t141*128) + 130, 1, 128) aligned(128, 2)], x128((int8)11)))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t105*128) + 256, 1, 128) aligned(128, 0)], x128((int8)6)), (int16x128)widening_mul(input_bounded[ramp((t105*128) + 257, 1, 128) aligned(128, 1)], x128((int8)9))), (int16x128)widening_mul(input_bounded[ramp((t105*128) + 258, 1, 128) aligned(128, 2)], x128((int8)12))), x128((uint32)4)), x128(255)))
+   let t107 = output.s0.x.x + t156
+   let t108 = (t156*3) + output.s0.x.x
+   let t142 = (t156*2) + output.s0.x.x
+   output[ramp((output.s0.x.x*128) + t195, 1, 128) aligned(128, 0)] = uint8x128(min((int32x128)shift_right((int32x128)widen_right_add((((int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t107*128) + 128, 1, 128) aligned(128, 0)]), x128((uint16)2)), (int16x128)widening_mul(input_bounded[ramp((t107*128) + 129, 1, 128) aligned(128, 1)], x128((int8)7))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t107*128) + 130, 1, 128) aligned(128, 2)], x128((int8)10)), (int16x128)widening_mul(input_bounded[ramp((t142*128) + 256, 1, 128) aligned(128, 0)], x128((int8)5)))) + (int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t142*128) + 257, 1, 128) aligned(128, 1)]), x128((uint16)3)), (int16x128)widening_mul(input_bounded[ramp((t142*128) + 258, 1, 128) aligned(128, 2)], x128((int8)11)))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t108*128) + 384, 1, 128) aligned(128, 0)], x128((int8)6)), (int16x128)widening_mul(input_bounded[ramp((t108*128) + 385, 1, 128) aligned(128, 1)], x128((int8)9))), (int16x128)widening_mul(input_bounded[ramp((t108*128) + 386, 1, 128) aligned(128, 2)], x128((int8)12))), x128((uint32)4)), x128(255)))
+   let t110 = (t156*2) + output.s0.x.x
+   let t111 = (t156*4) + output.s0.x.x
+   let t143 = (t156*3) + output.s0.x.x
+   output[ramp((output.s0.x.x*128) + t197, 1, 128) aligned(128, 0)] = uint8x128(min((int32x128)shift_right((int32x128)widen_right_add((((int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t110*128) + 256, 1, 128) aligned(128, 0)]), x128((uint16)2)), (int16x128)widening_mul(input_bounded[ramp((t110*128) + 257, 1, 128) aligned(128, 1)], x128((int8)7))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t110*128) + 258, 1, 128) aligned(128, 2)], x128((int8)10)), (int16x128)widening_mul(input_bounded[ramp((t143*128) + 384, 1, 128) aligned(128, 0)], x128((int8)5)))) + (int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t143*128) + 385, 1, 128) aligned(128, 1)]), x128((uint16)3)), (int16x128)widening_mul(input_bounded[ramp((t143*128) + 386, 1, 128) aligned(128, 2)], x128((int8)11)))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t111*128) + 512, 1, 128) aligned(128, 0)], x128((int8)6)), (int16x128)widening_mul(input_bounded[ramp((t111*128) + 513, 1, 128) aligned(128, 1)], x128((int8)9))), (int16x128)widening_mul(input_bounded[ramp((t111*128) + 514, 1, 128) aligned(128, 2)], x128((int8)12))), x128((uint32)4)), x128(255)))
+   let t113 = (t156*3) + output.s0.x.x
+   let t114 = (t156*5) + output.s0.x.x
+   let t144 = (t156*4) + output.s0.x.x
+   output[ramp((output.s0.x.x*128) + t199, 1, 128) aligned(128, 0)] = uint8x128(min((int32x128)shift_right((int32x128)widen_right_add((((int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t113*128) + 384, 1, 128) aligned(128, 0)]), x128((uint16)2)), (int16x128)widening_mul(input_bounded[ramp((t113*128) + 385, 1, 128) aligned(128, 1)], x128((int8)7))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t113*128) + 386, 1, 128) aligned(128, 2)], x128((int8)10)), (int16x128)widening_mul(input_bounded[ramp((t144*128) + 512, 1, 128) aligned(128, 0)], x128((int8)5)))) + (int32x128)widening_add((int16x128)shift_left(int16x128(input_bounded[ramp((t144*128) + 513, 1, 128) aligned(128, 1)]), x128((uint16)3)), (int16x128)widening_mul(input_bounded[ramp((t144*128) + 514, 1, 128) aligned(128, 2)], x128((int8)11)))) + (int32x128)widening_add((int16x128)widening_mul(input_bounded[ramp((t114*128) + 640, 1, 128) aligned(128, 0)], x128((int8)6)), (int16x128)widening_mul(input_bounded[ramp((t114*128) + 641, 1, 128) aligned(128, 1)], x128((int8)9))), (int16x128)widening_mul(input_bounded[ramp((t114*128) + 642, 1, 128) aligned(128, 2)], x128((int8)12))), x128((uint32)4)), x128(255)))
+  }
+ }
+ free input_bounded
+}
+}
+
+
+external_plus_metadata func conv3x3a32 (input, mask, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 0)
+let input.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ let t156 = (output.extent.0 + 127)/128
+ let t157 = t156*128
+ let t158 = min(t157 + 127, input.extent.0)
+ let t147 = max(t158, 1) <= input.extent.0
+ let t151 = min(output.extent.0 + 254, input.extent.0)
+ let t145 = (output.extent.1 + 511)/512
+ let t146 = (output.extent.1 + 3)/4
+ for<Hexagon> (output.s0.__outermost, 0, 1) {
+  let t165 = max((t151 + -127)/128, 0)
+  let parallel_closure = (void *)make_struct(input, output, input.extent.0, input.extent.1, input.stride.1, output.stride.1, t146, t156, t157, t158, t165, t147)
+  let closure_result = halide_do_par_for((halide_task_t)::conv3x3a32_par_for_output_s0_y_y_v1, 0, t145, (uint8_t *)(parallel_closure))
+  assert(closure_result == 0, closure_result)
+ }
+}
+}
+
+

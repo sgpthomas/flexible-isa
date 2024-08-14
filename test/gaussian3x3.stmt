@@ -1,0 +1,54 @@
+module name=gaussian3x3, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func gaussian3x3 (input, output) {
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.0 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 0)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 0)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+produce output {
+ let t31 = (output.extent.0 + 127)/128
+ let t26 = (output.extent.1 + 3)/4
+ let t27 = ((7 - input.min.1)*input.stride.1) - input.min.0
+ let t30 = (input.min.1*input.stride.1) + input.min.0
+ for<Hexagon> (output.s0.__outermost, 0, 1) {
+  for (output.s0.y.y, 0, t26) {
+   (uint8)prefetch(input, (((input.stride.1*output.s0.y.y)*4) + t27) + -1, (t31*128) + 2, 1, 6, input.stride.1)
+   let t41 = output.s0.y.y*4
+   let t42 = t41 + 1
+   let t43 = t41 + 2
+   let t44 = t41 + 3
+   let t40 = output.stride.1*t44
+   let t38 = output.stride.1*t43
+   let t36 = output.stride.1*t42
+   let t34 = output.s0.y.y*output.stride.1
+   let t33 = input.stride.1*output.s0.y.y
+   let t39 = (input.stride.1*t44) - t30
+   let t37 = (input.stride.1*t43) - t30
+   let t35 = (input.stride.1*t42) - t30
+   for (output.s0.x.x, 0, t31) {
+    let t6 = (((output.s0.x.x*32) + t33)*4) - t30
+    let t18 = t6 - input.stride.1
+    let t19 = input.stride.1 + t6
+    output[ramp(((output.s0.x.x*32) + t34)*4, 1, 128) aligned(4, 0)] = uint8x128((int16x128)rounding_shift_right(int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((int16x128)shift_left(int16x128(input[ramp(t6 + 1, 1, 128)]), x128((uint16)1)) + int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((((int16x128)shift_left(int16x128(input[ramp(t6, 1, 128)]), x128((uint16)2)) + (int16x128)shift_left(int16x128(input[ramp(t18, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t19, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t6 + -1, 1, 128)]), x128((uint16)1)))), input[ramp(t18 + -1, 1, 128)]))), input[ramp(t19 + -1, 1, 128)])))), input[ramp(t18 + 1, 1, 128)]))), input[ramp(t19 + 1, 1, 128)])), x128((uint16)4)))
+    let t9 = (output.s0.x.x*128) + t35
+    let t20 = t9 - input.stride.1
+    let t21 = input.stride.1 + t9
+    output[ramp((output.s0.x.x*128) + t36, 1, 128)] = uint8x128((int16x128)rounding_shift_right(int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((int16x128)shift_left(int16x128(input[ramp(t9 + 1, 1, 128)]), x128((uint16)1)) + int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((((int16x128)shift_left(int16x128(input[ramp(t9, 1, 128)]), x128((uint16)2)) + (int16x128)shift_left(int16x128(input[ramp(t20, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t21, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t9 + -1, 1, 128)]), x128((uint16)1)))), input[ramp(t20 + -1, 1, 128)]))), input[ramp(t21 + -1, 1, 128)])))), input[ramp(t20 + 1, 1, 128)]))), input[ramp(t21 + 1, 1, 128)])), x128((uint16)4)))
+    let t12 = (output.s0.x.x*128) + t37
+    let t22 = t12 - input.stride.1
+    let t23 = input.stride.1 + t12
+    output[ramp((output.s0.x.x*128) + t38, 1, 128) aligned(2, 0)] = uint8x128((int16x128)rounding_shift_right(int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((int16x128)shift_left(int16x128(input[ramp(t12 + 1, 1, 128)]), x128((uint16)1)) + int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((((int16x128)shift_left(int16x128(input[ramp(t12, 1, 128)]), x128((uint16)2)) + (int16x128)shift_left(int16x128(input[ramp(t22, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t23, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t12 + -1, 1, 128)]), x128((uint16)1)))), input[ramp(t22 + -1, 1, 128)]))), input[ramp(t23 + -1, 1, 128)])))), input[ramp(t22 + 1, 1, 128)]))), input[ramp(t23 + 1, 1, 128)])), x128((uint16)4)))
+    let t15 = (output.s0.x.x*128) + t39
+    let t24 = t15 - input.stride.1
+    let t25 = input.stride.1 + t15
+    output[ramp((output.s0.x.x*128) + t40, 1, 128)] = uint8x128((int16x128)rounding_shift_right(int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((int16x128)shift_left(int16x128(input[ramp(t15 + 1, 1, 128)]), x128((uint16)1)) + int16x128((uint16x128)widen_right_add(uint16x128(int16x128((uint16x128)widen_right_add(uint16x128(((((int16x128)shift_left(int16x128(input[ramp(t15, 1, 128)]), x128((uint16)2)) + (int16x128)shift_left(int16x128(input[ramp(t24, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t25, 1, 128)]), x128((uint16)1))) + (int16x128)shift_left(int16x128(input[ramp(t15 + -1, 1, 128)]), x128((uint16)1)))), input[ramp(t24 + -1, 1, 128)]))), input[ramp(t25 + -1, 1, 128)])))), input[ramp(t24 + 1, 1, 128)]))), input[ramp(t25 + 1, 1, 128)])), x128((uint16)4)))
+   }
+  }
+ }
+}
+}
+
+

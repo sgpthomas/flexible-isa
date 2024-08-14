@@ -1,0 +1,140 @@
+[
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 16
+          }
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "matrix_3200"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": "Unknown"
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "matrix_7000"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": "Unknown"
+        },
+        2
+      ]
+    }
+  ],
+  [
+    {
+      "name": "color_temp"
+    },
+    {
+      "Input": [
+        {
+          "Raw": "Unknown"
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "gamma"
+    },
+    {
+      "Input": [
+        {
+          "Raw": "Unknown"
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "contrast"
+    },
+    {
+      "Input": [
+        {
+          "Raw": "Unknown"
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "sharpen_strength"
+    },
+    {
+      "Input": [
+        {
+          "Raw": "Unknown"
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "blackLevel"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "whiteLevel"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Signed": 32
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "processed"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 8
+          }
+        },
+        3
+      ]
+    }
+  ]
+]

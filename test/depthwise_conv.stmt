@@ -1,0 +1,596 @@
+module name=depthwise_conv, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bounds_query
+external_plus_metadata func depthwise_conv (input, input_zero, filter, filter_zero, bias, depth_multiplier, stride_x, stride_y, dilation_x, dilation_y, output_multiplier, output_shift, output_zero, output_min, output_max, output) {
+let bias = (void *)_halide_buffer_get_host((struct halide_buffer_t *)bias.buffer)
+let filter = (void *)_halide_buffer_get_host((struct halide_buffer_t *)filter.buffer)
+let filter.extent.0 = _halide_buffer_get_extent((struct halide_buffer_t *)filter.buffer, 0)
+let filter.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)filter.buffer, 1)
+let filter.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)filter.buffer, 1)
+let filter.extent.2 = _halide_buffer_get_extent((struct halide_buffer_t *)filter.buffer, 2)
+let filter.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)filter.buffer, 2)
+let input = (void *)_halide_buffer_get_host((struct halide_buffer_t *)input.buffer)
+let input.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 1)
+let input.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 1)
+let input.min.2 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 2)
+let input.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 2)
+let input.min.3 = _halide_buffer_get_min((struct halide_buffer_t *)input.buffer, 3)
+let input.extent.3 = _halide_buffer_get_extent((struct halide_buffer_t *)input.buffer, 3)
+let input.stride.3 = _halide_buffer_get_stride((struct halide_buffer_t *)input.buffer, 3)
+let output = (void *)_halide_buffer_get_host((struct halide_buffer_t *)output.buffer)
+let output.min.1 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 1)
+let output.extent.1 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 1)
+let output.stride.1 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 1)
+let output.min.2 = _halide_buffer_get_min((struct halide_buffer_t *)output.buffer, 2)
+let output.extent.2 = _halide_buffer_get_extent((struct halide_buffer_t *)output.buffer, 2)
+let output.stride.2 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 2)
+let output.stride.3 = _halide_buffer_get_stride((struct halide_buffer_t *)output.buffer, 3)
+produce output {
+ if ((((8 <= output.extent.1) || ((output.extent.1 % 2) == 0)) && ((8 <= output.extent.2) || ((output.extent.2 % 2) == 0))) && (128 <= filter.extent.0)) {
+  let t1119 = dilation_x < 0
+  let t1120 = (filter.extent.1 + -1)*dilation_x
+  let t1121 = select(t1119, t1120, 0)
+  let t1122 = stride_x < 0
+  let t1123 = output.extent.1 + -1
+  let t1124 = min(output.extent.1, 2)
+  let t1125 = t1124 + -2
+  let t1126 = (select(t1122, t1123, t1125) + output.min.1)*stride_x
+  let t1127 = (filter.extent.1 == 3) && (filter.extent.2 == 3)
+  let t1128 = min(dilation_x, 0)*2
+  let t1129 = dilation_y < 0
+  let t1130 = (filter.extent.2 + -1)*dilation_y
+  let t1131 = select(t1129, t1130, 0)
+  let t1132 = stride_y < 0
+  let t1133 = output.extent.2 + -1
+  let t1134 = min(output.extent.2, 2)
+  let t1135 = t1134 + -2
+  let t1136 = (select(t1132, t1133, t1135) + output.min.2)*stride_y
+  let t1137 = min(dilation_y, 0)*2
+  let t1112 = depth_multiplier == 1
+  let t1091 = max(select(t1127, 3, filter.extent.2), filter.extent.2)
+  let t1092 = max(select(t1127, 3, filter.extent.1), filter.extent.1)
+  let t1090 = (filter.extent.0 + 127)/128
+  let t1114 = (output.extent.2 + 1)/2
+  let t1115 = (output.extent.1 + 1)/2
+  let t1103 = max(dilation_y, 0)*2
+  let t1110 = max(dilation_x, 0)*2
+  let t1093 = select(t1129, 0, t1130) + ((select(t1132, t1135, t1133) + output.min.2)*stride_y)
+  let t1097 = select(t1127, t1137, t1131) + t1136
+  let t1094 = t1131 + t1136
+  let t1095 = select(t1119, 0, t1120) + ((select(t1122, t1125, t1123) + output.min.1)*stride_x)
+  let t1105 = select(t1127, t1128, t1121) + t1126
+  let t1096 = t1121 + t1126
+  let t1118 = (output.min.2*output.stride.2) + ((input.min.3*output.stride.3) + (output.min.1*output.stride.1))
+  let t1113 = (input.min.2*input.stride.2) + ((input.min.3*input.stride.3) + (input.min.1*input.stride.1))
+  for (output.s0.c.co, 0, t1090) {
+   let output.s0.c.c.base = min(output.s0.c.co*128, filter.extent.0 + -128)
+   allocate filter_zeroed[int16 * 128 * t1092 * t1091] in Stack
+   produce filter_zeroed {
+    for (filter_zeroed.s0.y, 0, filter.extent.2) {
+     let t1139 = filter_zeroed.s0.y*t1092
+     let t1138 = (filter.stride.2*filter_zeroed.s0.y) + output.s0.c.c.base
+     for (filter_zeroed.s0.x, 0, filter.extent.1) {
+      filter_zeroed[ramp((filter_zeroed.s0.x + t1139)*128, 1, 64) aligned(128, 0)] = (int16x64)widening_sub(filter[ramp((filter.stride.1*filter_zeroed.s0.x) + t1138, 1, 64)], x64((uint8)filter_zero))
+      filter_zeroed[ramp(((filter_zeroed.s0.x + t1139)*128) + 64, 1, 64) aligned(128, 64)] = (int16x64)widening_sub(filter[ramp(((filter.stride.1*filter_zeroed.s0.x) + t1138) + 64, 1, 64)], x64((uint8)filter_zero))
+     }
+    }
+   }
+   allocate offset_c[int32 * 128] in Stack
+   produce offset_c {
+    consume filter_zeroed {
+     allocate sum_filter[int32 * 128 * 1]
+     produce sum_filter {
+      sum_filter[ramp(0, 1, 128)] = x128(0)
+      for (sum_filter.s1.r19$y, 0, filter.extent.2) {
+       let t1140 = sum_filter.s1.r19$y*t1092
+       for (sum_filter.s1.r19$x, 0, filter.extent.1) {
+        sum_filter[ramp(0, 1, 128)] = (int32x128)widen_right_add(sum_filter[ramp(0, 1, 128)], filter_zeroed[ramp((sum_filter.s1.r19$x + t1140)*128, 1, 128) aligned(128, 0)])
+       }
+      }
+     }
+     consume sum_filter {
+      offset_c[ramp(0, 1, 128)] = bias[ramp(output.s0.c.c.base, 1, 128)] - (int32x128)widen_right_mul(sum_filter[ramp(0, 1, 128)], x128(int16((uint8)input_zero)))
+     }
+     free sum_filter
+    }
+   }
+   consume offset_c {
+    consume filter_zeroed {
+     let t1153 = t1134 + -2
+     let t1154 = output.extent.2 + -1
+     let t1155 = t1124 + -2
+     let t1156 = output.extent.1 + -1
+     let t1143 = min(t1096, t1105)
+     let t1141 = min(t1094, t1097)
+     let t1144 = max(select(t1127, t1110, select(t1119, 0, t1120)) + ((select(t1122, t1155, t1156) + output.min.1)*stride_x), t1095) - min(select(t1127, t1128, select(t1119, t1120, 0)) + ((select(t1122, t1156, t1155) + output.min.1)*stride_x), t1096)
+     let t1142 = max(select(t1127, t1103, select(t1129, 0, t1130)) + ((select(t1132, t1153, t1154) + output.min.2)*stride_y), t1093) - min(select(t1127, t1137, select(t1129, t1130, 0)) + ((select(t1132, t1154, t1153) + output.min.2)*stride_y), t1094)
+     let t1152 = output.s0.c.c.base - t1118
+     let t1146 = t1095 - t1096
+     let t1145 = t1093 - t1094
+     for (output.s0.b.rebased, 0, input.extent.3) {
+      let resampled_input.y.extent_realized = t1142 + 1
+      let resampled_input.x.extent_realized = t1144 + 1
+      allocate resampled_input[uint8 * 128 * resampled_input.x.extent_realized * resampled_input.y.extent_realized * 1] in Stack
+      produce resampled_input {
+       if (t1112) {
+        let t1158 = t1096 - t1143
+        let t1159 = t1094 - t1141
+        let t1157 = ((input.min.3 + output.s0.b.rebased)*input.stride.3) + (output.s0.c.c.base - t1113)
+        for (resampled_input.s0.y.rebased, 0, t1145 + 1) {
+         let t1161 = ((resampled_input.s0.y.rebased + t1159)*resampled_input.x.extent_realized) + t1158
+         let t1160 = ((resampled_input.s0.y.rebased + t1094)*input.stride.2) + t1157
+         for (resampled_input.s0.x.rebased, 0, t1146 + 1) {
+          resampled_input[ramp((resampled_input.s0.x.rebased + t1161)*128, 1, 128) aligned(128, 0)] = input[ramp(((resampled_input.s0.x.rebased + t1096)*input.stride.1) + t1160, 1, 128)]
+         }
+        }
+       } else {
+        let t1163 = t1096 - t1143
+        let t1164 = t1094 - t1141
+        let t1162 = ((input.min.3 + output.s0.b.rebased)*input.stride.3) - t1113
+        for (resampled_input.s0.y.rebased, 0, t1145 + 1) {
+         let t1166 = ((resampled_input.s0.y.rebased + t1164)*resampled_input.x.extent_realized) + t1163
+         let t1165 = ((resampled_input.s0.y.rebased + t1094)*input.stride.2) + t1162
+         for (resampled_input.s0.x.rebased, 0, t1146 + 1) {
+          resampled_input[ramp((resampled_input.s0.x.rebased + t1166)*128, 1, 128) aligned(128, 0)] = input[(ramp(output.s0.c.c.base, 1, 128)/x128(depth_multiplier)) + x128(((resampled_input.s0.x.rebased + t1096)*input.stride.1) + t1165)]
+         }
+        }
+       }
+      }
+      consume resampled_input {
+       let t1168 = (dilation_x*2) - t1143
+       let t1172 = (dilation_y*2) - t1141
+       let t1173 = ((input.min.3 + output.s0.b.rebased)*output.stride.3) + t1152
+       for (output.s0.y.yo, 0, t1114) {
+        let output.s0.y.y.base.s = min(output.s0.y.yo*2, output.extent.2 + -2)
+        let t1198 = output.min.2 + output.s0.y.y.base.s
+        let t1199 = t1198 + 1
+        let t1200 = stride_y*t1199
+        let t1201 = (t1172 + t1200)*resampled_input.x.extent_realized
+        let t1202 = stride_y*t1198
+        let t1203 = (t1172 + t1202)*resampled_input.x.extent_realized
+        let t1204 = dilation_y - t1141
+        let t1205 = (t1200 + t1204)*resampled_input.x.extent_realized
+        let t1206 = (t1202 + t1204)*resampled_input.x.extent_realized
+        let t1207 = t1200 - t1141
+        let t1208 = resampled_input.x.extent_realized*t1207
+        let t1209 = t1202 - t1141
+        let t1210 = resampled_input.x.extent_realized*t1209
+        let t1211 = dilation_x - t1143
+        let t1174 = t1210 - t1143
+        let t1175 = t1208 - t1143
+        let t1181 = t1206 - t1143
+        let t1182 = t1205 - t1143
+        let t1188 = t1203 - t1143
+        let t1189 = t1201 - t1143
+        let t1176 = t1210 + t1211
+        let t1177 = t1208 + t1211
+        let t1183 = t1206 + t1211
+        let t1184 = t1205 + t1211
+        let t1190 = t1203 + t1211
+        let t1191 = t1201 + t1211
+        let t1196 = (output.stride.2*t1198) + t1173
+        let t1197 = (output.stride.2*t1199) + t1173
+        let t1178 = t1168 + t1210
+        let t1179 = t1168 + t1208
+        let t1185 = t1168 + t1206
+        let t1186 = t1168 + t1205
+        let t1192 = t1168 + t1203
+        let t1193 = t1168 + t1201
+        for (output.s0.x.xo, 0, t1115) {
+         let output.s0.x.x.base.s = min(output.s0.x.xo*2, output.extent.1 + -2)
+         allocate convolved[int32 * 512] in Register
+         produce convolved {
+          convolved[ramp(0, 1, 128)] = offset_c[ramp(0, 1, 128)]
+          convolved[ramp(128, 1, 128)] = offset_c[ramp(0, 1, 128)]
+          convolved[ramp(256, 1, 128)] = offset_c[ramp(0, 1, 128)]
+          convolved[ramp(384, 1, 128)] = offset_c[ramp(0, 1, 128)]
+          if (t1127) {
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(0, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1174)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(0, 1, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1174)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(0, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1175)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(0, 1, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1175)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(128, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1176)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(128, 1, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1176)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(128, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1177)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(128, 1, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1177)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(256, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1178)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(256, 1, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1178)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(256, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1179)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(256, 1, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1179)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1181)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1181)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1182)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1182)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1183)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1183)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1184)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1184)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 256, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1185)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 256, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1185)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 256, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1186)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*128) + 256, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1186)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1188)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1188)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1189)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1092*256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1189)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 128, 1, 128) aligned(256, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1190)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 128, 1, 128) aligned(256, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1190)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 128, 1, 128) aligned(256, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1191)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 128, 1, 128) aligned(256, 128)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1191)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1192)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1192)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.x.base.s)*stride_x) + t1193)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1092*256) + 256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp(((((output.min.1 + output.s0.x.x.base.s) + 1)*stride_x) + t1193)*128, 1, 128) aligned(128, 0)]))
+          } else {
+           let t1214 = output.min.1 + output.s0.x.x.base.s
+           let t1212 = (stride_x*t1214) - t1143
+           let t1213 = ((t1214 + 1)*stride_x) - t1143
+           for (convolved.s1.r19$y, 0, filter.extent.2) {
+            let t1220 = convolved.s1.r19$y*dilation_y
+            let t1221 = (t1207 + t1220)*resampled_input.x.extent_realized
+            let t1222 = (t1209 + t1220)*resampled_input.x.extent_realized
+            let t1215 = convolved.s1.r19$y*t1092
+            let t1217 = t1213 + t1222
+            let t1219 = t1213 + t1221
+            let t1216 = t1212 + t1222
+            let t1218 = t1212 + t1221
+            for (convolved.s1.r19$x, 0, filter.extent.1) {
+             convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((convolved.s1.r19$x + t1215)*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((convolved.s1.r19$x*dilation_x) + t1216)*128, 1, 128) aligned(128, 0)]))
+             convolved[ramp(128, 1, 128)] = convolved[ramp(128, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((convolved.s1.r19$x + t1215)*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((convolved.s1.r19$x*dilation_x) + t1217)*128, 1, 128) aligned(128, 0)]))
+             convolved[ramp(256, 1, 128)] = convolved[ramp(256, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((convolved.s1.r19$x + t1215)*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((convolved.s1.r19$x*dilation_x) + t1218)*128, 1, 128) aligned(128, 0)]))
+             convolved[ramp(384, 1, 128)] = convolved[ramp(384, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((convolved.s1.r19$x + t1215)*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((convolved.s1.r19$x*dilation_x) + t1219)*128, 1, 128) aligned(128, 0)]))
+            }
+           }
+          }
+         }
+         consume convolved {
+          output[ramp(((output.min.1 + output.s0.x.x.base.s)*output.stride.1) + t1196, 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)rounding_mul_shift_right(convolved[ramp(0, 1, 128)], x128(output_multiplier), x128((uint32)31)), x128((uint32)output_shift))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+          output[ramp((((output.min.1 + output.s0.x.x.base.s) + 1)*output.stride.1) + t1196, 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)rounding_mul_shift_right(convolved[ramp(128, 1, 128)], x128(output_multiplier), x128((uint32)31)), x128((uint32)output_shift))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+          output[ramp(((output.min.1 + output.s0.x.x.base.s)*output.stride.1) + t1197, 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)rounding_mul_shift_right(convolved[ramp(256, 1, 128)], x128(output_multiplier), x128((uint32)31)), x128((uint32)output_shift))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+          output[ramp((((output.min.1 + output.s0.x.x.base.s) + 1)*output.stride.1) + t1197, 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)rounding_mul_shift_right(convolved[ramp(384, 1, 128)], x128(output_multiplier), x128((uint32)31)), x128((uint32)output_shift))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+          free convolved
+         }
+        }
+       }
+      }
+      free resampled_input
+     }
+    }
+   }
+   free filter_zeroed
+   free offset_c
+  }
+ } else if (128 <= filter.extent.0) {
+  let t1248 = dilation_x < 0
+  let t1249 = (filter.extent.1 + -1)*dilation_x
+  let t1250 = select(t1248, t1249, 0)
+  let t1251 = stride_x < 0
+  let t1252 = ((select(t1251, output.extent.1, 1) + output.min.1) + -1)*stride_x
+  let t1253 = (filter.extent.1 == 3) && (filter.extent.2 == 3)
+  let t1254 = min(dilation_x, 0)*2
+  let t1255 = dilation_y < 0
+  let t1256 = (filter.extent.2 + -1)*dilation_y
+  let t1257 = select(t1255, t1256, 0)
+  let t1258 = stride_y < 0
+  let t1259 = ((select(t1258, output.extent.2, 1) + output.min.2) + -1)*stride_y
+  let t1260 = min(dilation_y, 0)*2
+  let t1243 = depth_multiplier == 1
+  let t1224 = max(select(t1253, 3, filter.extent.2), filter.extent.2)
+  let t1225 = max(select(t1253, 3, filter.extent.1), filter.extent.1)
+  let t1223 = (filter.extent.0 + 127)/128
+  let t1235 = max(dilation_y, 0)*2
+  let t1241 = max(dilation_x, 0)*2
+  let t1226 = select(t1255, 0, t1256) + ((select(t1258, 0, output.extent.2 + -1) + output.min.2)*stride_y)
+  let t1230 = select(t1253, t1260, t1257) + t1259
+  let t1227 = t1257 + t1259
+  let t1228 = select(t1248, 0, t1249) + ((select(t1251, 0, output.extent.1 + -1) + output.min.1)*stride_x)
+  let t1237 = select(t1253, t1254, t1250) + t1252
+  let t1229 = t1250 + t1252
+  let t1247 = (output.min.2*output.stride.2) + ((input.min.3*output.stride.3) + (output.min.1*output.stride.1))
+  let t1244 = (input.min.2*input.stride.2) + ((input.min.3*input.stride.3) + (input.min.1*input.stride.1))
+  for (output.s0.c.co, 0, t1223) {
+   let output.s0.c.c.base = min(output.s0.c.co*128, filter.extent.0 + -128)
+   allocate filter_zeroed[int16 * 128 * t1225 * t1224] in Stack
+   produce filter_zeroed {
+    for (filter_zeroed.s0.y, 0, filter.extent.2) {
+     let t1262 = filter_zeroed.s0.y*t1225
+     let t1261 = (filter.stride.2*filter_zeroed.s0.y) + output.s0.c.c.base
+     for (filter_zeroed.s0.x, 0, filter.extent.1) {
+      filter_zeroed[ramp((filter_zeroed.s0.x + t1262)*128, 1, 64) aligned(128, 0)] = (int16x64)widening_sub(filter[ramp((filter.stride.1*filter_zeroed.s0.x) + t1261, 1, 64)], x64((uint8)filter_zero))
+      filter_zeroed[ramp(((filter_zeroed.s0.x + t1262)*128) + 64, 1, 64) aligned(128, 64)] = (int16x64)widening_sub(filter[ramp(((filter.stride.1*filter_zeroed.s0.x) + t1261) + 64, 1, 64)], x64((uint8)filter_zero))
+     }
+    }
+   }
+   allocate offset_c[int32 * 128] in Stack
+   produce offset_c {
+    consume filter_zeroed {
+     allocate sum_filter[int32 * 128 * 1]
+     produce sum_filter {
+      sum_filter[ramp(0, 1, 128)] = x128(0)
+      for (sum_filter.s1.r19$y, 0, filter.extent.2) {
+       let t1263 = sum_filter.s1.r19$y*t1225
+       for (sum_filter.s1.r19$x, 0, filter.extent.1) {
+        sum_filter[ramp(0, 1, 128)] = (int32x128)widen_right_add(sum_filter[ramp(0, 1, 128)], filter_zeroed[ramp((sum_filter.s1.r19$x + t1263)*128, 1, 128) aligned(128, 0)])
+       }
+      }
+     }
+     consume sum_filter {
+      offset_c[ramp(0, 1, 128)] = bias[ramp(output.s0.c.c.base, 1, 128)] - (int32x128)widen_right_mul(sum_filter[ramp(0, 1, 128)], x128(int16((uint8)input_zero)))
+     }
+     free sum_filter
+    }
+   }
+   consume offset_c {
+    consume filter_zeroed {
+     let t1266 = min(t1229, t1237)
+     let t1264 = min(t1227, t1230)
+     let t1267 = max(select(t1253, t1241, select(t1248, 0, t1249)) + ((select(t1251, 0, output.extent.1 + -1) + output.min.1)*stride_x), t1228) - min(select(t1253, t1254, select(t1248, t1249, 0)) + (((select(t1251, output.extent.1, 1) + output.min.1) + -1)*stride_x), t1229)
+     let t1265 = max(select(t1253, t1235, select(t1255, 0, t1256)) + ((select(t1258, 0, output.extent.2 + -1) + output.min.2)*stride_y), t1226) - min(select(t1253, t1260, select(t1255, t1256, 0)) + (((select(t1258, output.extent.2, 1) + output.min.2) + -1)*stride_y), t1227)
+     let t1275 = output.s0.c.c.base - t1247
+     let t1269 = t1228 - t1229
+     let t1268 = t1226 - t1227
+     for (output.s0.b.rebased, 0, input.extent.3) {
+      let resampled_input.y.extent_realized = t1265 + 1
+      let resampled_input.x.extent_realized = t1267 + 1
+      allocate resampled_input[uint8 * 128 * resampled_input.x.extent_realized * resampled_input.y.extent_realized * 1] in Stack
+      produce resampled_input {
+       if (t1243) {
+        let t1277 = t1229 - t1266
+        let t1278 = t1227 - t1264
+        let t1276 = ((input.min.3 + output.s0.b.rebased)*input.stride.3) + (output.s0.c.c.base - t1244)
+        for (resampled_input.s0.y.rebased, 0, t1268 + 1) {
+         let t1280 = ((resampled_input.s0.y.rebased + t1278)*resampled_input.x.extent_realized) + t1277
+         let t1279 = ((resampled_input.s0.y.rebased + t1227)*input.stride.2) + t1276
+         for (resampled_input.s0.x.rebased, 0, t1269 + 1) {
+          resampled_input[ramp((resampled_input.s0.x.rebased + t1280)*128, 1, 128) aligned(128, 0)] = input[ramp(((resampled_input.s0.x.rebased + t1229)*input.stride.1) + t1279, 1, 128)]
+         }
+        }
+       } else {
+        let t1282 = t1229 - t1266
+        let t1283 = t1227 - t1264
+        let t1281 = ((input.min.3 + output.s0.b.rebased)*input.stride.3) - t1244
+        for (resampled_input.s0.y.rebased, 0, t1268 + 1) {
+         let t1285 = ((resampled_input.s0.y.rebased + t1283)*resampled_input.x.extent_realized) + t1282
+         let t1284 = ((resampled_input.s0.y.rebased + t1227)*input.stride.2) + t1281
+         for (resampled_input.s0.x.rebased, 0, t1269 + 1) {
+          resampled_input[ramp((resampled_input.s0.x.rebased + t1285)*128, 1, 128) aligned(128, 0)] = input[(ramp(output.s0.c.c.base, 1, 128)/x128(depth_multiplier)) + x128(((resampled_input.s0.x.rebased + t1229)*input.stride.1) + t1284)]
+         }
+        }
+       }
+      }
+      consume resampled_input {
+       let t1287 = (dilation_x*2) - t1266
+       let t1291 = (dilation_y*2) - t1264
+       let t1292 = ((input.min.3 + output.s0.b.rebased)*output.stride.3) + t1275
+       for (output.s0.y.yo, 0, output.extent.2) {
+        let t1306 = output.min.2 + output.s0.y.yo
+        let t1307 = stride_y*t1306
+        let t1308 = (t1291 + t1307)*resampled_input.x.extent_realized
+        let t1309 = ((dilation_y - t1264) + t1307)*resampled_input.x.extent_realized
+        let t1310 = t1307 - t1264
+        let t1311 = resampled_input.x.extent_realized*t1310
+        let t1312 = dilation_x - t1266
+        let t1293 = t1311 - t1266
+        let t1297 = t1309 - t1266
+        let t1301 = t1308 - t1266
+        let t1294 = t1311 + t1312
+        let t1298 = t1309 + t1312
+        let t1302 = t1308 + t1312
+        let t1305 = (output.stride.2*t1306) + t1292
+        let t1295 = t1287 + t1311
+        let t1299 = t1287 + t1309
+        let t1303 = t1287 + t1308
+        for (output.s0.x.xo, 0, output.extent.1) {
+         allocate convolved[int32 * 128] in Register
+         produce convolved {
+          convolved[ramp(0, 1, 128)] = offset_c[ramp(0, 1, 128)]
+          if (t1253) {
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(0, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1293)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(128, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1294)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(256, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1295)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1225*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1297)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1225*128) + 128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1298)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1225*128) + 256, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1299)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(t1225*256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1301)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1225*256) + 128, 1, 128) aligned(256, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1302)*128, 1, 128) aligned(128, 0)]))
+           convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((t1225*256) + 256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1303)*128, 1, 128) aligned(128, 0)]))
+          } else {
+           let t1313 = ((output.min.1 + output.s0.x.xo)*stride_x) - t1266
+           for (convolved.s1.r19$y, 0, filter.extent.2) {
+            let t1314 = convolved.s1.r19$y*t1225
+            let t1315 = (((convolved.s1.r19$y*dilation_y) + t1310)*resampled_input.x.extent_realized) + t1313
+            for (convolved.s1.r19$x, 0, filter.extent.1) {
+             convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((convolved.s1.r19$x + t1314)*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((convolved.s1.r19$x*dilation_x) + t1315)*128, 1, 128) aligned(128, 0)]))
+            }
+           }
+          }
+         }
+         consume convolved {
+          output[ramp(((output.min.1 + output.s0.x.xo)*output.stride.1) + t1305, 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)rounding_mul_shift_right(convolved[ramp(0, 1, 128)], x128(output_multiplier), x128((uint32)31)), x128((uint32)output_shift))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+         }
+         free convolved
+        }
+       }
+      }
+      free resampled_input
+     }
+    }
+   }
+   free filter_zeroed
+   free offset_c
+  }
+ } else if (0 < filter.extent.0) {
+  let filter_zeroed.y.extent_realized = max(select((filter.extent.1 == 3) && (filter.extent.2 == 3), 3, filter.extent.2), filter.extent.2)
+  let filter_zeroed.x.extent_realized = max(select((filter.extent.1 == 3) && (filter.extent.2 == 3), 3, filter.extent.1), filter.extent.1)
+  allocate filter_zeroed[int16 * 128 * filter_zeroed.x.extent_realized * filter_zeroed.y.extent_realized] in Stack
+  produce filter_zeroed {
+   let t1317 = 65 <= filter.extent.0
+   let t1316 = 64 <= filter.extent.0
+   for (filter_zeroed.s0.y, 0, filter.extent.2) {
+    let t1319 = filter_zeroed.s0.y*filter_zeroed.x.extent_realized
+    let t1318 = filter.stride.2*filter_zeroed.s0.y
+    for (filter_zeroed.s0.x, 0, filter.extent.1) {
+     if (t1316) {
+      filter_zeroed[ramp((filter_zeroed.s0.x + t1319)*128, 1, 64) aligned(128, 0)] = (int16x64)widening_sub(filter[ramp((filter.stride.1*filter_zeroed.s0.x) + t1318, 1, 64)], x64((uint8)filter_zero))
+      if (t1317) {
+       predicate (int16x64(ramp(0, 1, 64)) <= x64((int16)saturating_cast(saturating_sub(filter.extent.0, 65))))
+        filter_zeroed[ramp(((filter_zeroed.s0.x + t1319)*128) + 64, 1, 64) aligned(128, 64)] = (int16x64)widening_sub(filter[ramp(((filter.stride.1*filter_zeroed.s0.x) + t1318) + 64, 1, 64)] if (int8x64(ramp(0, 1, 64)) <= x64((int8)saturating_cast(saturating_sub(filter.extent.0, 65)))), x64((uint8)filter_zero))
+      }
+     } else {
+      predicate (int16x64(ramp(0, 1, 64)) <= x64((int16)saturating_cast(saturating_sub(filter.extent.0, 1))))
+       filter_zeroed[ramp((filter_zeroed.s0.x + t1319)*128, 1, 64) aligned(128, 0)] = (int16x64)widening_sub(filter[ramp((filter.stride.1*filter_zeroed.s0.x) + t1318, 1, 64)] if (int8x64(ramp(0, 1, 64)) <= x64((int8)saturating_cast(saturating_sub(filter.extent.0, 1)))), x64((uint8)filter_zero))
+     }
+    }
+   }
+  }
+  allocate offset_c[int32 * 128] in Stack
+  produce offset_c {
+   consume filter_zeroed {
+    allocate sum_filter[int32 * 128 * 1]
+    produce sum_filter {
+     predicate (ramp(1, 1, 128) <= x128(filter.extent.0))
+      sum_filter[ramp(0, 1, 128)] = x128(0)
+     for (sum_filter.s1.r19$y, 0, filter.extent.2) {
+      let t1320 = filter_zeroed.x.extent_realized*sum_filter.s1.r19$y
+      for (sum_filter.s1.r19$x, 0, filter.extent.1) {
+       let t1019 = ramp(1, 1, 128) <= x128(filter.extent.0)
+       predicate (ramp(1, 1, 128) <= x128(filter.extent.0))
+        sum_filter[ramp(0, 1, 128)] = (int32x128)widen_right_add(sum_filter[ramp(0, 1, 128)] if t1019, filter_zeroed[ramp((sum_filter.s1.r19$x + t1320)*128, 1, 128) aligned(128, 0)] if t1019)
+      }
+     }
+    }
+    consume sum_filter {
+     let t1020 = ramp(1, 1, 128) <= x128(filter.extent.0)
+     predicate (ramp(1, 1, 128) <= x128(filter.extent.0))
+      offset_c[ramp(0, 1, 128)] = (bias[ramp(0, 1, 128)] if t1020) - (int32x128)widen_right_mul(sum_filter[ramp(0, 1, 128)] if t1020, x128(int16((uint8)input_zero)))
+    }
+    free sum_filter
+   }
+  }
+  consume offset_c {
+   consume filter_zeroed {
+    let t1345 = dilation_x < 0
+    let t1346 = (filter.extent.1 + -1)*dilation_x
+    let t1347 = select(t1345, t1346, 0)
+    let t1348 = stride_x < 0
+    let t1349 = ((select(t1348, output.extent.1, 1) + output.min.1) + -1)*stride_x
+    let t1350 = (filter.extent.1 == 3) && (filter.extent.2 == 3)
+    let t1351 = min(dilation_x, 0)*2
+    let t1352 = dilation_y < 0
+    let t1353 = (filter.extent.2 + -1)*dilation_y
+    let t1354 = select(t1352, t1353, 0)
+    let t1355 = stride_y < 0
+    let t1356 = ((select(t1355, output.extent.2, 1) + output.min.2) + -1)*stride_y
+    let t1357 = min(dilation_y, 0)*2
+    let t1338 = depth_multiplier == 1
+    let t1330 = max(dilation_y, 0)*2
+    let t1336 = max(dilation_x, 0)*2
+    let t1321 = select(t1352, 0, t1353) + ((select(t1355, 0, output.extent.2 + -1) + output.min.2)*stride_y)
+    let t1325 = select(t1350, t1357, t1354) + t1356
+    let t1322 = t1354 + t1356
+    let t1323 = select(t1345, 0, t1346) + ((select(t1348, 0, output.extent.1 + -1) + output.min.1)*stride_x)
+    let t1332 = select(t1350, t1351, t1347) + t1349
+    let t1324 = t1347 + t1349
+    let t1344 = (output.min.2*output.stride.2) + ((input.min.3*output.stride.3) + (output.min.1*output.stride.1))
+    let t1339 = (input.min.2*input.stride.2) + ((input.min.3*input.stride.3) + (input.min.1*input.stride.1))
+    for (output.s0.b.rebased, 0, input.extent.3) {
+     let resampled_input.y.min_realized = min(t1322, t1325)
+     let resampled_input.y.extent_realized = (max(select(t1350, t1330, select(t1352, 0, t1353)) + ((select(t1355, 0, output.extent.2 + -1) + output.min.2)*stride_y), t1321) - min(select(t1350, t1357, select(t1352, t1353, 0)) + (((select(t1355, output.extent.2, 1) + output.min.2) + -1)*stride_y), t1322)) + 1
+     let resampled_input.x.min_realized = min(t1324, t1332)
+     let resampled_input.x.extent_realized = (max(select(t1350, t1336, select(t1345, 0, t1346)) + ((select(t1348, 0, output.extent.1 + -1) + output.min.1)*stride_x), t1323) - min(select(t1350, t1351, select(t1345, t1346, 0)) + (((select(t1348, output.extent.1, 1) + output.min.1) + -1)*stride_x), t1324)) + 1
+     allocate resampled_input[uint8 * 128 * resampled_input.x.extent_realized * resampled_input.y.extent_realized * 1] in Stack
+     produce resampled_input {
+      if (t1338) {
+       let t1360 = ((input.min.3 + output.s0.b.rebased)*input.stride.3) - t1339
+       let t1359 = t1323 - t1324
+       let t1358 = t1321 - t1322
+       let t1362 = t1322 - resampled_input.y.min_realized
+       let t1361 = t1324 - resampled_input.x.min_realized
+       for (resampled_input.s0.y.rebased, 0, t1358 + 1) {
+        let t1364 = ((resampled_input.s0.y.rebased + t1362)*resampled_input.x.extent_realized) + t1361
+        let t1363 = ((resampled_input.s0.y.rebased + t1322)*input.stride.2) + t1360
+        for (resampled_input.s0.x.rebased, 0, t1359 + 1) {
+         predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(filter.extent.0, 1))))
+          resampled_input[ramp((resampled_input.s0.x.rebased + t1364)*128, 1, 128) aligned(128, 0)] = input[ramp(((resampled_input.s0.x.rebased + t1324)*input.stride.1) + t1363, 1, 128)] if (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(filter.extent.0, 1))))
+        }
+       }
+      } else {
+       let t1367 = ((input.min.3 + output.s0.b.rebased)*input.stride.3) - t1339
+       let t1366 = t1323 - t1324
+       let t1365 = t1321 - t1322
+       let t1369 = t1322 - resampled_input.y.min_realized
+       let t1368 = t1324 - resampled_input.x.min_realized
+       for (resampled_input.s0.y.rebased, 0, t1365 + 1) {
+        let t1371 = ((resampled_input.s0.y.rebased + t1369)*resampled_input.x.extent_realized) + t1368
+        let t1370 = ((resampled_input.s0.y.rebased + t1322)*input.stride.2) + t1367
+        for (resampled_input.s0.x.rebased, 0, t1366 + 1) {
+         predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(filter.extent.0, 1))))
+          resampled_input[ramp((resampled_input.s0.x.rebased + t1371)*128, 1, 128) aligned(128, 0)] = input[(ramp(0, 1, 128)/x128(depth_multiplier)) + x128(((resampled_input.s0.x.rebased + t1324)*input.stride.1) + t1370)] if (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(filter.extent.0, 1))))
+        }
+       }
+      }
+     }
+     consume resampled_input {
+      let t1378 = ((input.min.3 + output.s0.b.rebased)*output.stride.3) - t1344
+      let t1377 = (dilation_y*2) - resampled_input.y.min_realized
+      let t1373 = (dilation_x*2) - resampled_input.x.min_realized
+      for (output.s0.y.yo, 0, output.extent.2) {
+       let t1392 = output.min.2 + output.s0.y.yo
+       let t1393 = stride_y*t1392
+       let t1394 = (t1377 + t1393)*resampled_input.x.extent_realized
+       let t1395 = ((dilation_y - resampled_input.y.min_realized) + t1393)*resampled_input.x.extent_realized
+       let t1396 = t1393 - resampled_input.y.min_realized
+       let t1397 = resampled_input.x.extent_realized*t1396
+       let t1398 = dilation_x - resampled_input.x.min_realized
+       let t1379 = t1397 - resampled_input.x.min_realized
+       let t1383 = t1395 - resampled_input.x.min_realized
+       let t1387 = t1394 - resampled_input.x.min_realized
+       let t1380 = t1397 + t1398
+       let t1384 = t1395 + t1398
+       let t1388 = t1394 + t1398
+       let t1391 = (output.stride.2*t1392) + t1378
+       let t1381 = t1373 + t1397
+       let t1385 = t1373 + t1395
+       let t1389 = t1373 + t1394
+       for (output.s0.x.xo, 0, output.extent.1) {
+        allocate convolved[int32 * 128] in Register
+        produce convolved {
+         convolved[ramp(0, 1, 128)] = offset_c[ramp(0, 1, 128)]
+         if (t1350) {
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(0, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1379)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(128, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1380)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(256, 1, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1381)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(filter_zeroed.x.extent_realized*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1383)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((filter_zeroed.x.extent_realized*128) + 128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1384)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((filter_zeroed.x.extent_realized*128) + 256, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1385)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp(filter_zeroed.x.extent_realized*256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1387)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((filter_zeroed.x.extent_realized*256) + 128, 1, 128) aligned(256, 128)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1388)*128, 1, 128) aligned(128, 0)]))
+          convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((filter_zeroed.x.extent_realized*256) + 256, 1, 128) aligned(256, 0)], int16x128(resampled_input[ramp((((output.min.1 + output.s0.x.xo)*stride_x) + t1389)*128, 1, 128) aligned(128, 0)]))
+         } else {
+          let t1399 = ((output.min.1 + output.s0.x.xo)*stride_x) - resampled_input.x.min_realized
+          for (convolved.s1.r19$y, 0, filter.extent.2) {
+           let t1400 = convolved.s1.r19$y*filter_zeroed.x.extent_realized
+           let t1401 = (((convolved.s1.r19$y*dilation_y) + t1396)*resampled_input.x.extent_realized) + t1399
+           for (convolved.s1.r19$x, 0, filter.extent.1) {
+            convolved[ramp(0, 1, 128)] = convolved[ramp(0, 1, 128)] + (int32x128)widening_mul(filter_zeroed[ramp((convolved.s1.r19$x + t1400)*128, 1, 128) aligned(128, 0)], int16x128(resampled_input[ramp(((convolved.s1.r19$x*dilation_x) + t1401)*128, 1, 128) aligned(128, 0)]))
+           }
+          }
+         }
+        }
+        consume convolved {
+         predicate (int16x128(ramp(0, 1, 128)) <= x128((int16)saturating_cast(saturating_sub(filter.extent.0, 1))))
+          output[ramp(((output.min.1 + output.s0.x.xo)*output.stride.1) + t1391, 1, 128)] = max(min((uint8x128)saturating_cast((int16x128)saturating_add((int16x128)saturating_cast((int32x128)rounding_shift_right((int32x128)rounding_mul_shift_right(convolved[ramp(0, 1, 128)] if (ramp(1, 1, 128) <= x128(filter.extent.0)), x128(output_multiplier), x128((uint32)31)), x128((uint32)output_shift))), x128(int16((uint8)output_zero)))), x128((uint8)output_max)), x128((uint8)output_min))
+        }
+        free convolved
+       }
+      }
+     }
+     free resampled_input
+    }
+   }
+  }
+  free filter_zeroed
+  free offset_c
+ }
+}
+}
+
+

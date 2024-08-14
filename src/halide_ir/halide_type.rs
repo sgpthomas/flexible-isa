@@ -11,6 +11,7 @@ pub enum HalideType {
     Bool,
     Vec(u64, Box<HalideType>),
     Ptr(Vec<ast::Id>),
+    Struct(Vec<HalideType>),
 }
 
 impl HalideType {
@@ -77,7 +78,12 @@ impl HalideType {
                     .collect::<std::vec::Vec<_>>()
                     .join(" ")
             )),
+            Struct(_) => ast::Id::new("struct *"),
         }
+    }
+
+    pub fn void_ptr() -> Self {
+        HalideType::Ptr(vec![ast::Id::new("void")])
     }
 
     pub fn bits(&self) -> u64 {
@@ -88,6 +94,7 @@ impl HalideType {
             HalideType::Bool => 1,
             HalideType::Vec(_, typ) => typ.bits(),
             HalideType::Ptr(_) => 8,
+            HalideType::Struct(_) => 8,
         }
     }
 
@@ -104,17 +111,19 @@ impl HalideType {
             HalideType::Unsigned(x) => HalideType::Unsigned(x * 2),
             HalideType::Signed(x) => HalideType::Signed(x * 2),
             HalideType::Vec(width, vec_typ) => HalideType::Vec(*width, Box::new(vec_typ.widen())),
-            HalideType::Unknown | HalideType::Bool | HalideType::Ptr(_) => self.clone(),
+            HalideType::Unknown | HalideType::Bool | HalideType::Ptr(_) | HalideType::Struct(_) => {
+                self.clone()
+            }
         }
     }
 
     pub fn signed(self) -> Self {
         match self {
             x @ (HalideType::Unknown
-            // | HalideType::AnyNumber
             | HalideType::Signed(_)
             | HalideType::Bool
-            | HalideType::Ptr(_)) => x,
+            | HalideType::Ptr(_)
+            | HalideType::Struct(_)) => x,
 
             HalideType::Unsigned(bits) => HalideType::Signed(bits),
             HalideType::Vec(lanes, typ) => HalideType::Vec(lanes, Box::new(typ.signed())),

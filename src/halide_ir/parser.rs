@@ -51,6 +51,17 @@ impl StmtParser {
         Ok(StmtParser::file(inputs.single().unwrap())?)
     }
 
+    fn struct_member(lhs: Expr, rhs: Expr, span: pest::Span<'_>) -> ParseResult<Expr> {
+        Expr::struct_member(lhs, rhs).map_err(|e| {
+            pest_consume::Error::new_from_span(
+                pest::error::ErrorVariant::CustomError {
+                    message: e.to_string(),
+                },
+                span,
+            )
+        })
+    }
+
     fn expr_pratt(pairs: Pairs<Rule>) -> ParseResult<Expr> {
         PRATT
             .map_primary(|primary| match primary.as_rule() {
@@ -86,7 +97,7 @@ impl StmtParser {
                     Rule::and => Expr::and(lhs?, rhs?),
                     Rule::or => Expr::or(lhs?, rhs?),
                     Rule::if_infx => Expr::If(Box::new(lhs?), Box::new(rhs?), ()),
-                    Rule::struct_member => Expr::StructMember(Box::new(lhs?), Box::new(rhs?), ()),
+                    Rule::struct_member => Self::struct_member(lhs?, rhs?, op.as_span())?,
                     x => unreachable!("Unexpected infix operator: `{x:?}`"),
                 })
             })
