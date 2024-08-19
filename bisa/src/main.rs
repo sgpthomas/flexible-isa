@@ -1,4 +1,7 @@
-use fud_core::{cli, DriverBuilder};
+mod cli;
+
+use cli::BisaCli;
+use fud_core::{cli as c, DriverBuilder};
 
 fn main() -> anyhow::Result<()> {
     let mut bld = DriverBuilder::new("bisa");
@@ -18,8 +21,10 @@ fn main() -> anyhow::Result<()> {
         });
     }
 
-    bld = bld.load_plugins();
+    let config = c::config_from_cli_ext::<BisaCli>(&bld.name)?;
+
+    bld = bld.load_plugins(&config)?;
 
     let driver = bld.build();
-    cli::cli(&driver)
+    c::cli_ext::<BisaCli>(&driver, &config)
 }

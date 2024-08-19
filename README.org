@@ -10,13 +10,13 @@ Run =cargo build --all= to build both the flexible isa binary as well as the =bi
 
 A simple build tool based on =fud-core= to build an ISA from a set of Halide generators. It's maybe overly complicated to have a separate build tool for this. But I wanted to play around more with =fud-core= and see what it felt like to build a build tool with it for a particular purpose. It's also pretty nice for debugging. I find it nicer to work with than =Makefiles=.
 
-Anyways, to get things working you need to have a =~/.config/bisa.toml= file with the keys =halide.base= pointing to a Halide installation and =hannk.base= pointing to where =hannk= is stored. There's a copy in this repository located at =benchmarks/hank=. Once you have this, =bisa= will be able to run.
+Anyways, to get things working you need to have a =~/.config/bisa.toml= file with the keys =halide.root= pointing to a Halide installation and =root= pointing to the root of this repository. You can create this file with =bisa config init --halide <halide_path> --root <this_repo_path>=
 
 *** Halide
 
 We need Halide to be able to run generators.
 
-Clone the repository. And install any necessary dependencies. Refer to the =README_cmake.md= for details about dependencies.
+Clone the repository. ([[git@github.com:halide/Halide.git][git@github.com:halide/Halide.git]]) And install any necessary dependencies. Refer to the =README_cmake.md= for details about dependencies.
 
 In the repository run the following commands.
 

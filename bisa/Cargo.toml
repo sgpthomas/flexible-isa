@@ -5,8 +5,11 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
-fud-core = { version = "0.0.2", git = "https://github.com/calyxir/calyx.git", branch = "rhai-1.19" }
+argh = "0.1.12"
+fud-core = { version = "0.0.2", git = "https://github.com/calyxir/calyx.git", branch = "fud2-pyenv" }
 manifest-dir-macros = "0.1.18"
+serde = "1.0.208"
+toml = "0.8.19"
 
 [[bin]]
 name = "bisa"
