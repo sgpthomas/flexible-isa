@@ -7,6 +7,10 @@ pub struct Args {
     #[argh(positional)]
     pub input: Vec<PathBuf>,
 
+    /// input .json metadata files
+    #[argh(option)]
+    pub types: Vec<PathBuf>,
+
     /// generate input / output types from halide generators
     #[argh(switch)]
     pub generator_types: bool,

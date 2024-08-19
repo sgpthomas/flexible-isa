@@ -32,7 +32,7 @@ pub struct InitCommand {
 #[derive(serde::Serialize, Debug)]
 struct InitConfig {
     root: PathBuf,
-    hannk: HalideConfig,
+    halide: HalideConfig,
 }
 
 #[derive(serde::Serialize, Debug)]
@@ -44,7 +44,7 @@ impl InitConfig {
     fn new(root: PathBuf, halide_root: PathBuf) -> Self {
         Self {
             root,
-            hannk: HalideConfig { root: halide_root },
+            halide: HalideConfig { root: halide_root },
         }
     }
 }

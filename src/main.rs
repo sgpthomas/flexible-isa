@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::Context;
 #[allow(unused)]
 use halide_ir::Printer;
 #[allow(unused)]
@@ -37,11 +38,22 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let asts = args
-        .input
+    let files_w_types = if args.types.is_empty() {
+        args.input.iter().map(|f| (f, None)).collect_vec()
+    } else if args.input.len() == args.types.len() {
+        args.input
+            .iter()
+            .zip(args.types.iter().map(Some))
+            .collect_vec()
+    } else {
+        anyhow::bail!("Don't have types for all inputs")
+    };
+
+    let asts = files_w_types
         .iter()
-        .map(|file| {
-            let func_sig = HalideGeneratorParser::read_json(file)?;
+        .map(|(file, types)| {
+            let func_sig = HalideGeneratorParser::read_json(types.as_ref().unwrap_or(file))
+                .with_context(|| format!("Don't have buffer types: {file:?}"))?;
             StmtParser::parse_file(file)
                 .map(|ast| Inline::default().do_pass(ast))
                 .map(|ast| UniqueIdents::default().do_pass(ast))
