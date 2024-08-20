@@ -7,8 +7,8 @@ use halide_ir::Printer;
 use instruction_select::Simplify;
 
 use halide_ir::{
-    Flatten, Inline, InsertCasts, MineExpressions, NumberNodes, RemoveCasts, Rewrite, StmtParser,
-    TypeAnnotator, UniqueIdents, Visitor,
+    Inline, InsertCasts, LiftExpressions, MineExpressions, NumberNodes, RemoveCasts, Rewrite,
+    StmtParser, TypeAnnotator, UniqueIdents, Visitor,
 };
 use instruction_select::{InstructionSelect, Instructions};
 
@@ -109,8 +109,7 @@ fn main() -> anyhow::Result<()> {
             .into_iter()
             .map(|ast| rewriter.do_pass(ast))
             .map(RemoveCasts::do_pass_default)
-            .map(NumberNodes::do_pass_default)
-            .map(Flatten::do_pass_default)
+            .map(LiftExpressions::do_pass_default)
             .collect();
         for ast in asts {
             if args.output_instr() {

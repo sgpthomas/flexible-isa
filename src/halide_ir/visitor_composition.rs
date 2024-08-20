@@ -80,6 +80,17 @@ where
     }
 }
 
+impl<T> Default for SetData<T>
+where
+    T: Default + Clone,
+{
+    fn default() -> Self {
+        Self {
+            value: T::default(),
+        }
+    }
+}
+
 impl<X, T> Visitor<X> for SetData<T>
 where
     T: Clone,

@@ -1,9 +1,24 @@
 use crate::halide_ir::Annotation;
 
-use super::{ast, Visitor};
+use super::{ast, NumberNodes, SetData, Visitor};
 
 /// Extract all nested expressions into assignments.
-///
+#[derive(Default)]
+pub struct LiftExpressions {
+    number: NumberNodes,
+    lifter: LiftExpressionsInternal,
+    setter: SetData<()>,
+}
+
+impl LiftExpressions {
+    pub fn do_pass_default(ast: ast::Module<u64>) -> ast::Module<()> {
+        let mut lift_expressions = Self::default();
+        let ast = lift_expressions.number.do_pass(ast);
+        let ast = lift_expressions.lifter.do_pass(ast);
+        lift_expressions.setter.do_pass(ast)
+    }
+}
+
 /// Implementation notes:
 /// When we enter a stmt node (`start_stmt`), we record the name of something about
 /// this statement from which we can derive unique identifiers. We only ever lift
@@ -17,14 +32,14 @@ use super::{ast, Visitor};
 /// `Number`). When we return to the expressions that set `nested`, we unset
 /// `nested` and resume the process.
 #[derive(Default)]
-pub struct Flatten {
+struct LiftExpressionsInternal {
     var: Option<ast::Id>,
     count: usize,
     nested: Option<u64>,
     stack: Vec<ast::Stmt<u64>>,
 }
 
-impl Flatten {
+impl LiftExpressionsInternal {
     /// Consume the stack of expressions, and reset state back to default
     fn consume(&mut self) -> Vec<ast::Stmt<u64>> {
         self.var = None;
@@ -57,7 +72,7 @@ impl Flatten {
     }
 }
 
-impl Visitor<u64> for Flatten {
+impl Visitor<u64> for LiftExpressionsInternal {
     type Output = u64;
 
     fn default_u(&mut self, data: u64) -> Self::Output {
