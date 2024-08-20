@@ -5,16 +5,23 @@ use super::{ast, NumberNodes, SetData, Visitor};
 /// Extract all nested expressions into assignments.
 #[derive(Default)]
 pub struct LiftExpressions {
+    /// pass to number expressions
     number: NumberNodes,
+    /// pass that performs the lifting
     lifter: LiftExpressionsInternal,
+    /// erase any metadata
     setter: SetData<()>,
 }
 
 impl LiftExpressions {
-    pub fn do_pass_default(ast: ast::Module<u64>) -> ast::Module<()> {
+    pub fn do_pass_default<T>(ast: ast::Module<T>) -> ast::Module<()> {
         let mut lift_expressions = Self::default();
+        // we first have to number expressions so that
+        // we can refer to them in the lifter
         let ast = lift_expressions.number.do_pass(ast);
         let ast = lift_expressions.lifter.do_pass(ast);
+        // remove numbers because lifted expressions don't
+        // have valid numbers
         lift_expressions.setter.do_pass(ast)
     }
 }
