@@ -27,7 +27,6 @@ impl Id {
         prefix
             .as_ref()
             .and_then(|prefix| self.name.strip_prefix(prefix.as_ref()))
-            .and_then(|id| id.strip_prefix('_'))
             .map(Id::new)
             .unwrap_or(self.clone())
     }
@@ -201,6 +200,13 @@ pub enum Expr<T = ()> {
 
     // array access
     Access(Access<T>, #[deftly(data)] T),
+
+    Instruction {
+        num: u64,
+        args: Vec<Expr<T>>,
+        #[deftly(data)]
+        data: T,
+    },
 
     // let in exprs
     LetIn(Id, Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),

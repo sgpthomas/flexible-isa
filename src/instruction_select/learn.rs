@@ -57,7 +57,7 @@ fn replace_idents(
 }
 
 impl Instructions<Init> {
-    pub fn add_expr(&mut self, expr: &egg::RecExpr<babble::AstNode<HalideExprOp>>) {
+    pub fn add_expr(&mut self, expr: &egg::RecExpr<HalideLang>) {
         let root = self.egraph.add_expr(expr);
         self.roots.push(root);
     }

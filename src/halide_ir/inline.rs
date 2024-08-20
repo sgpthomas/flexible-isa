@@ -10,10 +10,12 @@ pub struct Inline<T> {
     substs: HashMap<ast::Id, ast::Expr<T>>,
 }
 
-impl<T> Visitor<T, T> for Inline<T>
+impl<T> Visitor<T> for Inline<T>
 where
     T: Clone,
 {
+    type Output = T;
+
     fn default_u(&mut self, data: T) -> T {
         data
     }

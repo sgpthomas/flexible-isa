@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
 use pretty::{
     termcolor::{Color, ColorChoice, ColorSpec, StandardStream},
@@ -225,7 +225,10 @@ impl Printer for ast::Number {
     }
 }
 
-impl<T> Printer for ast::Module<T> {
+impl<T> Printer for ast::Module<T>
+where
+    T: Debug,
+{
     fn to_doc(&self) -> Doc {
         Doc::text("module")
             .highlight(|cs| cs.set_bold(true).keyword())
@@ -237,7 +240,10 @@ impl<T> Printer for ast::Module<T> {
     }
 }
 
-impl<T> Printer for ast::Func<T> {
+impl<T> Printer for ast::Func<T>
+where
+    T: Debug,
+{
     fn to_doc(&self) -> Doc {
         self.metadata
             .to_doc()
@@ -254,7 +260,10 @@ impl<T> Printer for ast::Func<T> {
     }
 }
 
-impl<T> Printer for ast::Stmt<T> {
+impl<T> Printer for ast::Stmt<T>
+where
+    T: Debug,
+{
     fn to_doc(&self) -> Doc {
         match self {
             ast::Stmt::Let { var, expr, data: _ } => Doc::text("let")
@@ -371,9 +380,12 @@ impl<T> Printer for ast::Stmt<T> {
     }
 }
 
-impl<T> Printer for ast::Expr<T> {
+impl<T> Printer for ast::Expr<T>
+where
+    T: Debug,
+{
     fn to_doc(&self) -> Doc {
-        match self {
+        let doc = match self {
             ast::Expr::Number(n, _) => Doc::as_string(n.value).highlight(|cs| cs.literal()),
             ast::Expr::Ident(id, _) => id.to_doc(),
             ast::Expr::Unop(op, rhs, _) => {
@@ -464,11 +476,22 @@ impl<T> Printer for ast::Expr<T> {
                 .line_then(binding.to_doc().nest(2))
                 .space_then(Doc::text("in").highlight(|cs| cs.keyword()))
                 .line_then(body.to_doc().nest(2)),
-        }
+            ast::Expr::Instruction { num, args, data: _ } => Doc::text("inst")
+                .highlight(|cs| cs.keyword())
+                .append(Doc::text(format!("{num}")).enclose("<", ">"))
+                .space_then(args.intersperse(Doc::space()))
+                .parens()
+                .group(),
+        };
+        // doc.append(Doc::text(format!("{:?}", super::Annotation::data(self))).enclose("<", ">"))
+        doc
     }
 }
 
-impl<T> Printer for ast::Access<T> {
+impl<T> Printer for ast::Access<T>
+where
+    T: Debug,
+{
     fn to_doc(&self) -> Doc {
         let idx_doc = self.idx.to_doc().map_append(&self.align, |(low, hi)| {
             Doc::space().append(

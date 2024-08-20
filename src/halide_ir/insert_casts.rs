@@ -1,8 +1,11 @@
 use super::{ast, Annotation, HalideType, Visitor};
 
+#[derive(Default)]
 pub struct InsertCasts;
 
-impl Visitor<HalideType, HalideType> for InsertCasts {
+impl Visitor<HalideType> for InsertCasts {
+    type Output = HalideType;
+
     fn default_u(&mut self, data: HalideType) -> HalideType {
         data
     }

@@ -126,14 +126,21 @@ op(
   }
 );
 
-defop run_isa(s: stmt_state, m: metadata_state) >> f: flex_isa_state {
+fn build_flex_isa() {
   let proj_src = config("root");
-  let flex_isa = `${proj_src}/target/debug/flexible-isa`;
-  shell(`${flex_isa} ${s} --types ${m} > ${f}`)  
+  shell(`cargo build --manifest-path=${proj_src}/Cargo.toml`);
 }
 
 defop gen_metadata(h: halide_state) >> m: metadata_state {
   let proj_src = config("root");
+  build_flex_isa();
   let flex_isa = `${proj_src}/target/debug/flexible-isa`;
-  shell(`${flex_isa} ${h} --generator-types > ${m}`)
+  shell(`${flex_isa} ${h} --generator-types > ${m}`);
+}
+
+defop run_isa(s: stmt_state, m: metadata_state) >> f: flex_isa_state {
+  let proj_src = config("root");
+  build_flex_isa();
+  let flex_isa = `${proj_src}/target/debug/flexible-isa`;
+  shell(`${flex_isa} ${s} --types ${m} > ${f}`);
 }

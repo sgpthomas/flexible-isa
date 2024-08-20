@@ -18,7 +18,9 @@ impl UniqueIdents {
     }
 }
 
-impl<T> Visitor<T, T> for UniqueIdents {
+impl<T> Visitor<T> for UniqueIdents {
+    type Output = T;
+
     fn default_u(&mut self, data: T) -> T {
         data
     }

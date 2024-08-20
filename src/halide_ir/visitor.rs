@@ -6,21 +6,43 @@ use super::ast::{
 };
 
 /// Implements a visitor over the Halide IR.
-pub trait Visitor<T, U> {
+pub trait Visitor<T> {
+    type Output;
+
     /// The default value of `U` to be used when a method is not overridden
     /// in the trait definition.
-    fn default_u(&mut self, _data: T) -> U;
+    fn default_u(&mut self, _data: T) -> Self::Output;
 
-    fn do_pass(&mut self, ast: Module<T>) -> Module<U>
+    fn do_pass_default(ast: Module<T>) -> Module<Self::Output>
+    where
+        Self: Default,
+    {
+        let mut visitor = Self::default();
+        visitor.do_pass(ast)
+    }
+
+    fn do_pass(&mut self, ast: Module<T>) -> Module<Self::Output>
     where
         Self: Sized,
     {
         ast.visit(self)
     }
 
+    fn do_pass_expr(&mut self, expr: Expr<T>) -> Expr<Self::Output>
+    where
+        Self: Sized,
+    {
+        expr.visit(self)
+    }
+
     fn start_module(&mut self, _module: &Module<T>) {}
 
-    fn make_module(&mut self, params: HashMap<Id, Id>, funcs: Vec<Func<U>>, data: T) -> Module<U> {
+    fn make_module(
+        &mut self,
+        params: HashMap<Id, Id>,
+        funcs: Vec<Func<Self::Output>>,
+        data: T,
+    ) -> Module<Self::Output> {
         Module {
             params,
             funcs,
@@ -43,9 +65,9 @@ pub trait Visitor<T, U> {
         metadata: Id,
         name: Id,
         args: Vec<Id>,
-        stmts: Block<U>,
+        stmts: Block<Self::Output>,
         data: T,
-    ) -> Func<U> {
+    ) -> Func<Self::Output> {
         Func {
             metadata,
             name,
@@ -55,11 +77,11 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn stmt(&mut self, stmt: Stmt<U>) -> Stmt<U> {
+    fn stmt(&mut self, stmt: Stmt<Self::Output>) -> Stmt<Self::Output> {
         stmt
     }
 
-    fn let_stmt(&mut self, var: Id, expr: Expr<U>, data: T) -> Stmt<U> {
+    fn let_stmt(&mut self, var: Id, expr: Expr<Self::Output>, data: T) -> Stmt<Self::Output> {
         Stmt::Let {
             var,
             expr,
@@ -67,7 +89,7 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn produce_stmt(&mut self, var: Id, body: Block<U>, data: T) -> Stmt<U> {
+    fn produce_stmt(&mut self, var: Id, body: Block<Self::Output>, data: T) -> Stmt<Self::Output> {
         Stmt::Produce {
             var,
             body,
@@ -75,7 +97,7 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn consume_stmt(&mut self, var: Id, body: Block<U>, data: T) -> Stmt<U> {
+    fn consume_stmt(&mut self, var: Id, body: Block<Self::Output>, data: T) -> Stmt<Self::Output> {
         Stmt::Consume {
             var,
             body,
@@ -83,7 +105,12 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn store_stmt(&mut self, access: Access<U>, value: Expr<U>, data: T) -> Stmt<U> {
+    fn store_stmt(
+        &mut self,
+        access: Access<Self::Output>,
+        value: Expr<Self::Output>,
+        data: T,
+    ) -> Stmt<Self::Output> {
         Stmt::Store {
             access,
             value,
@@ -95,11 +122,11 @@ pub trait Visitor<T, U> {
         &mut self,
         name: Id,
         typ: Id,
-        extents: Vec<Expr<U>>,
+        extents: Vec<Expr<Self::Output>>,
         loc: MemoryType,
-        condition: Option<Expr<U>>,
+        condition: Option<Expr<Self::Output>>,
         data: T,
-    ) -> Stmt<U> {
+    ) -> Stmt<Self::Output> {
         Stmt::Allocate {
             name,
             typ,
@@ -110,7 +137,7 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn free_stmt(&mut self, var: Id, data: T) -> Stmt<U> {
+    fn free_stmt(&mut self, var: Id, data: T) -> Stmt<Self::Output> {
         Stmt::Free {
             var,
             data: self.default_u(data),
@@ -120,8 +147,8 @@ pub trait Visitor<T, U> {
     fn start_for_stmt(
         &mut self,
         _var: &Id,
-        _low: &mut Expr<U>,
-        _high: &mut Expr<U>,
+        _low: &mut Expr<Self::Output>,
+        _high: &mut Expr<Self::Output>,
         _device: &DeviceApi,
         _data: &T,
     ) {
@@ -130,12 +157,12 @@ pub trait Visitor<T, U> {
     fn make_for_stmt(
         &mut self,
         var: Id,
-        low: Expr<U>,
-        high: Expr<U>,
+        low: Expr<Self::Output>,
+        high: Expr<Self::Output>,
         device: DeviceApi,
-        body: Block<U>,
+        body: Block<Self::Output>,
         data: T,
-    ) -> Stmt<U> {
+    ) -> Stmt<Self::Output> {
         Stmt::For {
             var,
             low,
@@ -146,7 +173,13 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn if_stmt(&mut self, cond: Expr<U>, tru: Block<U>, fls: Option<Block<U>>, data: T) -> Stmt<U> {
+    fn if_stmt(
+        &mut self,
+        cond: Expr<Self::Output>,
+        tru: Block<Self::Output>,
+        fls: Option<Block<Self::Output>>,
+        data: T,
+    ) -> Stmt<Self::Output> {
         Stmt::If {
             cond,
             tru,
@@ -155,7 +188,12 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn predicate_stmt(&mut self, cond: Expr<U>, stmt: Stmt<U>, data: T) -> Stmt<U> {
+    fn predicate_stmt(
+        &mut self,
+        cond: Expr<Self::Output>,
+        stmt: Stmt<Self::Output>,
+        data: T,
+    ) -> Stmt<Self::Output> {
         Stmt::Predicate {
             cond,
             stmt: Box::new(stmt),
@@ -163,27 +201,32 @@ pub trait Visitor<T, U> {
         }
     }
 
-    fn expr_stmt(&mut self, expr: Expr<U>, data: T) -> Stmt<U> {
+    fn expr_stmt(&mut self, expr: Expr<Self::Output>, data: T) -> Stmt<Self::Output> {
         Stmt::Expr(expr, self.default_u(data))
     }
 
     fn start_expr(&mut self, _expr: &Expr<T>) {}
 
-    fn make_expr(&mut self, expr: Expr<U>) -> Expr<U> {
+    fn make_expr(&mut self, expr: Expr<Self::Output>) -> Expr<Self::Output> {
         expr
     }
 
-    fn make_number_expr(&mut self, number: Number, data: T) -> Expr<U> {
+    fn make_number_expr(&mut self, number: Number, data: T) -> Expr<Self::Output> {
         Expr::Number(number, self.default_u(data))
     }
 
-    fn make_ident_expr(&mut self, id: Id, data: T) -> Expr<U> {
+    fn make_ident_expr(&mut self, id: Id, data: T) -> Expr<Self::Output> {
         Expr::Ident(id, self.default_u(data))
     }
 
     fn start_unop_expr(&mut self, _op: &Unop, _inner: &Expr<T>, _data: &T) {}
 
-    fn make_unop_expr(&mut self, op: Unop, inner: Expr<U>, data: T) -> Expr<U> {
+    fn make_unop_expr(
+        &mut self,
+        op: Unop,
+        inner: Expr<Self::Output>,
+        data: T,
+    ) -> Expr<Self::Output> {
         Expr::Unop(op, Box::new(inner), self.default_u(data))
     }
 
@@ -199,10 +242,10 @@ pub trait Visitor<T, U> {
     fn make_arith_binop_expr(
         &mut self,
         op: ArithBinop,
-        lhs: Expr<U>,
-        rhs: Expr<U>,
+        lhs: Expr<Self::Output>,
+        rhs: Expr<Self::Output>,
         data: T,
-    ) -> Expr<U> {
+    ) -> Expr<Self::Output> {
         Expr::ArithBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
@@ -218,68 +261,94 @@ pub trait Visitor<T, U> {
     fn make_comp_binop_expr(
         &mut self,
         op: CompBinop,
-        lhs: Expr<U>,
-        rhs: Expr<U>,
+        lhs: Expr<Self::Output>,
+        rhs: Expr<Self::Output>,
         data: T,
-    ) -> Expr<U> {
+    ) -> Expr<Self::Output> {
         Expr::CompBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
     fn start_if_expr(&mut self, _cond: &Expr<T>, _expr: &Expr<T>, _data: &T) {}
 
-    fn make_if_expr(&mut self, expr: Expr<U>, cond: Expr<U>, data: T) -> Expr<U> {
+    fn make_if_expr(
+        &mut self,
+        expr: Expr<Self::Output>,
+        cond: Expr<Self::Output>,
+        data: T,
+    ) -> Expr<Self::Output> {
         Expr::If(Box::new(expr), Box::new(cond), self.default_u(data))
     }
 
-    fn make_struct_member_expr(&mut self, struct_id: Id, thing: Id, data: T) -> Expr<U> {
+    fn make_struct_member_expr(&mut self, struct_id: Id, thing: Id, data: T) -> Expr<Self::Output> {
         Expr::StructMember(struct_id, thing, self.default_u(data))
     }
 
     fn start_funcall_expr(&mut self, _id: &Id, _args: &[Expr<T>], _data: &T) {}
 
-    fn make_funcall_expr(&mut self, id: Id, args: Vec<Expr<U>>, data: T) -> Expr<U> {
+    fn make_funcall_expr(
+        &mut self,
+        id: Id,
+        args: Vec<Expr<Self::Output>>,
+        data: T,
+    ) -> Expr<Self::Output> {
         Expr::FunCall(id, args, self.default_u(data))
     }
 
     fn start_reinterpret_expr(&mut self, _typs: &[Id], _args: &[Expr<T>], _data: &T) {}
 
-    fn make_reinterpret_expr(&mut self, typs: Vec<Id>, args: Vec<Expr<U>>, data: T) -> Expr<U> {
+    fn make_reinterpret_expr(
+        &mut self,
+        typs: Vec<Id>,
+        args: Vec<Expr<Self::Output>>,
+        data: T,
+    ) -> Expr<Self::Output> {
         Expr::Reinterpret(typs, args, self.default_u(data))
     }
 
     fn start_cast_expr(&mut self, _typ: &Id, _expr: &Expr<T>, _data: &T) {}
 
-    fn make_cast_expr(&mut self, typ: Id, expr: Expr<U>, data: T) -> Expr<U> {
+    fn make_cast_expr(&mut self, typ: Id, expr: Expr<Self::Output>, data: T) -> Expr<Self::Output> {
         Expr::Cast(typ, Box::new(expr), self.default_u(data))
     }
 
     fn start_ptrcast_expr(&mut self, _typs: &[Id], _expr: &Expr<T>, _data: &T) {}
 
-    fn make_ptrcast_expr(&mut self, typs: Vec<Id>, expr: Expr<U>, data: T) -> Expr<U> {
+    fn make_ptrcast_expr(
+        &mut self,
+        typs: Vec<Id>,
+        expr: Expr<Self::Output>,
+        data: T,
+    ) -> Expr<Self::Output> {
         Expr::PtrCast(typs, Box::new(expr), self.default_u(data))
     }
 
     fn start_access_expr(&mut self, _access: &Access<T>, _data: &T) {}
 
-    fn make_access_expr(&mut self, access: Access<U>, data: T) -> Expr<U> {
+    fn make_access_expr(&mut self, access: Access<Self::Output>, data: T) -> Expr<Self::Output> {
         Expr::Access(access, self.default_u(data))
     }
 
     fn start_letin_expr(&mut self, _var: &Id, _binding: &Expr<T>, _body: &Expr<T>, _data: &T) {}
 
-    fn make_letin_expr(&mut self, var: Id, binding: Expr<U>, body: Expr<U>, data: T) -> Expr<U> {
+    fn make_letin_expr(
+        &mut self,
+        var: Id,
+        binding: Expr<Self::Output>,
+        body: Expr<Self::Output>,
+        data: T,
+    ) -> Expr<Self::Output> {
         Expr::LetIn(var, Box::new(binding), Box::new(body), self.default_u(data))
     }
 }
 
 pub trait Visitable<T, U> {
     type Res;
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res;
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res;
 }
 
 impl<T, U> Visitable<T, U> for Module<T> {
     type Res = Module<U>;
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         visitor.start_module(&self);
 
         let Module {
@@ -296,7 +365,7 @@ impl<T, U> Visitable<T, U> for Module<T> {
 impl<T, U> Visitable<T, U> for Func<T> {
     type Res = Func<U>;
 
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         let Func {
             metadata,
             name,
@@ -314,7 +383,7 @@ impl<T, U> Visitable<T, U> for Func<T> {
 impl<T, U> Visitable<T, U> for Stmt<T> {
     type Res = Stmt<U>;
 
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         let stmt = match self {
             Stmt::Let { var, expr, data } => {
                 let expr = expr.visit(visitor);
@@ -392,7 +461,7 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
 impl<T, U> Visitable<T, U> for Access<T> {
     type Res = Access<U>;
 
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         let Access { var, idx, align } = self;
 
         Access {
@@ -406,7 +475,7 @@ impl<T, U> Visitable<T, U> for Access<T> {
 impl<T, U> Visitable<T, U> for Expr<T> {
     type Res = Expr<U>;
 
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         visitor.start_expr(&self);
         let expr = match self {
             Expr::Number(number, data) => visitor.make_number_expr(number, data),
@@ -468,6 +537,11 @@ impl<T, U> Visitable<T, U> for Expr<T> {
                 let body = body.visit(visitor);
                 visitor.make_letin_expr(var, binding, body, data)
             }
+            Expr::Instruction { num, args, data } => Expr::Instruction {
+                num,
+                args: args.visit(visitor),
+                data: visitor.default_u(data),
+            },
         };
         visitor.make_expr(expr)
     }
@@ -479,7 +553,7 @@ where
 {
     type Res = Option<X::Res>;
 
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         self.map(|e| e.visit(visitor))
     }
 }
@@ -490,7 +564,7 @@ where
 {
     type Res = Vec<X::Res>;
 
-    fn visit(self, visitor: &mut dyn Visitor<T, U>) -> Self::Res {
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         self.into_iter().map(|x| x.visit(visitor)).collect()
     }
 }

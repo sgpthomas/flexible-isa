@@ -7,7 +7,8 @@ use halide_ir::Printer;
 use instruction_select::Simplify;
 
 use halide_ir::{
-    Inline, InsertCasts, MineExpressions, StmtParser, TypeAnnotator, UniqueIdents, Visitor,
+    Inline, InsertCasts, MineExpressions, NumberNodes, Rewrite, StmtParser, TypeAnnotator,
+    UniqueIdents, Visitor,
 };
 use instruction_select::{InstructionSelect, Instructions};
 
@@ -55,16 +56,17 @@ fn main() -> anyhow::Result<()> {
             let func_sig = HalideGeneratorParser::read_json(types.as_ref().unwrap_or(file))
                 .with_context(|| format!("Don't have buffer types: {file:?}"))?;
             StmtParser::parse_file(file)
-                .map(|ast| Inline::default().do_pass(ast))
-                .map(|ast| UniqueIdents::default().do_pass(ast))
+                .map(Inline::do_pass_default)
+                .map(UniqueIdents::do_pass_default)
                 .map(|ast| TypeAnnotator::from(func_sig).do_pass(ast))
-                .map(|ast| InsertCasts.do_pass(ast))
-                .inspect(|ast| {
-                    if args.output_ir {
-                        ast.stdout();
-                        println!()
-                    }
-                })
+                .map(InsertCasts::do_pass_default)
+                .map(NumberNodes::do_pass_default)
+            // .inspect(|ast| {
+            //     if args.output_ir {
+            //         ast.stdout();
+            //         println!()
+            //     }
+            // })
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
@@ -79,6 +81,7 @@ fn main() -> anyhow::Result<()> {
         let mut inst_sel = Instructions::default();
 
         miner.into_iter().for_each(|expr| {
+            // let wrapped = babble::AstNode::new(HalideExprOp::Named(*expr.data()), vec![]);
             let rec_expr = egg::RecExpr::from(expr.clone());
             inst_sel.add_expr(&rec_expr);
         });
@@ -87,21 +90,47 @@ fn main() -> anyhow::Result<()> {
         println!("Learning instructions...");
         let instrs = inst_sel.anti_unify();
 
-        println!("== Learned Patterns ==");
-        instrs.rewrites().for_each(|pat| {
-            println!(
-                "{}: {} => {}",
-                pat.name,
-                pat.searcher.get_pattern_ast().unwrap().pretty(80),
-                pat.applier.get_pattern_ast().unwrap().pretty(80)
-            );
-        });
+        // println!("== Learned Patterns ==");
+        // instrs.rewrites().for_each(|pat| {
+        //     println!(
+        //         "{}: {} => {}",
+        //         pat.name,
+        //         pat.searcher.get_pattern_ast().unwrap().pretty(80),
+        //         pat.applier.get_pattern_ast().unwrap().pretty(80)
+        //     );
+        // });
 
         let instr_map: HashMap<_, _> = instrs.instructions().collect();
 
         println!("== Final Program ==");
         let prog = instrs.apply();
         println!("{}", prog.pretty(80));
+
+        // unflatten the program
+        // let unflattened_prog = babble::Expr::from(prog.clone());
+        // let (_, rewritten) = unflattened_prog.into_inner().into_parts();
+        // let rewrite_map: HashMap<u64, babble::Expr<HalideExprOp>> = rewritten
+        //     .into_iter()
+        //     .filter_map(|op| {
+        //         if let (HalideExprOp::Named(id), mut expr) = op.into_inner().into_parts() {
+        //             Some((id, expr.remove(0)))
+        //         } else {
+        //             None
+        //         }
+        //     })
+        //     .collect();
+
+        let mut rewriter = Rewrite::new(prog.clone())?;
+
+        let asts: Vec<_> = asts.into_iter().map(|ast| rewriter.do_pass(ast)).collect();
+        for ast in asts {
+            if args.output_ir {
+                ast.stdout();
+                println!()
+            }
+        }
+
+        println!("== Used instruction ==");
         let instr_hist = InstructionSelect::from_recexpr(&prog);
         instr_hist
             .iter()

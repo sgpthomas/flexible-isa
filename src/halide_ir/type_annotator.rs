@@ -18,7 +18,7 @@ impl TypeAnnotator {
     fn prefix(&self) -> Option<String> {
         self.module_name
             .as_ref()
-            .map(|id| format!("{}{}", id.name, self.count))
+            .map(|id| format!("{}_{}$", id.name, self.count))
     }
 
     fn lookup(&self, var: &ast::Id) -> Option<HalideType> {
@@ -200,7 +200,9 @@ impl From<HashMap<ast::Id, HalideType>> for TypeAnnotator {
     }
 }
 
-impl<T> Visitor<T, HalideType> for TypeAnnotator {
+impl<T> Visitor<T> for TypeAnnotator {
+    type Output = HalideType;
+
     fn default_u(&mut self, _data: T) -> HalideType {
         HalideType::Unknown
     }

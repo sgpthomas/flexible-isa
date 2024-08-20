@@ -1,7 +1,8 @@
 use super::ast;
 
-pub struct MineExpressions<'a, T> {
-    exprs: Vec<&'a ast::Expr<T>>,
+#[derive(Default)]
+pub struct MineExpressions<'a> {
+    exprs: Vec<&'a ast::Expr<u64>>,
 
     var_prefix: Option<String>,
 
@@ -10,23 +11,13 @@ pub struct MineExpressions<'a, T> {
     should_mine: bool,
 }
 
-impl<'a, T> Default for MineExpressions<'a, T> {
-    fn default() -> Self {
-        Self {
-            exprs: vec![],
-            var_prefix: None,
-            should_mine: false,
-        }
-    }
-}
-
-impl<'a, T> MineExpressions<'a, T> {
+impl<'a> MineExpressions<'a> {
     pub fn set_var_prefix<S: ToString>(&mut self, prefix: S) -> &mut Self {
         self.var_prefix = Some(prefix.to_string());
         self
     }
 
-    pub fn mine_module<'s>(&'s mut self, module: &'a ast::Module<T>)
+    pub fn mine_module<'s>(&'s mut self, module: &'a ast::Module<u64>)
     where
         'a: 's,
     {
@@ -38,14 +29,14 @@ impl<'a, T> MineExpressions<'a, T> {
         }
     }
 
-    pub fn mine_func<'s>(&'s mut self, func: &'a ast::Func<T>)
+    pub fn mine_func<'s>(&'s mut self, func: &'a ast::Func<u64>)
     where
         'a: 's,
     {
         self.mine_block(&func.stmts);
     }
 
-    pub fn mine_block<'s>(&'s mut self, block: &'a ast::Block<T>)
+    pub fn mine_block<'s>(&'s mut self, block: &'a ast::Block<u64>)
     where
         'a: 's,
     {
@@ -54,7 +45,7 @@ impl<'a, T> MineExpressions<'a, T> {
         }
     }
 
-    pub fn mine_stmt<'s>(&'s mut self, stmt: &'a ast::Stmt<T>)
+    pub fn mine_stmt<'s>(&'s mut self, stmt: &'a ast::Stmt<u64>)
     where
         'a: 's,
     {
@@ -97,7 +88,7 @@ impl<'a, T> MineExpressions<'a, T> {
         }
     }
 
-    pub fn mine_expr<'s>(&'s mut self, expr: &'a ast::Expr<T>)
+    pub fn mine_expr<'s>(&'s mut self, expr: &'a ast::Expr<u64>)
     where
         'a: 's,
     {
@@ -111,8 +102,8 @@ impl<'a, T> MineExpressions<'a, T> {
     }
 }
 
-impl<'a, T> IntoIterator for MineExpressions<'a, T> {
-    type Item = &'a ast::Expr<T>;
+impl<'a> IntoIterator for MineExpressions<'a> {
+    type Item = &'a ast::Expr<u64>;
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
