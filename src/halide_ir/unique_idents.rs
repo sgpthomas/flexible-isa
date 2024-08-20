@@ -132,12 +132,12 @@ impl<T> Visitor<T> for UniqueIdents {
         }
     }
 
-    fn let_stmt(&mut self, var: ast::Id, expr: ast::Expr<T>, data: T) -> ast::Stmt<T> {
-        ast::Stmt::Let {
+    fn make_let_stmt(&mut self, var: ast::Id, expr: ast::Expr<T>, data: T) -> Vec<ast::Stmt<T>> {
+        vec![ast::Stmt::Let {
             var: var.with_prefix(&self.prefix()),
             expr,
             data,
-        }
+        }]
     }
 
     fn make_ident_expr(&mut self, id: ast::Id, data: T) -> ast::Expr<T> {

@@ -34,3 +34,23 @@ impl Visitor<HalideType> for InsertCasts {
         }
     }
 }
+
+#[derive(Default)]
+pub struct RemoveCasts;
+
+impl<T> Visitor<T> for RemoveCasts {
+    type Output = T;
+
+    fn default_u(&mut self, data: T) -> Self::Output {
+        data
+    }
+
+    fn make_cast_expr(
+        &mut self,
+        _typ: ast::Id,
+        expr: ast::Expr<Self::Output>,
+        _data: T,
+    ) -> ast::Expr<Self::Output> {
+        expr
+    }
+}

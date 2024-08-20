@@ -1,11 +1,12 @@
 #[macro_use]
 mod annotation;
 pub mod ast;
+mod casts;
 mod convert;
+mod flatten;
 mod generator_types;
 mod halide_type;
 mod inline;
-mod insert_casts;
 mod mine_exprs;
 mod number_nodes;
 mod parser;
@@ -17,10 +18,11 @@ mod visitor;
 mod visitor_composition;
 
 pub use annotation::Annotation;
+pub use casts::{InsertCasts, RemoveCasts};
+pub use flatten::Flatten;
 pub use generator_types::HalideGeneratorParser;
 pub use halide_type::{HalideType, MatchWidth};
 pub use inline::Inline;
-pub use insert_casts::InsertCasts;
 pub use mine_exprs::MineExpressions;
 pub use number_nodes::NumberNodes;
 pub use parser::StmtParser;

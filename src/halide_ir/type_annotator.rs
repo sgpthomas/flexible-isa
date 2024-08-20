@@ -222,19 +222,19 @@ impl<T> Visitor<T> for TypeAnnotator {
         self.count += 1;
     }
 
-    fn let_stmt(
+    fn make_let_stmt(
         &mut self,
         var: ast::Id,
         expr: ast::Expr<HalideType>,
         _data: T,
-    ) -> ast::Stmt<HalideType> {
+    ) -> Vec<ast::Stmt<HalideType>> {
         let typ = expr.data().clone();
         self.bind_var(var.clone(), typ.clone());
-        ast::Stmt::Let {
+        vec![ast::Stmt::Let {
             var,
             expr,
             data: typ,
-        }
+        }]
     }
 
     fn allocate_stmt(

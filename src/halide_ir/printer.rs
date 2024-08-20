@@ -380,10 +380,7 @@ where
     }
 }
 
-impl<T> Printer for ast::Expr<T>
-where
-    T: Debug,
-{
+impl<T> Printer for ast::Expr<T> {
     fn to_doc(&self) -> Doc {
         let doc = match self {
             ast::Expr::Number(n, _) => Doc::as_string(n.value).highlight(|cs| cs.literal()),
@@ -488,10 +485,7 @@ where
     }
 }
 
-impl<T> Printer for ast::Access<T>
-where
-    T: Debug,
-{
+impl<T> Printer for ast::Access<T> {
     fn to_doc(&self) -> Doc {
         let idx_doc = self.idx.to_doc().map_append(&self.align, |(low, hi)| {
             Doc::space().append(

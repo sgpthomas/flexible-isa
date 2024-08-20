@@ -214,7 +214,7 @@ pub enum Expr<T = ()> {
 
 impl<T> Expr<T>
 where
-    T: Default + std::fmt::Debug,
+    T: Default,
 {
     pub fn neg(inner: Expr<T>) -> Expr<T> {
         Expr::Unop(Unop::Neg, Box::new(inner), T::default())
@@ -277,10 +277,61 @@ where
         Expr::CompBinop(CompBinop::Or, Box::new(lhs), Box::new(rhs), T::default())
     }
 
-    pub fn struct_member(lhs: Expr<T>, rhs: Expr<T>) -> anyhow::Result<Expr<T>> {
+    pub fn struct_member(lhs: Expr<T>, rhs: Expr<T>) -> anyhow::Result<Expr<T>>
+    where
+        T: std::fmt::Debug,
+    {
         match (lhs, rhs) {
             (Expr::Ident(x, _), Expr::Ident(y, _)) => Ok(Expr::StructMember(x, y, T::default())),
             (lhs, rhs) => Err(anyhow!("{lhs:?} and {rhs:?} need to be idents")),
+        }
+    }
+
+    pub fn has_children(&self) -> bool {
+        match self {
+            Expr::Number(_, _) | Expr::Ident(_, _) => false,
+            Expr::Unop(_, _, _)
+            | Expr::ArithBinop(_, _, _, _)
+            | Expr::CompBinop(_, _, _, _)
+            | Expr::If(_, _, _)
+            | Expr::StructMember(_, _, _)
+            | Expr::FunCall(_, _, _)
+            | Expr::Reinterpret(_, _, _)
+            | Expr::Cast(_, _, _)
+            | Expr::PtrCast(_, _, _)
+            | Expr::Access(_, _)
+            | Expr::Instruction { .. }
+            | Expr::LetIn(_, _, _, _) => true,
+        }
+    }
+
+    pub fn is_complex(&self) -> bool {
+        match self {
+            Expr::Number(_, _) | Expr::Ident(_, _) => false,
+            Expr::Unop(_, expr, _) => expr.has_children(),
+            Expr::ArithBinop(_, lhs, rhs, _) | Expr::CompBinop(_, lhs, rhs, _) => {
+                lhs.has_children() || rhs.has_children()
+            }
+            Expr::If(expr, cond, _) => expr.has_children() || cond.has_children(),
+            Expr::StructMember(_, _, _) => false,
+            Expr::FunCall(_, args, _) => args.iter().any(Expr::has_children),
+            Expr::Reinterpret(_, args, _) => args.iter().any(Expr::has_children),
+            Expr::Cast(_, expr, _) => expr.has_children(),
+            Expr::PtrCast(_, expr, _) => expr.has_children(),
+            Expr::Access(
+                Access {
+                    var: _,
+                    idx,
+                    align: _,
+                },
+                _,
+            ) => idx.has_children(),
+            Expr::Instruction {
+                num: _,
+                args,
+                data: _,
+            } => args.iter().any(Expr::has_children),
+            Expr::LetIn(_, binding, body, _) => binding.has_children() || body.has_children(),
         }
     }
 }

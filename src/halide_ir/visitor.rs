@@ -77,16 +77,25 @@ pub trait Visitor<T> {
         }
     }
 
-    fn stmt(&mut self, stmt: Stmt<Self::Output>) -> Stmt<Self::Output> {
-        stmt
+    fn start_stmt(&mut self, _stmt: &Stmt<T>) {}
+
+    fn make_stmt(&mut self, stmt: Stmt<Self::Output>) -> Vec<Stmt<Self::Output>> {
+        vec![stmt]
     }
 
-    fn let_stmt(&mut self, var: Id, expr: Expr<Self::Output>, data: T) -> Stmt<Self::Output> {
-        Stmt::Let {
+    fn start_let_stmt(&mut self, _var: &Id, _expr: &Expr<T>, _data: &T) {}
+
+    fn make_let_stmt(
+        &mut self,
+        var: Id,
+        expr: Expr<Self::Output>,
+        data: T,
+    ) -> Vec<Stmt<Self::Output>> {
+        vec![Stmt::Let {
             var,
             expr,
             data: self.default_u(data),
-        }
+        }]
     }
 
     fn produce_stmt(&mut self, var: Id, body: Block<Self::Output>, data: T) -> Stmt<Self::Output> {
@@ -105,17 +114,19 @@ pub trait Visitor<T> {
         }
     }
 
-    fn store_stmt(
+    fn start_store_stmt(&mut self, _access: &Access<T>, _value: &Expr<T>, _data: &T) {}
+
+    fn make_store_stmt(
         &mut self,
         access: Access<Self::Output>,
         value: Expr<Self::Output>,
         data: T,
-    ) -> Stmt<Self::Output> {
-        Stmt::Store {
+    ) -> Vec<Stmt<Self::Output>> {
+        vec![Stmt::Store {
             access,
             value,
             data: self.default_u(data),
-        }
+        }]
     }
 
     fn allocate_stmt(
@@ -188,7 +199,9 @@ pub trait Visitor<T> {
         }
     }
 
-    fn predicate_stmt(
+    fn start_predicate_stmt(&mut self, _cond: &Expr<T>, _stmt: &Stmt<T>, _data: &T) {}
+
+    fn make_predicate_stmt(
         &mut self,
         cond: Expr<Self::Output>,
         stmt: Stmt<Self::Output>,
@@ -381,30 +394,33 @@ impl<T, U> Visitable<T, U> for Func<T> {
 }
 
 impl<T, U> Visitable<T, U> for Stmt<T> {
-    type Res = Stmt<U>;
+    type Res = Vec<Stmt<U>>;
 
     fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
-        let stmt = match self {
+        visitor.start_stmt(&self);
+        let stmts: Vec<_> = match self {
             Stmt::Let { var, expr, data } => {
+                visitor.start_let_stmt(&var, &expr, &data);
                 let expr = expr.visit(visitor);
-                visitor.let_stmt(var, expr, data)
+                visitor.make_let_stmt(var, expr, data)
             }
             Stmt::Produce { var, body, data } => {
                 let body = body.visit(visitor);
-                visitor.produce_stmt(var, body, data)
+                vec![visitor.produce_stmt(var, body, data)]
             }
             Stmt::Consume { var, body, data } => {
                 let body = body.visit(visitor);
-                visitor.consume_stmt(var, body, data)
+                vec![visitor.consume_stmt(var, body, data)]
             }
             Stmt::Store {
                 access,
                 value,
                 data,
             } => {
+                visitor.start_store_stmt(&access, &value, &data);
                 let access = access.visit(visitor);
                 let value = value.visit(visitor);
-                visitor.store_stmt(access, value, data)
+                visitor.make_store_stmt(access, value, data)
             }
             Stmt::Allocate {
                 name,
@@ -416,9 +432,9 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
             } => {
                 let extents = extents.visit(visitor);
                 let condition = condition.visit(visitor);
-                visitor.allocate_stmt(name, typ, extents, loc, condition, data)
+                vec![visitor.allocate_stmt(name, typ, extents, loc, condition, data)]
             }
-            Stmt::Free { var, data } => visitor.free_stmt(var, data),
+            Stmt::Free { var, data } => vec![visitor.free_stmt(var, data)],
             Stmt::For {
                 var,
                 low,
@@ -431,7 +447,7 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
                 let mut high = high.visit(visitor);
                 visitor.start_for_stmt(&var, &mut low, &mut high, &device, &data);
                 let body = body.visit(visitor);
-                visitor.make_for_stmt(var, low, high, device, body, data)
+                vec![visitor.make_for_stmt(var, low, high, device, body, data)]
             }
             Stmt::If {
                 cond,
@@ -442,19 +458,37 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
                 let cond = cond.visit(visitor);
                 let tru = tru.visit(visitor);
                 let fls = fls.visit(visitor);
-                visitor.if_stmt(cond, tru, fls, data)
+                vec![visitor.if_stmt(cond, tru, fls, data)]
             }
             Stmt::Predicate { cond, stmt, data } => {
+                visitor.start_predicate_stmt(&cond, &*stmt, &data);
                 let cond = cond.visit(visitor);
-                let stmt = stmt.visit(visitor);
-                visitor.predicate_stmt(cond, stmt, data)
+                // stmt.visit can produce a list of new stmts
+                // the last stmt will be the "original" stmt that
+                // we visited. pop that off and construct the predicate
+                // from that. we then push that to the end of the list
+                // that we got from `stmt.visit`. if there is nothing
+                // to pop, this statement was removed from the visit
+                // and so we also return nothing here. we need some statement
+                // to predicate
+                let mut preconds = stmt.visit(visitor);
+                let stmt = preconds.pop();
+                if let Some(stmt) = stmt {
+                    preconds.push(visitor.make_predicate_stmt(cond, stmt, data));
+                    preconds
+                } else {
+                    vec![]
+                }
             }
             Stmt::Expr(expr, data) => {
                 let expr = expr.visit(visitor);
-                visitor.expr_stmt(expr, data)
+                vec![visitor.expr_stmt(expr, data)]
             }
         };
-        visitor.stmt(stmt)
+        stmts
+            .into_iter()
+            .flat_map(|stmt| visitor.make_stmt(stmt))
+            .collect()
     }
 }
 
@@ -558,11 +592,16 @@ where
     }
 }
 
-impl<X, T, U> Visitable<T, U> for Vec<X>
-where
-    X: Visitable<T, U>,
-{
-    type Res = Vec<X::Res>;
+impl<T, U> Visitable<T, U> for Vec<Stmt<T>> {
+    type Res = Vec<Stmt<U>>;
+
+    fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
+        self.into_iter().flat_map(|x| x.visit(visitor)).collect()
+    }
+}
+
+impl<T, U> Visitable<T, U> for Vec<Expr<T>> {
+    type Res = Vec<Expr<U>>;
 
     fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
         self.into_iter().map(|x| x.visit(visitor)).collect()

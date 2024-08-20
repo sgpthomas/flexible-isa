@@ -20,8 +20,29 @@ pub struct Args {
     pub dont_learn: bool,
 
     /// output halide ir
-    #[argh(switch)]
-    pub output_ir: bool,
+    #[argh(option)]
+    pub output_ir: Vec<OutputIr>,
+}
+
+#[derive(Debug, derive_more::FromStr)]
+pub enum OutputIr {
+    Parse,
+    Types,
+    Instr,
+}
+
+impl Args {
+    pub fn output_parse(&self) -> bool {
+        self.output_ir.iter().any(|x| matches!(x, OutputIr::Parse))
+    }
+
+    pub fn output_types(&self) -> bool {
+        self.output_ir.iter().any(|x| matches!(x, OutputIr::Types))
+    }
+
+    pub fn output_instr(&self) -> bool {
+        self.output_ir.iter().any(|x| matches!(x, OutputIr::Instr))
+    }
 }
 
 pub fn cli() -> Args {

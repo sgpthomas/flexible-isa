@@ -2,6 +2,8 @@
 
 use babble::Teachable;
 
+use crate::halide_ir::ast;
+
 use super::{
     cost::InstructionSelect, lang::HalideExprOp, AntiUnified, HalideLang, Init, InstructionState,
 };
@@ -69,7 +71,7 @@ impl Instructions<Init> {
         let mut learned_library = babble::LearnedLibraryBuilder::default()
             .learn_trivial(true)
             .ban_op(HalideExprOp::Cast(vec![]))
-            // .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
+            .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
             .with_roots(self.roots.clone())
             .build(&self.egraph);
 
