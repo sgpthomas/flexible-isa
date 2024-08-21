@@ -410,6 +410,7 @@ impl babble::DiscriminantEq for HalideExprOp {
         match (self, other) {
             (Cast(_), Cast(_)) => true,
             (FunCall(_), FunCall(_)) => true,
+            (Named(_), Named(_)) => true,
             (x, y) => x.eq(y),
         }
     }

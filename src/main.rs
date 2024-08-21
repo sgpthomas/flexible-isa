@@ -87,9 +87,7 @@ fn main() -> anyhow::Result<()> {
         let mut inst_sel = Instructions::default();
 
         miner.into_iter().for_each(|expr| {
-            // let wrapped = babble::AstNode::new(HalideExprOp::Named(*expr.data()), vec![]);
-            let rec_expr = egg::RecExpr::from(expr.clone());
-            inst_sel.add_expr(&rec_expr);
+            inst_sel.add_expr(expr.clone());
         });
 
         // run anti-unification to discover patterns
@@ -101,25 +99,24 @@ fn main() -> anyhow::Result<()> {
 
         println!("== Final Program ==");
         let prog = instrs.apply();
-        println!("{}", prog.pretty(80));
+        // println!("{}", prog.pretty(80));
 
         // map expressions back into their program
         let mut rewriter = Rewrite::new(prog.clone())?;
-        let asts: Vec<_> = asts
-            .into_iter()
+        asts.into_iter()
             .map(|ast| rewriter.do_pass(ast))
             .map(RemoveCasts::do_pass_default)
             .map(LiftExpressions::do_pass_default)
-            .collect();
-        for ast in asts {
-            if args.output_instr() {
-                ast.stdout();
-                println!()
-            }
-        }
+            .for_each(|ast| {
+                if args.output_instr() {
+                    ast.stdout();
+                    println!()
+                }
+            });
 
-        println!("== Used instruction ==");
+        println!("== Used instructions ==");
         let instr_hist = InstructionSelect::from_recexpr(&prog);
+        println!("len: {}", instr_hist.len());
         instr_hist
             .iter()
             .filter_map(|(op, count)| {
@@ -131,7 +128,7 @@ fn main() -> anyhow::Result<()> {
             })
             .sorted_by_key(|(_, count)| *count)
             .for_each(|(i, count)| {
-                println!("{i}: {count} {}", instr_map[&((*i) as usize)]);
+                println!("{i}: {count}\n{}", instr_map[&((*i) as usize)].pretty(80));
             });
 
         return Ok(());

@@ -3,7 +3,7 @@ use crate::{
     halide_ir::Annotation,
     instruction_select::{BabbleOp, HalideExprOp, HalideLang},
 };
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use std::collections::HashMap;
 
 pub struct Rewrite {
@@ -27,14 +27,16 @@ impl Rewrite {
         let map = children
             .into_iter()
             .map(|op| {
-                if let (HalideExprOp::Named(id), mut expr) = op.into_inner().into_parts() {
+                let (op, mut expr) = op.into_inner().into_parts();
+                if let HalideExprOp::Named(id) = op {
                     let ast_expr = ast::Expr::try_from(expr.swap_remove(0))?;
                     Ok((id, set_data.do_pass_expr(ast_expr)))
                 } else {
-                    Err(anyhow!("Unnamed expression"))
+                    Err(anyhow!("Unnamed expression: {op:?}"))
                 }
             })
-            .collect::<anyhow::Result<_>>()?;
+            .collect::<anyhow::Result<_>>()
+            .context("translating children into map")?;
 
         Ok(Rewrite { map })
     }

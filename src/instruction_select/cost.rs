@@ -90,6 +90,10 @@ where
     pub fn iter(&self) -> impl Iterator<Item = (&Op, &usize)> {
         self.op_count.iter()
     }
+
+    pub fn len(&self) -> usize {
+        self.op_count.len()
+    }
 }
 
 impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {

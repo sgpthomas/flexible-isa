@@ -166,6 +166,18 @@ impl TypeAnnotator {
                 }
             }
 
+            // abs value functions
+            ("abs", [a, _b]) => a.data().clone().unsigned(),
+            ("absd", [a, _b]) => a.data().clone().unsigned(),
+
+            // vector functions
+            ("select", [_cond, tru, fls]) if tru.data() == fls.data() => tru.data().clone(),
+            ("interleave_vectors", [v1, v2])
+                if v1.data() == v2.data() && matches!(v1.data(), HalideType::Vec(..)) =>
+            {
+                v1.data().widen()
+            }
+
             // try parsing the function name as a normal HalideType
             (x_lanes, [arg]) if x_lanes.starts_with('x') => x_lanes
                 .strip_prefix('x')

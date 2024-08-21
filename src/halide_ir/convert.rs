@@ -174,15 +174,15 @@ impl TryFrom<babble::Expr<HalideExprOp>> for ast::Expr<()> {
                 Err(anyhow!("Wrong number of arguments for `StructMember`"))
             }
             (HalideExprOp::FunCall(id), args) => Ok(ast::Expr::FunCall(
-                id.try_into()?,
-                args.into_iter()
+                id,
+                args.iter()
                     .map(ast::Expr::try_from)
                     .collect::<Result<_, _>>()?,
                 (),
             )),
             (HalideExprOp::Reinterpret(typs), args) => Ok(ast::Expr::Reinterpret(
                 typs,
-                args.into_iter()
+                args.iter()
                     .map(ast::Expr::try_from)
                     .collect::<Result<_, _>>()?,
                 (),
@@ -210,7 +210,7 @@ impl TryFrom<babble::Expr<HalideExprOp>> for ast::Expr<()> {
             (HalideExprOp::Instruction(i), args) => Ok(ast::Expr::Instruction {
                 num: i,
                 args: args
-                    .into_iter()
+                    .iter()
                     .map(ast::Expr::try_from)
                     .collect::<Result<_, _>>()?,
                 data: (),

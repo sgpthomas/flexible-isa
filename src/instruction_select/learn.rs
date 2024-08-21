@@ -59,8 +59,11 @@ fn replace_idents(
 }
 
 impl Instructions<Init> {
-    pub fn add_expr(&mut self, expr: &egg::RecExpr<HalideLang>) {
-        let root = self.egraph.add_expr(expr);
+    pub fn add_expr<R>(&mut self, expr: R)
+    where
+        R: Into<egg::RecExpr<HalideLang>>,
+    {
+        let root = self.egraph.add_expr(&expr.into());
         self.roots.push(root);
     }
 
@@ -72,6 +75,7 @@ impl Instructions<Init> {
             .learn_trivial(true)
             .ban_op(HalideExprOp::Cast(vec![]))
             .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
+            .ban_op(HalideExprOp::Named(0))
             .with_roots(self.roots.clone())
             .build(&self.egraph);
 

@@ -129,6 +129,18 @@ impl HalideType {
             HalideType::Vec(lanes, typ) => HalideType::Vec(lanes, Box::new(typ.signed())),
         }
     }
+
+    pub fn unsigned(self) -> Self {
+        match self {
+            x @ (HalideType::Unknown
+            | HalideType::Unsigned(_)
+            | HalideType::Bool
+            | HalideType::Ptr(_)
+            | HalideType::Struct(_)) => x,
+            HalideType::Signed(bits) => HalideType::Unsigned(bits),
+            HalideType::Vec(lanes, typ) => HalideType::Vec(lanes, Box::new(typ.unsigned())),
+        }
+    }
 }
 
 pub trait MatchWidth {
