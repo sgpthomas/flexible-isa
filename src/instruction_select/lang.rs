@@ -1,6 +1,8 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use crate::halide_ir::ast;
+use itertools::Itertools;
+
+use crate::halide_ir::{ast, HalideType};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum BabbleOp {
@@ -68,6 +70,51 @@ pub enum HalideExprOp {
     PatternVar(egg::Var),
 }
 
+enum HalideExprOpParseError {
+    Cast,
+    Call,
+    Reinterpret,
+}
+
+impl HalideExprOp {
+    fn parse_cast(input: &str) -> Result<Self, HalideExprOpParseError> {
+        input
+            .strip_prefix("cast<")
+            .and_then(|x| x.strip_suffix('>'))
+            .ok_or(HalideExprOpParseError::Cast)
+            .map(|typs| {
+                typs.split(' ')
+                    .map(HalideType::from_str)
+                    .map(|x| HalideType::to_id(&x))
+                    .collect_vec()
+            })
+            .map(Self::Cast)
+    }
+
+    fn parse_call(input: &str) -> Result<Self, HalideExprOpParseError> {
+        input
+            .strip_prefix("call[")
+            .and_then(|x| x.strip_suffix(']'))
+            .ok_or(HalideExprOpParseError::Call)
+            .map(ast::Id::new)
+            .map(Self::FunCall)
+    }
+
+    fn parse_reinterpret(input: &str) -> Result<Self, HalideExprOpParseError> {
+        input
+            .strip_prefix("reinterpret<")
+            .and_then(|x| x.strip_suffix('>'))
+            .ok_or(HalideExprOpParseError::Reinterpret)
+            .map(|typs| {
+                typs.split(' ')
+                    .map(HalideType::from_str)
+                    .map(|x| HalideType::to_id(&x))
+                    .collect_vec()
+            })
+            .map(Self::Reinterpret)
+    }
+}
+
 impl FromStr for HalideExprOp {
     type Err = Infallible;
 
@@ -95,20 +142,19 @@ impl FromStr for HalideExprOp {
             "if" => Self::If,
             "::" => Self::StructMember,
 
-            // function calls
-            // "call" => Self::FunCall,
-            // "reinterpret" => Self::Reinterpret,
-
-            // // casts
-            // "cast" => Self::Cast,
-
             // array access
             "get" => Self::Access,
 
-            // babble ops and constants
+            // anything with arguments
+            // constants, casts, fun_calls, reinterprets, && babble ops
+            // tries parsing in order, if something fails, try the next thing
+            // if nothing succeeds, default to BabbleOp::Symbol
             input => input
                 .parse()
                 .map(|value| Self::Number(ast::Number::new_int(value)))
+                .or_else(|_| Self::parse_cast(input))
+                .or_else(|_| Self::parse_call(input))
+                .or_else(|_| Self::parse_reinterpret(input))
                 .or_else(|_| input.parse().map(|x| Self::Babble(BabbleOp::LambdaVar(x))))
                 .or_else(|_| input.parse().map(|x| Self::Babble(BabbleOp::LibVar(x))))
                 .or_else(|_| {
