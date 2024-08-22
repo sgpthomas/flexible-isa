@@ -51,6 +51,7 @@ impl StmtParser {
         Ok(StmtParser::file(inputs.single().unwrap())?)
     }
 
+    #[allow(clippy::result_large_err)]
     fn struct_member(lhs: Expr, rhs: Expr, span: pest::Span<'_>) -> ParseResult<Expr> {
         Expr::struct_member(lhs, rhs).map_err(|e| {
             pest_consume::Error::new_from_span(
@@ -62,6 +63,7 @@ impl StmtParser {
         })
     }
 
+    #[allow(clippy::result_large_err)]
     fn expr_pratt(pairs: Pairs<Rule>) -> ParseResult<Expr> {
         PRATT
             .map_primary(|primary| match primary.as_rule() {
