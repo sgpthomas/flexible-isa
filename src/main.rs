@@ -131,7 +131,8 @@ fn main() -> anyhow::Result<()> {
                 None
             }
         })
-        .sorted_by_key(|(_, count)| *count)
+        // sort first by count, then by index
+        .sorted_by_key(|(i, count)| (*count, *i))
         .for_each(|(i, count)| {
             println!("{i}: {count}\n{}", instr_map[&((*i) as usize)].pretty(80));
         });
