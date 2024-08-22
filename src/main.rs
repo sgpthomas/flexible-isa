@@ -68,22 +68,25 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    let instrs = if args.learn {
-        // gather expressions from all the asts
-        let mut miner = MineExpressions::default();
-        for ast in &asts {
-            miner.mine_module(ast);
-        }
+    // gather expressions from all the asts
+    let mut miner = MineExpressions::default();
+    for ast in &asts {
+        miner.mine_module(ast);
+    }
 
-        // gather all of the expressions into the instruction selector
-        let mut inst_sel = Instructions::default();
-        miner.into_iter().for_each(|expr| {
-            inst_sel.add_expr(expr.clone());
-        });
+    // add all of the expressions into the instruction selector
+    let mut instr_sel = Instructions::default();
+    miner.into_iter().for_each(|expr| {
+        instr_sel.add_expr(expr.clone());
+    });
 
+    let instr_sel = if let Some(path) = &args.load {
+        println!("Loading instructions from {path:?}...");
+        instr_sel.load(path)?
+    } else if args.learn {
         // run anti-unification to discover patterns (instructions)
         println!("Learning instructions...");
-        let instrs = inst_sel.anti_unify();
+        let instrs = instr_sel.learn();
 
         // serialize the instructions to a file
         if let Some(path) = &args.save {
@@ -91,16 +94,13 @@ fn main() -> anyhow::Result<()> {
         }
 
         instrs
-    } else if let Some(path) = &args.load {
-        Instructions::load(path)?
     } else {
-        return Err(anyhow!(
-            "Need to specify either `--learn` or `--load <file>`"
-        ));
+        return Err(anyhow!("Need either `--learn` or `--load <path>`"));
     };
 
-    println!("== Final Program ==");
-    let prog = instrs.apply();
+    let prog = instr_sel.apply();
+    // println!("== Final Program ==");
+    // println!("{}", prog.pretty(80));
 
     // map expressions back into their program. we have a single `RecExpr` that
     // contains expressions from all of the asts that we were given initially
@@ -120,7 +120,7 @@ fn main() -> anyhow::Result<()> {
     println!("== Used instructions ==");
     let instr_hist = InstructionSelect::from_recexpr(&prog);
     // XXX: this doesn't need to be a hashmap
-    let instr_map: HashMap<_, _> = instrs.instructions().collect();
+    let instr_map: HashMap<_, _> = instr_sel.instructions().collect();
     println!("len: {}", instr_hist.len());
     instr_hist
         .iter()

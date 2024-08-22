@@ -1,6 +1,6 @@
 use derive_deftly::{define_derive_deftly, Deftly};
 
-use super::HalideExprOp;
+use super::HalideLang;
 
 // This is unnecessary, but I wanted to play around with these deftly derive macros
 define_derive_deftly! {
@@ -17,9 +17,9 @@ pub trait InstructionState {}
 #[derive_deftly(InstructionState)]
 pub struct Init;
 
-/// State once we have run anti-unification. We now have a library of "instructions"
+/// State after we have learned a set of instructions
 #[derive(Deftly)]
 #[derive_deftly(InstructionState)]
-pub struct AntiUnified {
-    pub learned_lib: babble::LearnedLibrary<HalideExprOp, (egg::Id, egg::Id)>,
+pub struct Learned {
+    pub instructions: Vec<(usize, egg::Pattern<HalideLang>)>,
 }

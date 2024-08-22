@@ -9,7 +9,7 @@ use itertools::Itertools;
 use crate::halide_ir::ast;
 
 use super::{
-    cost::InstructionSelect, lang::HalideExprOp, AntiUnified, HalideLang, Init, InstructionState,
+    cost::InstructionSelect, lang::HalideExprOp, HalideLang, Init, InstructionState, Learned,
 };
 
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
@@ -71,7 +71,7 @@ impl Instructions<Init> {
         self.roots.push(root);
     }
 
-    pub fn anti_unify(mut self) -> Instructions<AntiUnified> {
+    pub fn learn(mut self) -> Instructions<Learned> {
         // we need to rebuild the e-graph before learning a library
         self.egraph.rebuild();
 
@@ -99,17 +99,45 @@ impl Instructions<Init> {
             state: _,
         } = self;
 
+        // grab patterns from the learned library
+        let instructions = learned_library
+            .anti_unifications()
+            .enumerate()
+            .map(|(i, au)| (i, au.clone().into()))
+            .collect();
+
         Instructions {
             egraph,
             roots,
-            state: AntiUnified {
-                learned_lib: learned_library,
-            },
+            state: Learned { instructions },
         }
+    }
+
+    pub fn load(self, path: &Path) -> anyhow::Result<Instructions<Learned>> {
+        let file = File::open(path).context("Loading instructions from file")?;
+
+        let raw: Vec<(usize, String)> = serde_json::from_reader(file)?;
+
+        let instructions: Vec<(usize, egg::Pattern<HalideLang>)> = raw
+            .into_iter()
+            .map(|(i, pat)| Ok((i, pat.parse()?)))
+            .collect::<anyhow::Result<_>>()?;
+
+        let Self {
+            egraph,
+            roots,
+            state: _,
+        } = self;
+
+        Ok(Instructions {
+            egraph,
+            roots,
+            state: Learned { instructions },
+        })
     }
 }
 
-impl Instructions<AntiUnified> {
+impl Instructions<Learned> {
     /// Apply the set of learned rewrite rules to the egraph that we have, and extract a
     /// program preferring instructions that are used more frequently.
     pub fn apply(&self) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
@@ -132,32 +160,24 @@ impl Instructions<AntiUnified> {
     }
 
     pub fn rewrites(&self) -> impl Iterator<Item = egg::Rewrite<HalideLang, ()>> + '_ {
-        self.state
-            .learned_lib
-            .anti_unifications()
-            .enumerate()
-            .map(|(i, au)| {
-                let pattern: egg::Pattern<_> = au.clone().into();
+        self.instructions().map(|(i, pat)| {
+            // let pattern: egg::Pattern<_> = au.clone().into();
 
-                let searcher: egg::Pattern<_> = pattern.clone();
+            let searcher: egg::Pattern<_> = pat.clone();
 
-                let head = HalideExprOp::Instruction(i as u64);
-                let vars = pattern.vars().into_iter().map(babble::PartialExpr::Hole);
-                let applier_partial_expr: babble::PartialExpr<_, _> =
-                    babble::PartialExpr::Node(babble::AstNode::new(head, vars));
-                let applier: egg::Pattern<_> = applier_partial_expr.into();
+            let head = HalideExprOp::Instruction(i as u64);
+            let vars = pat.vars().into_iter().map(babble::PartialExpr::Hole);
+            let applier_partial_expr: babble::PartialExpr<_, _> =
+                babble::PartialExpr::Node(babble::AstNode::new(head, vars));
+            let applier: egg::Pattern<_> = applier_partial_expr.into();
 
-                let name = format!("instruction {i}");
-                egg::rewrite!(name; searcher => applier)
-            })
+            let name = format!("instruction {i}");
+            egg::rewrite!(name; searcher => applier)
+        })
     }
 
     pub fn instructions(&self) -> impl Iterator<Item = (usize, egg::Pattern<HalideLang>)> + '_ {
-        self.state
-            .learned_lib
-            .anti_unifications()
-            .enumerate()
-            .map(|(i, au)| (i, au.clone().into()))
+        self.state.instructions.iter().cloned()
     }
 
     pub fn serialize(&self, path: &Path) -> anyhow::Result<()> {
@@ -170,13 +190,5 @@ impl Instructions<AntiUnified> {
         serde_json::to_writer_pretty(file, &value)?;
 
         Ok(())
-    }
-
-    pub fn load(path: &Path) -> anyhow::Result<Self> {
-        let file = File::open(path).context("Loading instructions from file")?;
-
-        let _value: Vec<(usize, String)> = serde_json::from_reader(file)?;
-
-        todo!()
     }
 }
