@@ -8,6 +8,7 @@ pub enum HalideType {
     // AnyNumber,
     Unsigned(u64),
     Signed(u64),
+    Float(u64),
     Bool,
     Vec(u64, Box<HalideType>),
     Ptr(Vec<ast::Id>),
@@ -19,6 +20,7 @@ impl HalideType {
         use HalideType::*;
         match (&*self, &*other) {
             (&Unknown, _) | (_, &Unknown) => Unknown,
+            (&Float(x), _) | (_, &Float(x)) => Float(x),
             (x, y) if x == y => x.clone(),
             _ => Unknown,
         }
@@ -40,6 +42,9 @@ impl HalideType {
             "int32" => Signed(32),
             "int64" => Signed(64),
             "int128" => Signed(128),
+            "float" => Float(32),
+            "float32" => Float(32),
+            "float64" => Float(64),
             // vector types are written `int16x128`
             // so to parse them, we split at the x
             // reparse the left side, and parse the right side
@@ -69,6 +74,7 @@ impl HalideType {
             // AnyNumber => ast::Id::new("number"),
             Unsigned(n) => ast::Id::new(format!("uint{n}")),
             Signed(n) => ast::Id::new(format!("int{n}")),
+            Float(n) => ast::Id::new(format!("float{n}")),
             Bool => ast::Id::new("bool"),
             Vec(n, typ) => ast::Id::new(format!("{}x{n}", typ.to_id().name)),
             Ptr(typs) => ast::Id::new(format!(
@@ -91,6 +97,7 @@ impl HalideType {
             HalideType::Unknown => 0,
             HalideType::Unsigned(x) => *x,
             HalideType::Signed(x) => *x,
+            HalideType::Float(x) => *x,
             HalideType::Bool => 1,
             HalideType::Vec(_, typ) => typ.bits(),
             HalideType::Ptr(_) => 8,
@@ -105,11 +112,19 @@ impl HalideType {
         }
     }
 
+    pub fn set_lanes(self, lanes: u64) -> Self {
+        match self {
+            HalideType::Vec(_, typ) => HalideType::Vec(lanes, typ),
+            x => x,
+        }
+    }
+
     pub fn widen(&self) -> Self {
         // XXX: technically widening a 1-bit type should produce an 8-bit type
         match self {
             HalideType::Unsigned(x) => HalideType::Unsigned(x * 2),
             HalideType::Signed(x) => HalideType::Signed(x * 2),
+            HalideType::Float(x) => HalideType::Float(x * 2),
             HalideType::Vec(width, vec_typ) => HalideType::Vec(*width, Box::new(vec_typ.widen())),
             HalideType::Unknown | HalideType::Bool | HalideType::Ptr(_) | HalideType::Struct(_) => {
                 self.clone()
@@ -121,6 +136,7 @@ impl HalideType {
         match self {
             x @ (HalideType::Unknown
             | HalideType::Signed(_)
+            | HalideType::Float(_)
             | HalideType::Bool
             | HalideType::Ptr(_)
             | HalideType::Struct(_)) => x,
@@ -134,6 +150,7 @@ impl HalideType {
         match self {
             x @ (HalideType::Unknown
             | HalideType::Unsigned(_)
+            | HalideType::Float(_)
             | HalideType::Bool
             | HalideType::Ptr(_)
             | HalideType::Struct(_)) => x,

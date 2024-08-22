@@ -39,13 +39,18 @@ impl Display for Id {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Number {
-    pub value: u64,
+pub enum Number {
+    Int(u64),
+    Float(String), // pub value: u64,
 }
 
 impl Number {
-    pub fn new(value: u64) -> Self {
-        Self { value }
+    pub fn new_int(value: u64) -> Self {
+        Number::Int(value)
+    }
+
+    pub fn new_float<S: ToString>(value: S) -> Self {
+        Number::Float(value.to_string())
     }
 }
 

@@ -21,7 +21,9 @@
     {
       "Input": [
         {
-          "Buffer": "Unknown"
+          "Buffer": {
+            "Float": 32
+          }
         },
         2
       ]
@@ -34,7 +36,9 @@
     {
       "Input": [
         {
-          "Buffer": "Unknown"
+          "Buffer": {
+            "Float": 32
+          }
         },
         2
       ]
@@ -47,7 +51,9 @@
     {
       "Input": [
         {
-          "Raw": "Unknown"
+          "Raw": {
+            "Float": 32
+          }
         },
         1
       ]
@@ -60,7 +66,9 @@
     {
       "Input": [
         {
-          "Raw": "Unknown"
+          "Raw": {
+            "Float": 32
+          }
         },
         1
       ]
@@ -73,7 +81,9 @@
     {
       "Input": [
         {
-          "Raw": "Unknown"
+          "Raw": {
+            "Float": 32
+          }
         },
         1
       ]
@@ -86,7 +96,9 @@
     {
       "Input": [
         {
-          "Raw": "Unknown"
+          "Raw": {
+            "Float": 32
+          }
         },
         1
       ]

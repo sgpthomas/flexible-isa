@@ -1,6 +1,10 @@
 //! Use babble to learn common patterns in a list of expressions.
 
+use std::{fs::File, path::Path};
+
+use anyhow::Context;
 use babble::Teachable;
+use itertools::Itertools;
 
 use crate::halide_ir::ast;
 
@@ -106,6 +110,8 @@ impl Instructions<Init> {
 }
 
 impl Instructions<AntiUnified> {
+    /// Apply the set of learned rewrite rules to the egraph that we have, and extract a
+    /// program preferring instructions that are used more frequently.
     pub fn apply(&self) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
         // extract the best program
         let mut egraph = self.egraph.clone();
@@ -152,5 +158,25 @@ impl Instructions<AntiUnified> {
             .anti_unifications()
             .enumerate()
             .map(|(i, au)| (i, au.clone().into()))
+    }
+
+    pub fn serialize(&self, path: &Path) -> anyhow::Result<()> {
+        let file = File::create(path)?;
+
+        let value = self
+            .instructions()
+            .map(|(idx, pat)| (idx, pat.ast))
+            .collect_vec();
+        serde_json::to_writer_pretty(file, &value)?;
+
+        Ok(())
+    }
+
+    pub fn load(path: &Path) -> anyhow::Result<Self> {
+        let file = File::open(path).context("Loading instructions from file")?;
+
+        let _value: Vec<(usize, String)> = serde_json::from_reader(file)?;
+
+        todo!()
     }
 }

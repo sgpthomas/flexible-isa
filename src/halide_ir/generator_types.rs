@@ -99,6 +99,7 @@ impl HalideGeneratorParser {
             "int32_t" => HalideType::Signed(32),
             "int64_t" => HalideType::Signed(64),
             "int" => HalideType::Signed(32),
+            "float" => HalideType::Float(32),
             _ => HalideType::Unknown,
         }
     }

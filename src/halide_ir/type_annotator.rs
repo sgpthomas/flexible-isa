@@ -6,7 +6,9 @@ use super::{ast, Annotation, HalideType, MatchWidth, Visitor};
 pub struct TypeAnnotator {
     module_name: Option<ast::Id>,
     count: usize,
-    func_signature: HashMap<ast::Id, HalideType>,
+    external_func_signature: HashMap<ast::Id, HalideType>,
+    /// map from internal function name to discovered argument types
+    internal_func_signatures: HashMap<ast::Id, Vec<HalideType>>,
     context: HashMap<ast::Id, HalideType>,
 }
 
@@ -22,7 +24,7 @@ impl TypeAnnotator {
     }
 
     fn lookup(&self, var: &ast::Id) -> Option<HalideType> {
-        self.func_signature
+        self.external_func_signature
             .get(&var.clone().strip_prefix(&self.prefix()))
             .or_else(|| self.context.get(var))
             .cloned()
@@ -57,8 +59,8 @@ impl TypeAnnotator {
                 HalideType::Ptr(vec![ast::Id::new("halide_buffer_t")])
             }
             ("ramp", [base, _stride, lanes]) => {
-                if let ast::Expr::Number(n, _) = lanes {
-                    HalideType::Vec(n.value, Box::new(base.data().clone()))
+                if let ast::Expr::Number(ast::Number::Int(n), _) = lanes {
+                    HalideType::Vec(*n, Box::new(base.data().clone()))
                 } else {
                     HalideType::Unknown
                 }
@@ -150,7 +152,7 @@ impl TypeAnnotator {
             ("saturating_cast", [a]) => a.data().clone(),
             ("min", [a, _b]) => a.data().clone(),
             ("max", [a, _b]) => a.data().clone(),
-            ("halide_do_par_for", [_usr_ctx, _min, _size, _closure]) => HalideType::Signed(32),
+            // ("halide_do_par_for", [_usr_ctx, _min, _size, _closure]) => HalideType::Signed(32),
             ("assert", _) => HalideType::Bool,
             ("prefetch", _) => HalideType::void_ptr(),
 
@@ -159,12 +161,17 @@ impl TypeAnnotator {
                 HalideType::Struct(args.iter().map(|a| a.data()).cloned().collect())
             }
             ("load_typed_struct_member", [_arg, proto, idx]) => {
-                if let (HalideType::Struct(typs), ast::Expr::Number(n, _)) = (proto.data(), idx) {
-                    typs[n.value as usize].clone()
+                if let (HalideType::Struct(typs), ast::Expr::Number(ast::Number::Int(n), _)) =
+                    (proto.data(), idx)
+                {
+                    typs[(*n) as usize].clone()
                 } else {
                     HalideType::Unknown
                 }
             }
+
+            // floating point functions
+            ("pow_f32", [a, _b]) => a.data().clone(),
 
             // abs value functions
             ("abs", [a, _b]) => a.data().clone().unsigned(),
@@ -176,6 +183,29 @@ impl TypeAnnotator {
                 if v1.data() == v2.data() && matches!(v1.data(), HalideType::Vec(..)) =>
             {
                 v1.data().widen()
+            }
+            ("slice_vectors", [v, _, _, extent]) if matches!(v.data(), HalideType::Vec(..)) => {
+                if let ast::Expr::Number(ast::Number::Int(lanes), _) = extent {
+                    v.data().clone().set_lanes(*lanes)
+                } else {
+                    unreachable!("Called `slice_vectors` with invalid argument: {extent:?}")
+                }
+            }
+            ("concat_vectors", args) => {
+                // width is sum of all vector widths of arguments
+                let width = args.iter().map(|a| a.data().lanes()).sum();
+
+                // grab the type from the first element of `args`
+                let vec_typ = args.first().expect("empty `concat_vectors`").data().clone();
+                vec_typ.set_lanes(width)
+            }
+            ("shuffle", args) => {
+                let (vec_expr, shfl_idxs) = args.split_first().expect("empty `shuffle`");
+                vec_expr.data().clone().set_lanes(shfl_idxs.len() as u64)
+            }
+            ("interleave_vectors", args) => {
+                let (vec_expr, shfl_idxs) = args.split_first().expect("empty `interleave_vectors`");
+                vec_expr.data().clone().set_lanes(shfl_idxs.len() as u64)
             }
 
             // try parsing the function name as a normal HalideType
@@ -202,11 +232,12 @@ impl TypeAnnotator {
 }
 
 impl From<HashMap<ast::Id, HalideType>> for TypeAnnotator {
-    fn from(func_signature: HashMap<ast::Id, HalideType>) -> Self {
+    fn from(external_func_signature: HashMap<ast::Id, HalideType>) -> Self {
         Self {
             module_name: None,
             count: 0,
-            func_signature,
+            external_func_signature,
+            internal_func_signatures: HashMap::default(),
             context: HashMap::default(),
         }
     }
@@ -226,12 +257,25 @@ impl<T> Visitor<T> for TypeAnnotator {
     fn start_func(
         &mut self,
         _metadata: &ast::Id,
-        _name: &ast::Id,
-        _args: &[ast::Id],
+        name: &ast::Id,
+        args: &[ast::Id],
         _stmts: &ast::Block<T>,
         _data: &T,
     ) {
         self.count += 1;
+
+        // if the name of this function has a signature in `internal_func_signatures`
+        // then grab those bindings
+        let arg_typ_bindings = if let Some(arg_typs) = self.internal_func_signatures.get(name) {
+            args.iter().cloned().zip(arg_typs.iter().cloned()).collect()
+        } else {
+            vec![]
+        };
+
+        // insert any bindings into the contet
+        for (arg, typ) in arg_typ_bindings {
+            self.bind_var(arg, typ);
+        }
     }
 
     fn make_let_stmt(
@@ -283,7 +327,10 @@ impl<T> Visitor<T> for TypeAnnotator {
     }
 
     fn make_number_expr(&mut self, number: ast::Number, _data: T) -> ast::Expr<HalideType> {
-        ast::Expr::Number(number, HalideType::Signed(32))
+        match number {
+            ast::Number::Int(_) => ast::Expr::Number(number, HalideType::Signed(32)),
+            ast::Number::Float(_) => ast::Expr::Number(number, HalideType::Float(32)),
+        }
     }
 
     fn make_ident_expr(&mut self, id: ast::Id, _data: T) -> ast::Expr<HalideType> {
@@ -338,7 +385,22 @@ impl<T> Visitor<T> for TypeAnnotator {
         args: Vec<ast::Expr<HalideType>>,
         _data: T,
     ) -> ast::Expr<HalideType> {
-        let typ = self.halide_intrinsic_type(&id, &args);
+        let typ = if id.name == "halide_do_par_for" {
+            let (fn_name, rest) = args
+                .split_first()
+                .expect("`halide_do_par_for` called with empty args");
+            if let ast::Expr::StructMember(_, int_fn_name, _) = fn_name {
+                self.internal_func_signatures.insert(
+                    int_fn_name.clone(),
+                    rest.iter().map(|e| e.data().clone()).collect(),
+                );
+                HalideType::Signed(32)
+            } else {
+                unreachable!()
+            }
+        } else {
+            self.halide_intrinsic_type(&id, &args)
+        };
         ast::Expr::FunCall(id, args, typ)
     }
 

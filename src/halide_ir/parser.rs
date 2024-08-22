@@ -107,24 +107,31 @@ impl StmtParser {
 
 #[pest_consume::parser]
 impl StmtParser {
-    fn num(_input: Node) -> ParseResult<()> {
-        Ok(())
-    }
-
-    fn int(_input: Node) -> ParseResult<()> {
-        Ok(())
-    }
-
     fn identifier(input: Node) -> ParseResult<Id> {
         Ok(Id::new(input.as_str()))
     }
 
     fn number(input: Node) -> ParseResult<Number> {
+        Ok(match_nodes!(
+            input.into_children();
+            [int(value)] => Number::new_int(value),
+            [float(value)] => Number::new_float(value)
+        ))
+    }
+
+    fn int(input: Node) -> ParseResult<u64> {
         input
             .as_str()
             .parse::<u64>()
-            .map(Number::new)
             .map_err(|_| input.error("Expected valid u64"))
+    }
+
+    fn float(input: Node) -> ParseResult<String> {
+        input
+            .as_str()
+            .strip_suffix('f')
+            .map(ToString::to_string)
+            .ok_or_else(|| input.error("Float literal missing `f` suffix"))
     }
 
     fn file(input: Node) -> ParseResult<Module> {
@@ -545,10 +552,10 @@ impl StmtParser {
         Ok(match_nodes!(
             input.into_children();
             [identifier(var), expr(idx)] => Access { var, idx: Box::new(idx), align: None },
-            [identifier(var), expr(idx), number(low), number(hi)] => Access {
+            [identifier(var), expr(idx), int(low), int(hi)] => Access {
                 var,
                 idx: Box::new(idx),
-                align: Some((low.value, hi.value))
+                align: Some((low, hi))
             }
         ))
     }

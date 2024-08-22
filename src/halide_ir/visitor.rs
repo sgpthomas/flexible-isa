@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
+
 use super::ast::{
     Access, ArithBinop, Block, CompBinop, DeviceApi, Expr, Func, Id, MemoryType, Module, Number,
     Stmt, Unop,
@@ -370,7 +372,13 @@ impl<T, U> Visitable<T, U> for Module<T> {
             data,
         } = self;
 
-        let funcs = funcs.into_iter().map(|f| f.visit(visitor)).collect();
+        // visit external functions before internal ones
+        let funcs = funcs
+            .into_iter()
+            .sorted_by_key(|f1| f1.metadata.name.contains("external"))
+            .rev()
+            .map(|f| f.visit(visitor))
+            .collect();
         visitor.make_module(params, funcs, data)
     }
 }

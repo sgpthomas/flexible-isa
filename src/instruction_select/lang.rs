@@ -108,7 +108,7 @@ impl FromStr for HalideExprOp {
             // babble ops and constants
             input => input
                 .parse()
-                .map(|value| Self::Number(ast::Number { value }))
+                .map(|value| Self::Number(ast::Number::new_int(value)))
                 .or_else(|_| input.parse().map(|x| Self::Babble(BabbleOp::LambdaVar(x))))
                 .or_else(|_| input.parse().map(|x| Self::Babble(BabbleOp::LibVar(x))))
                 .or_else(|_| {
@@ -139,7 +139,8 @@ impl Display for BabbleOp {
 impl Display for HalideExprOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            HalideExprOp::Number(ast::Number { value }) => f.write_str(&value.to_string()),
+            HalideExprOp::Number(ast::Number::Int(value)) => f.write_str(&value.to_string()),
+            HalideExprOp::Number(ast::Number::Float(value)) => write!(f, "{value}f"),
             HalideExprOp::Ident(ast::Id { name }) => f.write_str(name),
             HalideExprOp::Neg => f.write_str("neg"),
             HalideExprOp::Add => f.write_str("+"),

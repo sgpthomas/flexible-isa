@@ -15,13 +15,21 @@ pub struct Args {
     #[argh(switch)]
     pub generator_types: bool,
 
-    /// don't learn new instructions
-    #[argh(switch)]
-    pub dont_learn: bool,
-
     /// output halide ir
     #[argh(option)]
     pub output_ir: Vec<OutputIr>,
+
+    /// save learned instructions to a file
+    #[argh(option)]
+    pub save: Option<PathBuf>,
+
+    /// load saved instructions from a file
+    #[argh(option)]
+    pub load: Option<PathBuf>,
+
+    /// learn new instructions
+    #[argh(switch)]
+    pub learn: bool,
 }
 
 #[derive(Debug, derive_more::FromStr)]

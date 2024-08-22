@@ -6,6 +6,7 @@ use super::{HalideExprOp, HalideLang};
 use egg::Language;
 use itertools::Itertools;
 
+/// `egg::CostFunction` that weights instructions based on how much they are used.
 pub struct InstructionSelect<Op>
 where
     Op: Debug + Hash,

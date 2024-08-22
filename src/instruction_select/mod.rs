@@ -7,5 +7,6 @@ mod typestate;
 pub use cost::InstructionSelect;
 pub use lang::{BabbleOp, HalideExprOp, HalideLang};
 pub use learn::Instructions;
+#[allow(unused)]
 pub use simplify::Simplify;
 pub use typestate::{AntiUnified, Init, InstructionState};

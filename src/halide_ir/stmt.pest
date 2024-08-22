@@ -1,11 +1,9 @@
-// primitive data types
-num = @{ int+ }
-int = { ASCII_DIGIT+ }
-
 ident_syms = _{ "_" | "." | "-" | "$" }
 
 identifier = @{ ("_" | ASCII_ALPHA)+ ~ (ident_syms | ASCII_ALPHA | ASCII_DIGIT)* }
-number = @{ ASCII_DIGIT+ }
+number = { float | int }
+int = @{ ASCII_DIGIT+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ "f" }
 
 // toplevel stmt parsing
 
@@ -215,7 +213,7 @@ cast_args = {
 
 // array access
 access_expr = {
-    identifier ~ "[" ~ expr ~ ("aligned" ~ "(" ~ number ~ "," ~ number ~ ")")? ~ "]"
+    identifier ~ "[" ~ expr ~ ("aligned" ~ "(" ~ int ~ "," ~ int ~ ")")? ~ "]"
 }
 
 let_expr = {

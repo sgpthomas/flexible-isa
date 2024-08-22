@@ -221,7 +221,10 @@ impl Printer for ast::Id {
 
 impl Printer for ast::Number {
     fn to_doc(&self) -> Doc {
-        Doc::as_string(self.value)
+        match self {
+            ast::Number::Int(v) => Doc::as_string(v),
+            ast::Number::Float(f) => Doc::text(f).append("f"),
+        }
     }
 }
 
@@ -383,7 +386,7 @@ where
 impl<T> Printer for ast::Expr<T> {
     fn to_doc(&self) -> Doc {
         let doc = match self {
-            ast::Expr::Number(n, _) => Doc::as_string(n.value).highlight(|cs| cs.literal()),
+            ast::Expr::Number(n, _) => n.to_doc().highlight(|cs| cs.literal()),
             ast::Expr::Ident(id, _) => id.to_doc(),
             ast::Expr::Unop(op, rhs, _) => {
                 let op = match op {
