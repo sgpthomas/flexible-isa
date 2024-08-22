@@ -13,7 +13,8 @@ pub trait Visitor<T> {
 
     /// The default value of `U` to be used when a method is not overridden
     /// in the trait definition.
-    fn default_u(&mut self, _data: T) -> Self::Output;
+    #[allow(unused_variables)]
+    fn default_u(&mut self, data: T) -> Self::Output;
 
     fn do_pass_default(ast: Module<T>) -> Module<Self::Output>
     where
@@ -37,7 +38,8 @@ pub trait Visitor<T> {
         expr.visit(self)
     }
 
-    fn start_module(&mut self, _module: &Module<T>) {}
+    #[allow(unused_variables)]
+    fn start_module(&mut self, module: &Module<T>) {}
 
     fn make_module(
         &mut self,
@@ -52,15 +54,8 @@ pub trait Visitor<T> {
         }
     }
 
-    fn start_func(
-        &mut self,
-        _metadata: &Id,
-        _name: &Id,
-        _args: &[Id],
-        _stmts: &Block<T>,
-        _data: &T,
-    ) {
-    }
+    #[allow(unused_variables)]
+    fn start_func(&mut self, metadata: &Id, name: &Id, args: &[Id], stmts: &Block<T>, data: &T) {}
 
     fn make_func(
         &mut self,
@@ -79,13 +74,15 @@ pub trait Visitor<T> {
         }
     }
 
-    fn start_stmt(&mut self, _stmt: &Stmt<T>) {}
+    #[allow(unused_variables)]
+    fn start_stmt(&mut self, stmt: &Stmt<T>) {}
 
     fn make_stmt(&mut self, stmt: Stmt<Self::Output>) -> Vec<Stmt<Self::Output>> {
         vec![stmt]
     }
 
-    fn start_let_stmt(&mut self, _var: &Id, _expr: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_let_stmt(&mut self, var: &Id, expr: &Expr<T>, data: &T) {}
 
     fn make_let_stmt(
         &mut self,
@@ -116,7 +113,8 @@ pub trait Visitor<T> {
         }
     }
 
-    fn start_store_stmt(&mut self, _access: &Access<T>, _value: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_store_stmt(&mut self, access: &Access<T>, value: &Expr<T>, data: &T) {}
 
     fn make_store_stmt(
         &mut self,
@@ -157,13 +155,14 @@ pub trait Visitor<T> {
         }
     }
 
+    #[allow(unused_variables)]
     fn start_for_stmt(
         &mut self,
-        _var: &Id,
-        _low: &mut Expr<Self::Output>,
-        _high: &mut Expr<Self::Output>,
-        _device: &DeviceApi,
-        _data: &T,
+        var: &Id,
+        low: &mut Expr<Self::Output>,
+        high: &mut Expr<Self::Output>,
+        device: &DeviceApi,
+        data: &T,
     ) {
     }
 
@@ -201,7 +200,8 @@ pub trait Visitor<T> {
         }
     }
 
-    fn start_predicate_stmt(&mut self, _cond: &Expr<T>, _stmt: &Stmt<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_predicate_stmt(&mut self, cond: &Expr<T>, stmt: &Stmt<T>, data: &T) {}
 
     fn make_predicate_stmt(
         &mut self,
@@ -220,7 +220,8 @@ pub trait Visitor<T> {
         Stmt::Expr(expr, self.default_u(data))
     }
 
-    fn start_expr(&mut self, _expr: &Expr<T>) {}
+    #[allow(unused_variables)]
+    fn start_expr(&mut self, expr: &Expr<T>) {}
 
     fn make_expr(&mut self, expr: Expr<Self::Output>) -> Expr<Self::Output> {
         expr
@@ -234,7 +235,8 @@ pub trait Visitor<T> {
         Expr::Ident(id, self.default_u(data))
     }
 
-    fn start_unop_expr(&mut self, _op: &Unop, _inner: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_unop_expr(&mut self, op: &Unop, inner: &Expr<T>, data: &T) {}
 
     fn make_unop_expr(
         &mut self,
@@ -245,14 +247,8 @@ pub trait Visitor<T> {
         Expr::Unop(op, Box::new(inner), self.default_u(data))
     }
 
-    fn start_arith_binop_expr(
-        &mut self,
-        _op: &ArithBinop,
-        _lhs: &Expr<T>,
-        _rhs: &Expr<T>,
-        _data: &T,
-    ) {
-    }
+    #[allow(unused_variables)]
+    fn start_arith_binop_expr(&mut self, op: &ArithBinop, lhs: &Expr<T>, rhs: &Expr<T>, data: &T) {}
 
     fn make_arith_binop_expr(
         &mut self,
@@ -264,14 +260,8 @@ pub trait Visitor<T> {
         Expr::ArithBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
-    fn start_comp_binop_expr(
-        &mut self,
-        _op: &CompBinop,
-        _lhs: &Expr<T>,
-        _rhs: &Expr<T>,
-        _data: &T,
-    ) {
-    }
+    #[allow(unused_variables)]
+    fn start_comp_binop_expr(&mut self, op: &CompBinop, lhs: &Expr<T>, rhs: &Expr<T>, data: &T) {}
 
     fn make_comp_binop_expr(
         &mut self,
@@ -283,7 +273,8 @@ pub trait Visitor<T> {
         Expr::CompBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
-    fn start_if_expr(&mut self, _cond: &Expr<T>, _expr: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_if_expr(&mut self, cond: &Expr<T>, expr: &Expr<T>, data: &T) {}
 
     fn make_if_expr(
         &mut self,
@@ -298,7 +289,8 @@ pub trait Visitor<T> {
         Expr::StructMember(struct_id, thing, self.default_u(data))
     }
 
-    fn start_funcall_expr(&mut self, _id: &Id, _args: &[Expr<T>], _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_funcall_expr(&mut self, id: &Id, args: &[Expr<T>], data: &T) {}
 
     fn make_funcall_expr(
         &mut self,
@@ -309,7 +301,8 @@ pub trait Visitor<T> {
         Expr::FunCall(id, args, self.default_u(data))
     }
 
-    fn start_reinterpret_expr(&mut self, _typs: &[Id], _args: &[Expr<T>], _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_reinterpret_expr(&mut self, typs: &[Id], args: &[Expr<T>], data: &T) {}
 
     fn make_reinterpret_expr(
         &mut self,
@@ -320,13 +313,15 @@ pub trait Visitor<T> {
         Expr::Reinterpret(typs, args, self.default_u(data))
     }
 
-    fn start_cast_expr(&mut self, _typ: &Id, _expr: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_cast_expr(&mut self, typ: &Id, expr: &Expr<T>, data: &T) {}
 
     fn make_cast_expr(&mut self, typ: Id, expr: Expr<Self::Output>, data: T) -> Expr<Self::Output> {
         Expr::Cast(typ, Box::new(expr), self.default_u(data))
     }
 
-    fn start_ptrcast_expr(&mut self, _typs: &[Id], _expr: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_ptrcast_expr(&mut self, typs: &[Id], expr: &Expr<T>, data: &T) {}
 
     fn make_ptrcast_expr(
         &mut self,
@@ -337,13 +332,15 @@ pub trait Visitor<T> {
         Expr::PtrCast(typs, Box::new(expr), self.default_u(data))
     }
 
-    fn start_access_expr(&mut self, _access: &Access<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_access_expr(&mut self, access: &Access<T>, data: &T) {}
 
     fn make_access_expr(&mut self, access: Access<Self::Output>, data: T) -> Expr<Self::Output> {
         Expr::Access(access, self.default_u(data))
     }
 
-    fn start_letin_expr(&mut self, _var: &Id, _binding: &Expr<T>, _body: &Expr<T>, _data: &T) {}
+    #[allow(unused_variables)]
+    fn start_letin_expr(&mut self, var: &Id, binding: &Expr<T>, body: &Expr<T>, data: &T) {}
 
     fn make_letin_expr(
         &mut self,
