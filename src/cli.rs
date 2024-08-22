@@ -17,7 +17,7 @@ pub struct Args {
 
     /// output halide ir
     #[argh(option)]
-    pub output_ir: Vec<OutputIr>,
+    pub output: Vec<OutputType>,
 
     /// save learned instructions to a file
     #[argh(option)]
@@ -33,23 +33,28 @@ pub struct Args {
 }
 
 #[derive(Debug, derive_more::FromStr)]
-pub enum OutputIr {
+pub enum OutputType {
     Parse,
     Types,
+    Raw,
     Instr,
 }
 
 impl Args {
     pub fn output_parse(&self) -> bool {
-        self.output_ir.iter().any(|x| matches!(x, OutputIr::Parse))
+        self.output.iter().any(|x| matches!(x, OutputType::Parse))
     }
 
     pub fn output_types(&self) -> bool {
-        self.output_ir.iter().any(|x| matches!(x, OutputIr::Types))
+        self.output.iter().any(|x| matches!(x, OutputType::Types))
+    }
+
+    pub fn output_raw(&self) -> bool {
+        self.output.iter().any(|x| matches!(x, OutputType::Raw))
     }
 
     pub fn output_instr(&self) -> bool {
-        self.output_ir.iter().any(|x| matches!(x, OutputIr::Instr))
+        self.output.iter().any(|x| matches!(x, OutputType::Instr))
     }
 }
 

@@ -99,8 +99,10 @@ fn main() -> anyhow::Result<()> {
     };
 
     let prog = instr_sel.apply();
-    // println!("== Final Program ==");
-    // println!("{}", prog.pretty(80));
+    if args.output_raw() {
+        println!("== Raw Egg Program (before mapping back to Halide) ==");
+        println!("{}", prog.pretty(80));
+    }
 
     // map expressions back into their program. we have a single `RecExpr` that
     // contains expressions from all of the asts that we were given initially
