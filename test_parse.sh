@@ -4,16 +4,16 @@
 set -e
 
 function stmt() {
-    if [ ! -e "test/$1.stmt" ]; then
-        echo "Generating test/$1.stmt"
-        bisa --from benchmark benchmarks/$1 -o test/$1.stmt
+    if [ ! -e "cache/$1.stmt" ]; then
+        echo "Generating cache/$1.stmt"
+        bisa --from benchmark benchmarks/$1 -o cache/$1.stmt
     fi
 }
 
 function json() {
-    if [ ! -e "test/$1.json" ]; then
-        echo "Generating test/$1.json"
-        bisa --from benchmark benchmarks/$1 -o test/$1.json
+    if [ ! -e "cache/$1.json" ]; then
+        echo "Generating cache/$1.json"
+        bisa --from benchmark benchmarks/$1 -o cache/$1.json
     fi
 }
 

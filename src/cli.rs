@@ -1,4 +1,9 @@
-use std::path::PathBuf;
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
+
+use itertools::Itertools;
 
 #[derive(argh::FromArgs, Debug)]
 /// Generate an ISA from a set of Halide files
@@ -30,6 +35,71 @@ pub struct Args {
     /// learn new instructions
     #[argh(switch)]
     pub learn: bool,
+}
+
+impl Args {
+    pub fn new<P>(stmt_files: &[P]) -> Self
+    where
+        P: Into<PathBuf> + AsRef<OsStr>,
+    {
+        Self {
+            input: stmt_files.iter().map(|x| PathBuf::from(&x)).collect_vec(),
+            types: vec![],
+            generator_types: false,
+            output: vec![],
+            save: None,
+            load: None,
+            learn: true,
+        }
+    }
+
+    pub fn types<P>(mut self, type_files: &[P]) -> Self
+    where
+        P: Into<PathBuf> + AsRef<OsStr>,
+    {
+        self.types = type_files.iter().map(|x| PathBuf::from(&x)).collect_vec();
+        self
+    }
+
+    pub fn generator_types(mut self, generator_types: bool) -> Self {
+        self.generator_types = generator_types;
+        self
+    }
+
+    pub fn show_parse(mut self) -> Self {
+        self.output.push(OutputType::Parse);
+        self
+    }
+
+    pub fn show_types(mut self) -> Self {
+        self.output.push(OutputType::Types);
+        self
+    }
+
+    pub fn show_raw(mut self) -> Self {
+        self.output.push(OutputType::Raw);
+        self
+    }
+
+    pub fn show_instr(mut self) -> Self {
+        self.output.push(OutputType::Instr);
+        self
+    }
+
+    pub fn save(mut self, path: &Path) -> Self {
+        self.save = Some(path.to_path_buf());
+        self
+    }
+
+    pub fn load(mut self, path: &Path) -> Self {
+        self.load = Some(path.to_path_buf());
+        self
+    }
+
+    pub fn learn(mut self, learn: bool) -> Self {
+        self.learn = learn;
+        self
+    }
 }
 
 #[derive(Debug, derive_more::FromStr)]

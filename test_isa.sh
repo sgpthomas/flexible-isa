@@ -4,7 +4,7 @@
 # set -e
 
 function isa() {
-    target/release/flexible-isa --learn test/$1.stmt
+    target/release/flexible-isa --learn cache/$1.stmt
 }
 
 benchmarks=(add average_pool blur3x3 conv3x3a16 conv3x3a32 depthwise_conv dilate3x3 \
@@ -18,7 +18,7 @@ benchmarks=(add average_pool blur3x3 conv3x3a16 conv3x3a32 depthwise_conv dilate
 # done
 
 w_ext=( "${benchmarks[@]/%/.stmt}" )
-files=( "${w_ext[@]/#/test/}" )
+files=( "${w_ext[@]/#/cache/}" )
 # cargo run --release -- ${w_ext[@]/#/test/}
 cargo run --release -- --learn "${files[@]:0:7}"
 # cargo run --release -- --learn test/dilate3x3.stmt

@@ -1,0 +1,76 @@
+---
+source: tests/tests.rs
+description: generate isa for max_pool
+---
+[
+    (
+        4,
+        3,
+        "(+ (cast<int32> ?#1) (cast<int32> (neg (cast<int32> ?x0))))",
+    ),
+    (
+        15,
+        3,
+        "(/ (cast<int32> (+ (cast<int32> ?#2) (cast<int32> ?x0))) (cast<int32> ?x1))",
+    ),
+    (
+        16,
+        3,
+        "(<= (cast<int32> ?x0) (cast<int32> ?#1))",
+    ),
+    (
+        17,
+        3,
+        "(get ?x0 (cast<int32> ?x1))",
+    ),
+    (
+        18,
+        3,
+        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))",
+    ),
+    (
+        19,
+        3,
+        "(get ?x0 (cast<int32x256> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 256))))",
+    ),
+    (
+        20,
+        3,
+        "(get ?x0 (cast<int32x512> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 512))))",
+    ),
+    (
+        1,
+        8,
+        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))",
+    ),
+    (
+        5,
+        8,
+        "(- (cast<int32> (- (cast<int32> (- (cast<int32> (- (cast<int32> ?#5) (cast<int32> (* (cast<int32> ?#6) (cast<int32> ?x0))))) (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?x2))))) (cast<int32> (* (cast<int32> ?x3) (cast<int32> ?x4))))) (cast<int32> ?#7))",
+    ),
+    (
+        10,
+        8,
+        "(- (cast<int32> (call[max] (cast<int32> ?x0) (cast<int32> 0))) (cast<int32> ?x1))",
+    ),
+    (
+        14,
+        11,
+        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+    (
+        2,
+        16,
+        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
+    ),
+    (
+        12,
+        16,
+        "(- (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+    (
+        3,
+        36,
+        "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+]

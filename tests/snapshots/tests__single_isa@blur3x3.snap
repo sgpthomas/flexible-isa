@@ -1,0 +1,151 @@
+---
+source: tests/tests.rs
+description: generate isa for blur3x3
+---
+[
+    (
+        2,
+        1,
+        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> (\"%\" (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> 4))) (cast<int32> 1))) (cast<int32> ?#2))) (cast<int32> (neg (cast<int32> 64))))",
+    ),
+    (
+        9,
+        1,
+        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> (* (cast<int32> ?#2) (cast<int32> 64))))",
+    ),
+    (
+        10,
+        1,
+        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
+    ),
+    (
+        14,
+        1,
+        "(+ (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> (neg (cast<int32> ?x3))))",
+    ),
+    (
+        19,
+        1,
+        "(+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 2))))",
+    ),
+    (
+        23,
+        1,
+        "(+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 128))))",
+    ),
+    (
+        41,
+        1,
+        "(* (cast<int32> (\"%\" (cast<int32> ?x0) (cast<int32> 4))) (cast<int32> ?x1))",
+    ),
+    (
+        42,
+        1,
+        "(* (cast<int32> ?x0) (cast<int32> 64))",
+    ),
+    (
+        44,
+        1,
+        "(/ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
+    ),
+    (
+        51,
+        1,
+        "(\"%\" (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 2))) (cast<int32> 4))",
+    ),
+    (
+        54,
+        1,
+        "(\"%\" (cast<int32> ?x0) (cast<int32> 4))",
+    ),
+    (
+        60,
+        1,
+        "(&& (cast<bool> (<= (cast<int32> ?x0) (cast<int32> ?x1))) ?x2)",
+    ),
+    (
+        0,
+        2,
+        "(neg (cast<int32> ?x0))",
+    ),
+    (
+        8,
+        2,
+        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 64))) (cast<int32> ?x1))",
+    ),
+    (
+        12,
+        2,
+        "(+ (cast<int32> (\"%\" (cast<int32> ?x0) (cast<int32> 4))) (cast<int32> 1))",
+    ),
+    (
+        13,
+        2,
+        "(+ (cast<int32> (call[min] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#1) (cast<int32> 128))) (cast<int32> 384))) (cast<int32> ?#2))) (cast<int32> ?x0))",
+    ),
+    (
+        16,
+        2,
+        "(+ (cast<int32> ?x0) (cast<int32> 1))",
+    ),
+    (
+        17,
+        2,
+        "(+ (cast<int32> ?x0) (cast<int32> 2))",
+    ),
+    (
+        22,
+        2,
+        "(+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 64))))",
+    ),
+    (
+        47,
+        2,
+        "(/ (cast<uint16x64> (+ (cast<uint16x64> (get ?#9 (cast<int32x64> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> 1) (cast<int32> 64))))) (cast<uint16x64> (+ (cast<uint16x64> (get ?#10 (cast<int32x64> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x3) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> 1) (cast<int32> 64))))) (cast<uint16x64> (get ?#11 (cast<int32x64> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x4) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> 1) (cast<int32> 64))))))))) (cast<uint16x64> (call[x64] (cast<uint16> 3))))",
+    ),
+    (
+        48,
+        2,
+        "(/ (cast<uint8x64> (+ (cast<uint8x64> (get ?#3 (cast<int32x64> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 63))))) (cast<int32> 1) (cast<int32> 64))))) (cast<uint8x64> (+ (cast<uint8x64> (get ?#4 (cast<int32x64> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 62))))) (cast<int32> 1) (cast<int32> 64))))) (cast<uint8x64> (get ?#5 (cast<int32x64> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 64))))) (cast<int32> 1) (cast<int32> 64))))))))) (cast<uint16x64> (call[x64] (cast<uint16> 3))))",
+    ),
+    (
+        52,
+        2,
+        "(\"%\" (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 3))) (cast<int32> 4))",
+    ),
+    (
+        59,
+        2,
+        "(!= (cast<int32> (\"%\" (cast<int32> ?x0) (cast<int32> 64))) (cast<int32> 0))",
+    ),
+    (
+        61,
+        2,
+        "(&& (cast<bool> ?x0) (cast<bool> ?x1))",
+    ),
+    (
+        4,
+        3,
+        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 2))))) (cast<int32> ?x1))) (cast<int32> ?x2))",
+    ),
+    (
+        43,
+        3,
+        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+    (
+        45,
+        3,
+        "(/ (cast<int32> ?x0) (cast<int32> 64))",
+    ),
+    (
+        58,
+        4,
+        "(<= (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+    (
+        25,
+        8,
+        "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+]
