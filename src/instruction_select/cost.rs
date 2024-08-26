@@ -95,6 +95,10 @@ where
     pub fn len(&self) -> usize {
         self.op_count.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.op_count.is_empty()
+    }
 }
 
 impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
