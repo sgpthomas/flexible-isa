@@ -9,8 +9,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.86"
 argh = "0.1.12"
-# babble = { git = "https://github.com/sgpthomas/babble.git" }
-babble = { path = "../babble" }
+babble = { git = "https://github.com/sgpthomas/babble.git" }
+# babble = { path = "../babble" }
 derive-deftly = "0.14.1"
 egg = { git = "https://github.com/egraphs-good/egg.git", features = ["serde-1"] }
 env_logger = "0.11.3"
