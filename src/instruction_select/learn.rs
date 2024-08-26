@@ -81,6 +81,7 @@ impl Instructions<Init> {
             .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
             .ban_op(HalideExprOp::Named(0))
             .with_roots(self.roots.clone())
+            .with_dfta(false)
             .build(&self.egraph);
 
         // I want to rewrite all instructions that contain variables into instructions that use pattern vars.
