@@ -20,7 +20,7 @@ pub struct Args {
     #[argh(switch)]
     pub generator_types: bool,
 
-    /// output halide ir
+    /// output halide ir. options: `parse, types, raw, instr`
     #[argh(option)]
     pub output: Vec<OutputType>,
 

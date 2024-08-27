@@ -1,0 +1,47 @@
+[
+  [
+    {
+      "name": "offset"
+    },
+    {
+      "Input": [
+        {
+          "Raw": {
+            "Unsigned": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "input"
+    },
+    {
+      "Input": [
+        {
+          "Buffer": {
+            "Unsigned": 16
+          }
+        },
+        1
+      ]
+    }
+  ],
+  [
+    {
+      "name": "brighter"
+    },
+    {
+      "Output": [
+        {
+          "Buffer": {
+            "Unsigned": 16
+          }
+        },
+        1
+      ]
+    }
+  ]
+]
