@@ -141,7 +141,7 @@ impl Instructions<Init> {
 impl Instructions<Learned> {
     /// Apply the set of learned rewrite rules to the egraph that we have, and extract a
     /// program preferring instructions that are used more frequently.
-    pub fn apply(&self) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
+    pub fn apply(&self, limit: Option<usize>) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
         // extract the best program
         let mut egraph = self.egraph.clone();
         let root = egraph.add(babble::AstNode::new(
@@ -151,11 +151,15 @@ impl Instructions<Learned> {
 
         let rewrites = self.rewrites().collect::<Vec<_>>();
 
-        let runner = egg::Runner::default().with_egraph(egraph).run(&rewrites);
+        let runner = egg::Runner::default()
+            .with_egraph(egraph)
+            .with_node_limit(1_000_000)
+            .run(&rewrites);
 
-        let cost = InstructionSelect::new(&runner.egraph);
+        let cost = InstructionSelect::new(&runner.egraph).with_limit(limit);
         let extractor = egg::Extractor::new(&runner.egraph, cost);
-        let (_, best) = extractor.find_best(root);
+        let (cost, best) = extractor.find_best(root);
+        println!("cost: {cost}");
 
         best
     }

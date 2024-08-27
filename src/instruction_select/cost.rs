@@ -51,7 +51,7 @@ where
     pub fn new<N: egg::Analysis<babble::AstNode<Op>>>(
         egraph: &egg::EGraph<babble::AstNode<Op>, N>,
     ) -> Self {
-        // count the corrences of every node in the graph
+        // count the occurences of every node in the graph
         let mut op_count = HashMap::new();
         for eclass in egraph.classes() {
             for node in &eclass.nodes {
@@ -101,6 +101,29 @@ where
     }
 }
 
+impl InstructionSelect<HalideExprOp> {
+    pub fn with_limit(self, limit: Option<usize>) -> Self {
+        let allowed_ops: HashMap<_, _> = if let Some(limit) = &limit {
+            println!("limiting");
+            self.op_count
+                .into_iter()
+                .filter(|(op, _count)| matches!(op, HalideExprOp::Instruction(_)))
+                .sorted_by_key(|(_op, count)| *count)
+                .rev()
+                .take(*limit)
+                .collect()
+        } else {
+            self.op_count
+        };
+
+        println!("{allowed_ops:#?}");
+
+        Self {
+            op_count: allowed_ops,
+        }
+    }
+}
+
 impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
     type Cost = usize;
 
@@ -108,10 +131,16 @@ impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
     where
         C: FnMut(egg::Id) -> Self::Cost,
     {
+        // println!("{:#?}", allowed_ops);
+
         // operations that occur more frequently are less expensive
         let max_occurence = self.op_count.values().max().unwrap();
+
         let op_cost = match enode.operation() {
-            inst @ HalideExprOp::Instruction(_) => max_occurence - self.op_count[inst],
+            inst @ HalideExprOp::Instruction(_) if self.op_count.contains_key(inst) => {
+                max_occurence - self.op_count[inst]
+            }
+            HalideExprOp::Instruction(_) => 1_000_000,
             // prefer instructions over anything else
             _ => max_occurence * 2,
         };

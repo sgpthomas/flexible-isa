@@ -35,6 +35,10 @@ pub struct Args {
     /// learn new instructions
     #[argh(switch)]
     pub learn: bool,
+
+    /// limit the number of learned instructions
+    #[argh(option)]
+    pub limit: Option<usize>,
 }
 
 impl Args {
@@ -50,6 +54,7 @@ impl Args {
             save: None,
             load: None,
             learn: true,
+            limit: None,
         }
     }
 
@@ -98,6 +103,11 @@ impl Args {
 
     pub fn learn(mut self, learn: bool) -> Self {
         self.learn = learn;
+        self
+    }
+
+    pub fn limit(mut self, limit: usize) -> Self {
+        self.limit = Some(limit);
         self
     }
 }

@@ -12,6 +12,7 @@ use itertools::Itertools;
 // }
 
 const BENCHMARKS_PATH: &str = "cache";
+#[allow(unused)]
 const BENCHMAKRS: &[&str] = &[
     "add",
     "average_pool",
@@ -71,10 +72,101 @@ fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> {
 }
 
 #[test]
-fn generate_individual_isas() -> anyhow::Result<()> {
-    for bench in BENCHMAKRS {
-        test_single_isa(bench)?;
-    }
+fn add_isa() -> anyhow::Result<()> {
+    test_single_isa("add")
+}
 
-    Ok(())
+#[test]
+fn average_pool_isa() -> anyhow::Result<()> {
+    test_single_isa("average_pool")
+}
+
+#[test]
+fn blur3x3_isa() -> anyhow::Result<()> {
+    test_single_isa("blur3x3")
+}
+
+#[test]
+fn camera_pipe_isa() -> anyhow::Result<()> {
+    test_single_isa("camera_pipe")
+}
+
+#[test]
+fn conv3x3a16_isa() -> anyhow::Result<()> {
+    test_single_isa("conv3x3a16")
+}
+
+#[test]
+fn conv3x3a32_isa() -> anyhow::Result<()> {
+    test_single_isa("conv3x3a32")
+}
+
+#[test]
+fn conv_nn_isa() -> anyhow::Result<()> {
+    test_single_isa("conv_nn")
+}
+
+#[test]
+fn depthwise_conv_isa() -> anyhow::Result<()> {
+    test_single_isa("depthwise_conv")
+}
+
+#[test]
+fn dilate3x3_isa() -> anyhow::Result<()> {
+    test_single_isa("dilate3x3")
+}
+
+#[test]
+fn gaussian3x3_isa() -> anyhow::Result<()> {
+    test_single_isa("gaussian3x3")
+}
+
+#[test]
+fn gaussian5x5_isa() -> anyhow::Result<()> {
+    test_single_isa("gaussian5x5")
+}
+
+#[test]
+fn gaussian7x7_isa() -> anyhow::Result<()> {
+    test_single_isa("gaussian7x7")
+}
+
+#[test]
+fn l2norm_isa() -> anyhow::Result<()> {
+    test_single_isa("l2norm")
+}
+
+#[test]
+fn matmul_isa() -> anyhow::Result<()> {
+    test_single_isa("matmul")
+}
+
+#[test]
+fn max_pool_isa() -> anyhow::Result<()> {
+    test_single_isa("max_pool")
+}
+
+#[test]
+fn mean_isa() -> anyhow::Result<()> {
+    test_single_isa("mean")
+}
+
+#[test]
+fn median3x3_isa() -> anyhow::Result<()> {
+    test_single_isa("median3x3")
+}
+
+#[test]
+fn mul_isa() -> anyhow::Result<()> {
+    test_single_isa("mul")
+}
+
+#[test]
+fn sobel3x3_isa() -> anyhow::Result<()> {
+    test_single_isa("sobel3x3")
+}
+
+#[test]
+fn softmax_isa() -> anyhow::Result<()> {
+    test_single_isa("softmax")
 }

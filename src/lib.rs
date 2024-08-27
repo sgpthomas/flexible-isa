@@ -101,7 +101,7 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
         return Err(anyhow!("Need either `--learn` or `--load <path>`"));
     };
 
-    let prog = instr_sel.apply();
+    let prog = instr_sel.apply(args.limit);
     if args.output_raw() {
         println!("== Raw Egg Program (before mapping back to Halide) ==");
         println!("{}", prog.pretty(80));
