@@ -8,7 +8,24 @@ fn main() -> anyhow::Result<()> {
 
     let instr_hist = InstructionSelect::from_recexpr(&isa.expressions);
 
-    println!("len: {}", instr_hist.len());
+    // print out expressions that haven't been mapped to instructions
+    instr_hist
+        .iter()
+        .filter_map(|(op, count)| match op {
+            HalideExprOp::FunCall(_)
+            | HalideExprOp::Instruction(_)
+            | HalideExprOp::Named(_)
+            | HalideExprOp::Babble(_)
+            | HalideExprOp::PatternVar(_)
+            | HalideExprOp::Cast(_) => None,
+            op => Some((op, count)),
+        })
+        .sorted_by_key(|(op, count)| (*count, *op))
+        .for_each(|(op, count)| println!("{op}: occurred {count} times"));
+
+    println!("==========\n");
+
+    // print out used instructions
     instr_hist
         .iter()
         .filter_map(|(op, count)| {
@@ -22,7 +39,7 @@ fn main() -> anyhow::Result<()> {
         .sorted_by_key(|(i, count)| (*count, *i))
         .for_each(|(i, count)| {
             println!(
-                "{i}: {count}\n{}",
+                "instruction {i}: occurred {count} times\n{}",
                 isa.instructions[&((*i) as usize)].pretty(80)
             );
         });
