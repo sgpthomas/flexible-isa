@@ -83,6 +83,8 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
         instr_sel.add_expr(expr.clone());
     });
 
+    // create the set of possible instructions by either loading them from file, or
+    // learning them over the set of input programs
     let instr_sel = if let Some(path) = &args.load {
         println!("Loading instructions from {path:?}...");
         instr_sel.load(path)?

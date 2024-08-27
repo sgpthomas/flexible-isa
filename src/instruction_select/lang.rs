@@ -1,5 +1,6 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
+use babble::PartialExpr;
 use itertools::Itertools;
 
 use crate::halide_ir::{ast, HalideType};
@@ -112,6 +113,13 @@ impl HalideExprOp {
                     .collect_vec()
             })
             .map(Self::Reinterpret)
+    }
+
+    pub fn partial_expr(self, arity: usize) -> PartialExpr<HalideExprOp, egg::Var> {
+        PartialExpr::Node(babble::AstNode::new(
+            self,
+            (0..arity).map(|i| PartialExpr::Hole(egg::Var::from_u32(i as u32))),
+        ))
     }
 }
 

@@ -3,7 +3,7 @@
 use std::{fs::File, path::Path};
 
 use anyhow::Context;
-use babble::Teachable;
+use babble::{PartialExpr, Teachable};
 use itertools::Itertools;
 
 use crate::halide_ir::ast;
@@ -84,8 +84,32 @@ impl Instructions<Init> {
             .with_dfta(false)
             .build(&self.egraph);
 
-        // I want to rewrite all instructions that contain variables into instructions that use pattern vars.
+        // I want to rewrite all instructions that contain concrete variables into
+        // instructions that use pattern vars
         learned_library.for_each_anti_unification(replace_idents);
+
+        // add an anti-unification for operations that we definitely
+        // want to have instructions for
+        learned_library.extend(
+            [
+                (HalideExprOp::Neg, 1),
+                (HalideExprOp::Add, 2),
+                (HalideExprOp::Sub, 2),
+                (HalideExprOp::Mul, 2),
+                (HalideExprOp::Div, 2),
+                (HalideExprOp::Modulo, 2),
+                (HalideExprOp::Lt, 2),
+                (HalideExprOp::Lte, 2),
+                (HalideExprOp::Eq, 2),
+                (HalideExprOp::Neq, 2),
+                (HalideExprOp::Gte, 2),
+                (HalideExprOp::Gt, 2),
+                (HalideExprOp::And, 2),
+                (HalideExprOp::Or, 2),
+            ]
+            .into_iter()
+            .map(|(op, arity)| op.partial_expr(arity)),
+        );
 
         // finds patterns that can apply in the same places, and only keeps the smaller
         // pattern. I think that this only matters when we are using rewrite rules. Haven't
@@ -168,8 +192,6 @@ impl Instructions<Learned> {
 
     pub fn rewrites(&self) -> impl Iterator<Item = egg::Rewrite<HalideLang, ()>> + '_ {
         self.instructions().map(|(i, pat)| {
-            // let pattern: egg::Pattern<_> = au.clone().into();
-
             let searcher: egg::Pattern<_> = pat.clone();
 
             let head = HalideExprOp::Instruction(i as u64);
