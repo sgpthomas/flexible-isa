@@ -115,7 +115,30 @@ impl HalideExprOp {
             .map(Self::Reinterpret)
     }
 
-    pub fn partial_expr(self, arity: usize) -> PartialExpr<HalideExprOp, egg::Var> {
+    /// Operations that we need to have instructions for.
+    pub fn essential_operations() -> impl Iterator<Item = (Self, usize)> {
+        [
+            (HalideExprOp::Neg, 1),
+            (HalideExprOp::Add, 2),
+            (HalideExprOp::Sub, 2),
+            (HalideExprOp::Mul, 2),
+            (HalideExprOp::Div, 2),
+            (HalideExprOp::Modulo, 2),
+            (HalideExprOp::Lt, 2),
+            (HalideExprOp::Lte, 2),
+            (HalideExprOp::Eq, 2),
+            (HalideExprOp::Neq, 2),
+            (HalideExprOp::Gte, 2),
+            (HalideExprOp::Gt, 2),
+            (HalideExprOp::And, 2),
+            (HalideExprOp::Or, 2),
+        ]
+        .into_iter()
+    }
+
+    /// Produce a partial expression of `arity` for `self` of the form:
+    ///   `(op ?0 .. ?arity)`
+    pub fn partial_expr(self, arity: usize) -> PartialExpr<Self, egg::Var> {
         PartialExpr::Node(babble::AstNode::new(
             self,
             (0..arity).map(|i| PartialExpr::Hole(egg::Var::from_u32(i as u32))),
