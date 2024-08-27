@@ -3,7 +3,7 @@
 use std::{fs::File, path::Path};
 
 use anyhow::Context;
-use babble::{PartialExpr, Teachable};
+use babble::Teachable;
 use itertools::Itertools;
 
 use crate::halide_ir::ast;

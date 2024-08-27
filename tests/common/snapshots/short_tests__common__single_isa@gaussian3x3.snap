@@ -1,85 +1,85 @@
 ---
-source: tests/tests.rs
+source: tests/common/mod.rs
 description: generate isa for gaussian3x3
 ---
 [
     (
-        9,
+        10,
         1,
         "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
-        11,
+        12,
         1,
         "(+ (cast<int32> ?x0) (cast<int32> 1))",
     ),
     (
-        13,
+        14,
         1,
         "(+ (cast<int32> ?x0) (cast<int32> 3))",
     ),
     (
-        14,
+        15,
         1,
         "(+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 1))))",
     ),
     (
-        21,
+        23,
         1,
         "(* (cast<int32> ?x0) (cast<int32> 128))",
     ),
     (
-        12,
+        13,
         2,
         "(+ (cast<int32> ?x0) (cast<int32> 2))",
     ),
     (
-        19,
+        21,
         2,
         "(* (cast<int32> (+ (cast<int32> (* (cast<int32> ?#1) (cast<int32> 32))) (cast<int32> ?x0))) (cast<int32> 4))",
     ),
     (
-        20,
+        22,
         2,
         "(* (cast<int32> ?x0) (cast<int32> 4))",
     ),
     (
-        23,
+        26,
         2,
         "(/ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
-        5,
+        6,
         4,
         "(+ (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?#7 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 1))) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 1))))) (cast<int16x128> (call[int16x128] (cast<uint16x128> (call[widen_right_add] (cast<uint16x128> (call[uint16x128] (cast<int16x128> (call[int16x128] (cast<uint16x128> (call[widen_right_add] (cast<uint16x128> (call[uint16x128] (cast<int16x128> (+ (cast<int16x128> (+ (cast<int16x128> (+ (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?#8 (cast<int32x128> (call[ramp] (cast<int32> ?x0) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 2))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?#9 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 1))))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?#10 (cast<int32x128> (call[ramp] (cast<int32> ?x2) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 1))))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?#11 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 1))))))))) (cast<uint8x128> (get ?#12 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x1) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> 1) (cast<int32> 128))))))))))) (cast<uint8x128> (get ?#13 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x2) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> 1) (cast<int32> 128))))))))))",
     ),
     (
-        17,
+        18,
         4,
         "(- (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
-        15,
+        16,
         5,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        8,
+        9,
         6,
         "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> ?x1))",
     ),
     (
-        18,
+        19,
         6,
         "(- (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        22,
+        24,
         6,
         "(* (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        24,
+        29,
         8,
         "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 1))) (cast<int32> 1) (cast<int32> 128))))",
     ),

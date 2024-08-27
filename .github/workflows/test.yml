@@ -22,4 +22,4 @@ jobs:
     - name: Test
       env:
         CI: true
-      run: cargo test
+      run: cargo test --test short_tests

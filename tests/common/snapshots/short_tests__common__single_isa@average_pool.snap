@@ -1,71 +1,81 @@
 ---
-source: tests/tests.rs
-description: generate isa for max_pool
+source: tests/common/mod.rs
+description: generate isa for average_pool
 ---
 [
     (
-        0,
+        7,
         1,
-        "(neg (cast<int32> ?x0))",
+        "(+ ?x0 ?x1)",
     ),
     (
-        4,
-        2,
+        6,
+        3,
         "(+ (cast<int32> ?#1) (cast<int32> (neg (cast<int32> ?x0))))",
     ),
     (
-        15,
+        24,
         3,
-        "(/ (cast<int32> (+ (cast<int32> ?#2) (cast<int32> ?x0))) (cast<int32> ?x1))",
+        "(/ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
-        16,
+        27,
         3,
         "(<= (cast<int32> ?x0) (cast<int32> ?#1))",
     ),
     (
-        17,
+        29,
         3,
         "(get ?x0 (cast<int32> ?x1))",
     ),
     (
-        18,
+        30,
         3,
         "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
-        19,
+        31,
         3,
         "(get ?x0 (cast<int32x256> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 256))))",
     ),
     (
-        20,
+        32,
         3,
         "(get ?x0 (cast<int32x512> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 512))))",
     ),
     (
-        5,
+        19,
+        4,
+        "(* (cast<int32> (- (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?#6) (cast<int32> ?x0))) (cast<int32> ?x1))) (cast<int32> (call[max] (cast<int32> ?#7) (cast<int32> ?x0))))) (cast<int32> (- (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?#8) (cast<int32> ?x2))) (cast<int32> ?x3))) (cast<int32> (call[max] (cast<int32> ?#9) (cast<int32> ?x2))))))",
+    ),
+    (
+        23,
+        4,
+        "(/ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 131072))) (cast<int32> (* (cast<int32> ?x0) (cast<int32> 2))))",
+    ),
+    (
+        8,
         8,
         "(- (cast<int32> (- (cast<int32> (- (cast<int32> (- (cast<int32> ?#5) (cast<int32> (* (cast<int32> ?#6) (cast<int32> ?x0))))) (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?x2))))) (cast<int32> (* (cast<int32> ?x3) (cast<int32> ?x4))))) (cast<int32> ?#7))",
     ),
     (
-        10,
+        13,
         8,
         "(- (cast<int32> (call[max] (cast<int32> ?x0) (cast<int32> 0))) (cast<int32> ?x1))",
     ),
     (
-        12,
+        16,
         16,
         "(- (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        14,
+        21,
         35,
         "(* (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        3,
-        69,
+        5,
+        68,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]
