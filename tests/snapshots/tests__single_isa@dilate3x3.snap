@@ -4,11 +4,6 @@ description: generate isa for dilate3x3
 ---
 [
     (
-        4,
-        1,
-        "(+ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
         5,
         1,
         "(+ (cast<int32> (- (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))) (cast<int32> ?x4))) (cast<int32> ?x5))",
@@ -64,9 +59,9 @@ description: generate isa for dilate3x3
         "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        64,
+        65,
         1,
-        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x1) (cast<int32> ?x2))) (cast<int32> 1) (cast<int32> 128))))",
+        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
         9,
@@ -240,7 +235,7 @@ description: generate isa for dilate3x3
     ),
     (
         37,
-        23,
+        26,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]

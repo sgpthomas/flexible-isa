@@ -156,7 +156,9 @@ impl Instructions<Learned> {
             .with_node_limit(1_000_000)
             .run(&rewrites);
 
-        let cost = InstructionSelect::new(&runner.egraph).with_limit(limit);
+        let cost = InstructionSelect::new(&runner.egraph)
+            .with_filter(|(op, _)| matches!(op, HalideExprOp::Instruction(_)))
+            .with_limit(limit);
         let extractor = egg::Extractor::new(&runner.egraph, cost);
         let (cost, best) = extractor.find_best(root);
         println!("cost: {cost}");

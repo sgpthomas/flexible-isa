@@ -449,11 +449,6 @@ description: generate isa for camera_pipe
         "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 2))) (cast<int32> ?x1))",
     ),
     (
-        51,
-        5,
-        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
         124,
         5,
         "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> 2))",
@@ -514,18 +509,18 @@ description: generate isa for camera_pipe
         "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
-        144,
-        15,
-        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
         48,
         17,
         "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> ?x1))",
     ),
     (
+        144,
+        20,
+        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+    (
         78,
-        30,
+        35,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]

@@ -114,11 +114,6 @@ description: generate isa for conv_nn
         "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#2) (cast<int32> 128))) (cast<int32> ?x0))) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
-        1,
-        2,
-        "(+ (cast<int32> (+ (cast<int32> (* (cast<int32> ?#1) (cast<int32> ?x0))) (cast<int32> ?#2))) (cast<int32> ?#3))",
-    ),
-    (
         31,
         2,
         "(+ (cast<int32> (call[vector_reduce_add] (cast<int32x128> (call[int32x128] (cast<uint16x128> (call[widening_mul] (cast<uint8x128> (call[shuffle] (cast<uint8x4> (get ?#2 (cast<int32x4> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#3) (cast<int32> 4))) (cast<int32> ?x0))) (cast<int32> 1) (cast<int32> 4))))) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3) (cast<int32> 0) (cast<int32> 1) (cast<int32> 2) (cast<int32> 3))) (cast<uint8x128> (get ?#4 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#5) (cast<int32> 128))) (cast<int32> ?x1))) (cast<int32> 1) (cast<int32> 128))))))))))) (cast<int32x32> (get ?#6 (cast<int32x32> (call[ramp] (cast<int32> 192) (cast<int32> 1) (cast<int32> 32))))))",
@@ -409,11 +404,6 @@ description: generate isa for conv_nn
         "(* (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))",
     ),
     (
-        152,
-        6,
-        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
         189,
         6,
         "(== (cast<uint8> ?x0) (cast<uint8> 0))",
@@ -422,11 +412,6 @@ description: generate isa for conv_nn
         211,
         6,
         "(get ?#1 (cast<int32x4> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#2) (cast<int32> 4))) (cast<int32> (+ (cast<int32> ?#3) (cast<int32> ?x0))))) (cast<int32> 1) (cast<int32> 4))))",
-    ),
-    (
-        3,
-        7,
-        "(+ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
         14,
@@ -549,28 +534,23 @@ description: generate isa for conv_nn
         "(get ?#1 (cast<int32x32> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#2) (cast<int32> 128))) (cast<int32> ?x0))) (cast<int32> 1) (cast<int32> 32))))",
     ),
     (
-        7,
-        23,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))",
-    ),
-    (
         206,
         26,
         "(get ?x0 (cast<int32x32> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 32))))",
     ),
     (
         17,
-        44,
+        69,
         "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
         169,
-        77,
+        83,
         "(* (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
         70,
-        81,
+        126,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]

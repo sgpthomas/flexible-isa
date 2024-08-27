@@ -9,21 +9,6 @@ description: generate isa for median3x3
         "(neg (cast<int32> ?x0))",
     ),
     (
-        3,
-        1,
-        "(+ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
-        9,
-        1,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> (- (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?#2))) (cast<int32> ?#3))",
-    ),
-    (
-        11,
-        1,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> 128))) (cast<int32> ?x2))",
-    ),
-    (
         13,
         1,
         "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?#1) (cast<int32> ?x0))) (cast<int32> 4))) (cast<int32> 4))",
@@ -79,44 +64,19 @@ description: generate isa for median3x3
         "(- (cast<int32> ?x0) (cast<int32> (call[min] (cast<int32> (call[max] (cast<int32> ?x1) (cast<int32> 0))) (cast<int32> (+ (cast<int32> (call[max] (cast<int32> ?x2) (cast<int32> 1))) (cast<int32> (neg (cast<int32> 1))))))))",
     ),
     (
-        70,
-        1,
-        "(* (cast<int32> (+ (cast<int32> (- (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?x2))",
-    ),
-    (
         73,
         1,
         "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 1))) (cast<int32> ?x1))",
     ),
     (
-        74,
+        96,
         1,
-        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?x1))",
-    ),
-    (
-        90,
-        1,
-        "(/ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
-        92,
-        1,
-        "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        95,
-        1,
-        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x1) (cast<int32> ?x2))) (cast<int32> 1) (cast<int32> 128))))",
+        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
         19,
         2,
         "(+ (cast<int32> (* (cast<int32> (* (cast<int32> (- (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 3))) (cast<int32> ?#2))) (cast<int32> 1))) (cast<int32> ?x1))) (cast<int32> ?#3))) (cast<int32> 128))) (cast<int32> ?#4))",
-    ),
-    (
-        25,
-        2,
-        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
         30,
@@ -154,9 +114,19 @@ description: generate isa for median3x3
         "(- (cast<int32> (call[max] (cast<int32> ?x0) (cast<int32> 1))) (cast<int32> (call[max] (cast<int32> ?x1) (cast<int32> 0))))",
     ),
     (
+        70,
+        2,
+        "(* (cast<int32> (+ (cast<int32> (- (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?x2))",
+    ),
+    (
         71,
         2,
         "(* (cast<int32> (+ (cast<int32> (call[max] (cast<int32> (- (cast<int32> (call[max] (cast<int32> ?x0) (cast<int32> 0))) (cast<int32> (call[max] (cast<int32> ?x1) (cast<int32> 1))))) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> 1))) (cast<int32> ?x2))",
+    ),
+    (
+        92,
+        2,
+        "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
         93,
@@ -174,11 +144,6 @@ description: generate isa for median3x3
         "(get ?#1 (cast<int32x128> (+ (cast<int32x128> (call[max] (cast<int32x128> (call[min] (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?#2) (cast<int32> (neg (cast<int32> 129))))) (cast<int32> 1) (cast<int32> 128))) (cast<int32x128> (call[x128] (cast<int32> (+ (cast<int32> ?#3) (cast<int32> (neg (cast<int32> 1))))))))) (cast<int32x128> (call[x128] (cast<int32> 0))))) (cast<int32x128> (call[x128] (cast<int32> ?x0))))))",
     ),
     (
-        10,
-        3,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?#1))) (cast<int32> ?#2))",
-    ),
-    (
         53,
         3,
         "(- (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> (+ (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 4))) (cast<int32> ?#5))) (cast<int32> 1))) (cast<int32> ?#6))) (cast<int32> 1))) (cast<int32> (call[min] (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> ?x1) (cast<int32> ?x2))) (cast<int32> 0))) (cast<int32> (+ (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> ?x3) (cast<int32> ?x4))) (cast<int32> 1))) (cast<int32> (neg (cast<int32> 1))))))))",
@@ -187,11 +152,6 @@ description: generate isa for median3x3
         67,
         3,
         "(* (cast<int32> (+ (cast<int32> (- (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 2))) (cast<int32> ?#3))) (cast<int32> 1))) (cast<int32> ?x1))) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?x2))",
-    ),
-    (
-        76,
-        3,
-        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
     ),
     (
         87,
@@ -239,19 +199,9 @@ description: generate isa for median3x3
         "(* (cast<int32> (+ (cast<int32> (- (cast<int32> (call[max] (cast<int32> (call[min] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 3))) (cast<int32> ?#3))) (cast<int32> 1))) (cast<int32> ?x1))) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?x2))",
     ),
     (
-        99,
+        74,
         4,
-        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?#2) (cast<int32> ?x0))) (cast<int32> 128))) (cast<int32> 1))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        100,
-        4,
-        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?#2) (cast<int32> ?x0))) (cast<int32> 128))) (cast<int32> 2))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        109,
-        4,
-        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (* (cast<int32> (+ (cast<int32> ?#2) (cast<int32> ?x0))) (cast<int32> 128))) (cast<int32> 1) (cast<int32> 128))))",
+        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 1))))) (cast<int32> ?x1))",
     ),
     (
         21,
@@ -264,34 +214,24 @@ description: generate isa for median3x3
         "(- (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
-        48,
-        7,
-        "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
+        24,
+        10,
+        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> ?x1))",
     ),
     (
         88,
-        7,
+        12,
         "(* (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
         102,
-        8,
+        12,
         "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 1))) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
         103,
-        8,
+        12,
         "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 2))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        110,
-        8,
-        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        24,
-        9,
-        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> ?x1))",
     ),
     (
         105,
@@ -309,6 +249,11 @@ description: generate isa for median3x3
         "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 128))))) (cast<int32> 1) (cast<int32> 128))))",
     ),
     (
+        110,
+        12,
+        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 1) (cast<int32> 128))))",
+    ),
+    (
         42,
         16,
         "(+ (cast<int32> ?x0) (cast<int32> (neg (cast<int32> 4))))",
@@ -317,5 +262,10 @@ description: generate isa for median3x3
         77,
         22,
         "(* (cast<int32> (+ (cast<int32> ?#1) (cast<int32> ?x0))) (cast<int32> 4))",
+    ),
+    (
+        48,
+        33,
+        "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]

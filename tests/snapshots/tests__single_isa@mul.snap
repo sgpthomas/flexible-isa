@@ -9,11 +9,6 @@ description: generate isa for mul
         "(+ (cast<int32> ?x0) (cast<int32> 1))",
     ),
     (
-        12,
-        1,
-        "(- (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
         21,
         1,
         "(<= ?x0 ?x1)",
@@ -59,14 +54,14 @@ description: generate isa for mul
         "(- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?x0 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#4) (cast<int32> 128))) (cast<int32> (+ (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?#5))) (cast<int32> ?x2))))) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> ?x3))) (cast<int16> 64))))))",
     ),
     (
-        11,
-        3,
-        "(- (cast<int32> (- (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
         20,
         3,
         "(<= (cast<int16x128> (call[int16x128] (cast<int32x128> (call[ramp] (cast<int32> 0) (cast<int32> 1) (cast<int32> 128))))) (cast<int16x128> (call[x128] (cast<int16> (call[saturating_cast] (cast<int32> (call[saturating_sub] (cast<int32> ?x0) (cast<int32> (+ (cast<int32> ?x1) (cast<int32> 1))))))))))",
+    ),
+    (
+        12,
+        7,
+        "(- (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
         18,

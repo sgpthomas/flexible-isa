@@ -54,11 +54,6 @@ description: generate isa for average_pool
         "(/ (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 131072))) (cast<int32> (* (cast<int32> ?x0) (cast<int32> 2))))",
     ),
     (
-        1,
-        8,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))",
-    ),
-    (
         7,
         8,
         "(- (cast<int32> (- (cast<int32> (- (cast<int32> (- (cast<int32> ?#5) (cast<int32> (* (cast<int32> ?#6) (cast<int32> ?x0))))) (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?x2))))) (cast<int32> (* (cast<int32> ?x3) (cast<int32> ?x4))))) (cast<int32> ?#7))",
@@ -69,23 +64,18 @@ description: generate isa for average_pool
         "(- (cast<int32> (call[max] (cast<int32> ?x0) (cast<int32> 0))) (cast<int32> ?x1))",
     ),
     (
-        19,
-        11,
-        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        2,
-        16,
-        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
         15,
         16,
         "(- (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
+        19,
+        35,
+        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
+    ),
+    (
         4,
-        36,
+        68,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]

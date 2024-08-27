@@ -24,11 +24,6 @@ description: generate isa for mean
         "(- (cast<int32> (- (cast<int32> (- (cast<int32> (- (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))) (cast<int32> ?x4))",
     ),
     (
-        13,
-        2,
-        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
         17,
         2,
         "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
@@ -64,18 +59,13 @@ description: generate isa for mean
         "(<= ?x0 ?x1)",
     ),
     (
-        0,
-        6,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> ?x3))",
-    ),
-    (
         16,
-        7,
+        15,
         "(* (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
         2,
-        21,
+        35,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
 ]

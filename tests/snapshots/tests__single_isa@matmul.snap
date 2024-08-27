@@ -39,16 +39,6 @@ description: generate isa for matmul
         "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 3))) (cast<int32> ?x1))",
     ),
     (
-        42,
-        1,
-        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
-        49,
-        1,
-        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
         60,
         1,
         "(if ?x0 (cast<bool> ?x1))",
@@ -82,6 +72,11 @@ description: generate isa for matmul
         37,
         2,
         "(* (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))) (cast<int32> 4))",
+    ),
+    (
+        49,
+        2,
+        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (
         59,
@@ -180,7 +175,7 @@ description: generate isa for matmul
     ),
     (
         18,
-        7,
+        8,
         "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
     ),
     (

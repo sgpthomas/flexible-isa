@@ -88,6 +88,28 @@ where
         Self { op_count }
     }
 
+    pub fn with_filter<F>(mut self, f: F) -> Self
+    where
+        F: Fn(&(Op, usize)) -> bool,
+    {
+        self.op_count = self.op_count.into_iter().filter(f).collect();
+        self
+    }
+
+    pub fn with_limit(mut self, limit: Option<usize>) -> Self {
+        self.op_count = if let Some(limit) = &limit {
+            self.op_count
+                .into_iter()
+                .sorted_by_key(|(_op, count)| *count)
+                .rev()
+                .take(*limit)
+                .collect()
+        } else {
+            self.op_count
+        };
+        self
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&Op, &usize)> {
         self.op_count.iter()
     }
@@ -101,29 +123,6 @@ where
     }
 }
 
-impl InstructionSelect<HalideExprOp> {
-    pub fn with_limit(self, limit: Option<usize>) -> Self {
-        let allowed_ops: HashMap<_, _> = if let Some(limit) = &limit {
-            println!("limiting");
-            self.op_count
-                .into_iter()
-                .filter(|(op, _count)| matches!(op, HalideExprOp::Instruction(_)))
-                .sorted_by_key(|(_op, count)| *count)
-                .rev()
-                .take(*limit)
-                .collect()
-        } else {
-            self.op_count
-        };
-
-        println!("{allowed_ops:#?}");
-
-        Self {
-            op_count: allowed_ops,
-        }
-    }
-}
-
 impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
     type Cost = usize;
 
@@ -131,8 +130,6 @@ impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
     where
         C: FnMut(egg::Id) -> Self::Cost,
     {
-        // println!("{:#?}", allowed_ops);
-
         // operations that occur more frequently are less expensive
         let max_occurence = self.op_count.values().max().unwrap();
 
