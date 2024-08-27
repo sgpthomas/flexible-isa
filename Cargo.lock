@@ -167,7 +167,7 @@ checksum = "0c4b4d0bd25bd0b74681c0ad21497610ce1b7c91b1022cd21c80c6fbdd9476b0"
 [[package]]
 name = "babble"
 version = "0.1.0"
-source = "git+https://github.com/sgpthomas/babble.git#ca19b0de6a9ecd58f5c4a91bbc6efc6d5ce0db72"
+source = "git+https://github.com/sgpthomas/babble.git#41fffd6189768f70dcc3e1bf128d32279f33131d"
 dependencies = [
  "anyhow",
  "babble-macros",
@@ -186,7 +186,7 @@ dependencies = [
 [[package]]
 name = "babble-macros"
 version = "0.1.0"
-source = "git+https://github.com/sgpthomas/babble.git#ca19b0de6a9ecd58f5c4a91bbc6efc6d5ce0db72"
+source = "git+https://github.com/sgpthomas/babble.git#41fffd6189768f70dcc3e1bf128d32279f33131d"
 dependencies = [
  "proc-macro2",
  "quote",
