@@ -60,7 +60,7 @@ impl<T> Visitor<T> for UniqueIdents {
         }
     }
 
-    fn produce_stmt(&mut self, var: ast::Id, body: ast::Block<T>, data: T) -> ast::Stmt<T> {
+    fn make_produce_stmt(&mut self, var: ast::Id, body: ast::Block<T>, data: T) -> ast::Stmt<T> {
         ast::Stmt::Produce {
             var: var.with_prefix(&self.prefix()),
             body,

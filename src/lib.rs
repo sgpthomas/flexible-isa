@@ -57,7 +57,7 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
                         println!()
                     }
                 })
-                .map(Inline::do_pass_default)
+                .map(|ast| Inline::new(!args.no_inline).do_pass(ast))
                 .map(UniqueIdents::do_pass_default)
                 .map(|ast| TypeAnnotator::from(func_sig).do_pass(ast))
                 .map(InsertCasts::do_pass_default)

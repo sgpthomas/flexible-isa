@@ -39,6 +39,10 @@ pub struct Args {
     /// limit the number of learned instructions
     #[argh(option)]
     pub limit: Option<usize>,
+
+    /// inline let expressions
+    #[argh(switch)]
+    pub no_inline: bool,
 }
 
 impl Args {
@@ -55,6 +59,7 @@ impl Args {
             load: None,
             learn: true,
             limit: None,
+            no_inline: false,
         }
     }
 
@@ -108,6 +113,11 @@ impl Args {
 
     pub fn limit(mut self, limit: usize) -> Self {
         self.limit = Some(limit);
+        self
+    }
+
+    pub fn no_inline(mut self, no_inline: bool) -> Self {
+        self.no_inline = no_inline;
         self
     }
 }

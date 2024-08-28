@@ -97,7 +97,15 @@ pub trait Visitor<T> {
         }]
     }
 
-    fn produce_stmt(&mut self, var: Id, body: Block<Self::Output>, data: T) -> Stmt<Self::Output> {
+    #[allow(unused_variables)]
+    fn start_produce_stmt(&mut self, var: &Id, body: &Block<T>, data: &T) {}
+
+    fn make_produce_stmt(
+        &mut self,
+        var: Id,
+        body: Block<Self::Output>,
+        data: T,
+    ) -> Stmt<Self::Output> {
         Stmt::Produce {
             var,
             body,
@@ -410,8 +418,9 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
                 visitor.make_let_stmt(var, expr, data)
             }
             Stmt::Produce { var, body, data } => {
+                visitor.start_produce_stmt(&var, &body, &data);
                 let body = body.visit(visitor);
-                vec![visitor.produce_stmt(var, body, data)]
+                vec![visitor.make_produce_stmt(var, body, data)]
             }
             Stmt::Consume { var, body, data } => {
                 let body = body.visit(visitor);
