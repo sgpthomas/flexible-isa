@@ -26,7 +26,7 @@ fn main() -> anyhow::Result<()> {
     println!("==========\n");
 
     // print out used instructions
-    instr_hist
+    let used_instrs: Vec<_> = instr_hist
         .iter()
         .filter_map(|(op, count)| {
             if let HalideExprOp::Instruction(i) = op {
@@ -37,12 +37,15 @@ fn main() -> anyhow::Result<()> {
         })
         // sort first by count, then by index
         .sorted_by_key(|(i, count)| (*count, *i))
-        .for_each(|(i, count)| {
-            println!(
-                "instruction {i}: occurred {count} times\n{}",
-                isa.instructions[&((*i) as usize)].pretty(80)
-            );
-        });
+        .collect();
+
+    println!("Used {} instructions", used_instrs.len());
+    used_instrs.into_iter().for_each(|(i, count)| {
+        println!(
+            "instruction {i}: occurred {count} times\n{}",
+            isa.instructions[&((*i) as usize)].pretty(80)
+        );
+    });
 
     Ok(())
 }

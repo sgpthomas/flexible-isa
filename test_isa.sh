@@ -20,5 +20,5 @@ benchmarks=(add average_pool blur3x3 conv3x3a16 conv3x3a32 depthwise_conv dilate
 w_ext=( "${benchmarks[@]/%/.stmt}" )
 files=( "${w_ext[@]/#/cache/}" )
 # cargo run --release -- ${w_ext[@]/#/test/}
-cargo run --release -- "${files[@]:0:10}" $@
+cargo run --release -- "${files[@]:0:6}" $@
 # cargo run --release -- --learn test/dilate3x3.stmt

@@ -45,6 +45,7 @@ impl HalideType {
             "float" => Float(32),
             "float32" => Float(32),
             "float64" => Float(64),
+            "bool" => Bool,
             // vector types are written `int16x128`
             // so to parse them, we split at the x
             // reparse the left side, and parse the right side
