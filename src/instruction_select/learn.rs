@@ -1,12 +1,12 @@
 //! Use babble to learn common patterns in a list of expressions.
 
-use std::{fs::File, path::Path};
+use std::{fs::File, mem, path::Path};
 
 use anyhow::Context;
 use babble::Teachable;
 use itertools::Itertools;
 
-use crate::halide_ir::ast;
+use crate::{halide_ir::ast, instruction_select::MinimalIsa};
 
 use super::{
     cost::InstructionSelect, lang::HalideExprOp, HalideLang, Init, InstructionState, Learned,
@@ -15,7 +15,7 @@ use super::{
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
 
 pub struct Instructions<S: InstructionState> {
-    egraph: egg::EGraph<babble::AstNode<HalideExprOp>, ()>,
+    pub(super) egraph: egg::EGraph<babble::AstNode<HalideExprOp>, ()>,
     roots: Vec<egg::Id>,
     state: S,
 }
@@ -91,7 +91,9 @@ impl Instructions<Init> {
         // add an anti-unification for operations that we definitely
         // want to have instructions for
         learned_library
-            .extend(HalideExprOp::essential_operations().map(|(op, arity)| op.partial_expr(arity)));
+            .extend(HalideExprOp::essential_unops().map(|(op, typs)| op.partial_expr(typs)));
+        learned_library
+            .extend(HalideExprOp::essential_binops().map(|(op, typs)| op.partial_expr(typs)));
 
         // finds patterns that can apply in the same places, and only keeps the smaller
         // pattern. I think that this only matters when we are using rewrite rules. Haven't
@@ -147,9 +149,10 @@ impl Instructions<Init> {
 impl Instructions<Learned> {
     /// Apply the set of learned rewrite rules to the egraph that we have, and extract a
     /// program preferring instructions that are used more frequently.
-    pub fn apply(&self, limit: Option<usize>) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
+    pub fn apply(&mut self, limit: Option<usize>) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
+        println!("Performing instruction selection...");
         // extract the best program
-        let mut egraph = self.egraph.clone();
+        let mut egraph = mem::take(&mut self.egraph);
         let root = egraph.add(babble::AstNode::new(
             HalideExprOp::list(),
             self.roots.clone(),
@@ -162,10 +165,22 @@ impl Instructions<Learned> {
             .with_node_limit(1_000_000)
             .run(&rewrites);
 
-        let cost = InstructionSelect::new(&runner.egraph)
-            .with_filter(|(op, _)| matches!(op, HalideExprOp::Instruction(_)))
+        // put the egraph back
+        self.egraph = runner.egraph;
+
+        let minimal_isa = MinimalIsa::new(self);
+
+        let cost = InstructionSelect::new(&self.egraph)
+            // .with_filter(|(op, _)| matches!(op, HalideExprOp::Instruction(_)))
+            .with_filter(|(op, _)| {
+                if let HalideExprOp::Instruction(i) = op {
+                    minimal_isa.instructions.contains(i)
+                } else {
+                    false
+                }
+            })
             .with_limit(limit);
-        let extractor = egg::Extractor::new(&runner.egraph, cost);
+        let extractor = egg::Extractor::new(&self.egraph, cost);
         let (cost, best) = extractor.find_best(root);
         println!("cost: {cost}");
 
@@ -176,7 +191,7 @@ impl Instructions<Learned> {
         self.instructions().map(|(i, pat)| {
             let searcher: egg::Pattern<_> = pat.clone();
 
-            let head = HalideExprOp::Instruction(i as u64);
+            let head = HalideExprOp::Instruction(i);
             let vars = pat.vars().into_iter().map(babble::PartialExpr::Hole);
             let applier_partial_expr: babble::PartialExpr<_, _> =
                 babble::PartialExpr::Node(babble::AstNode::new(head, vars));

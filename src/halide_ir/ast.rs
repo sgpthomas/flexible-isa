@@ -207,7 +207,7 @@ pub enum Expr<T = ()> {
     Access(Access<T>, #[deftly(data)] T),
 
     Instruction {
-        num: u64,
+        num: usize,
         args: Vec<Expr<T>>,
         #[deftly(data)]
         data: T,

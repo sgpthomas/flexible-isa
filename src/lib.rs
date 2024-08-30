@@ -85,7 +85,7 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
 
     // create the set of possible instructions by either loading them from file, or
     // learning them over the set of input programs
-    let instr_sel = if let Some(path) = &args.load {
+    let mut instr_sel = if let Some(path) = &args.load {
         println!("Loading instructions from {path:?}...");
         instr_sel.load(path)?
     } else if args.learn {
@@ -117,7 +117,7 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
         .map(RemoveCasts::do_pass_default)
         .map(LiftExpressions::do_pass_default)
         .for_each(|ast| {
-            if args.output_instr() {
+            if args.output_rewritten() {
                 ast.stdout();
                 println!()
             }

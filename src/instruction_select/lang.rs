@@ -62,7 +62,7 @@ pub enum HalideExprOp {
     Access,
 
     // Instructions
-    Instruction(u64),
+    Instruction(usize),
 
     Named(u64),
 
@@ -116,32 +116,50 @@ impl HalideExprOp {
     }
 
     /// Operations that we need to have instructions for.
-    pub fn essential_operations() -> impl Iterator<Item = (Self, usize)> {
+    pub fn essential_unops() -> impl Iterator<Item = (Self, [Option<HalideType>; 1])> {
+        use HalideType::*;
+        [(HalideExprOp::Neg, [Some(Signed(32))])].into_iter()
+    }
+
+    pub fn essential_binops() -> impl Iterator<Item = (Self, [Option<HalideType>; 2])> {
+        use HalideType::*;
         [
-            (HalideExprOp::Neg, 1),
-            (HalideExprOp::Add, 2),
-            (HalideExprOp::Sub, 2),
-            (HalideExprOp::Mul, 2),
-            (HalideExprOp::Div, 2),
-            (HalideExprOp::Modulo, 2),
-            (HalideExprOp::Lt, 2),
-            (HalideExprOp::Lte, 2),
-            (HalideExprOp::Eq, 2),
-            (HalideExprOp::Neq, 2),
-            (HalideExprOp::Gte, 2),
-            (HalideExprOp::Gt, 2),
-            (HalideExprOp::And, 2),
-            (HalideExprOp::Or, 2),
+            (HalideExprOp::Add, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Sub, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Mul, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Div, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Modulo, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Lt, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Lte, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Eq, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Neq, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Gte, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Gt, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::And, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Or, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::If, [None, Some(Bool)]),
         ]
         .into_iter()
     }
 
     /// Produce a partial expression of `arity` for `self` of the form:
     ///   `(op ?0 .. ?arity)`
-    pub fn partial_expr(self, arity: usize) -> PartialExpr<Self, egg::Var> {
+    pub fn partial_expr<const N: usize>(
+        self,
+        types: [Option<HalideType>; N],
+    ) -> PartialExpr<Self, egg::Var> {
         PartialExpr::Node(babble::AstNode::new(
             self,
-            (0..arity).map(|i| PartialExpr::Hole(egg::Var::from_u32(i as u32))),
+            types.iter().enumerate().map(|(i, typ)| {
+                if let Some(typ) = typ {
+                    PartialExpr::Node(babble::AstNode::new(
+                        HalideExprOp::Cast(vec![typ.to_id()]),
+                        vec![PartialExpr::Hole(egg::Var::from_u32(i as u32))],
+                    ))
+                } else {
+                    PartialExpr::Hole(egg::Var::from_u32(i as u32))
+                }
+            }),
         ))
     }
 }

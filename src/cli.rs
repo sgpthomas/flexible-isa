@@ -92,7 +92,7 @@ impl Args {
     }
 
     pub fn show_instr(mut self) -> Self {
-        self.output.push(OutputType::Instr);
+        self.output.push(OutputType::Rewritten);
         self
     }
 
@@ -127,7 +127,8 @@ pub enum OutputType {
     Parse,
     Types,
     Raw,
-    Instr,
+    Rewritten,
+    Instrs,
 }
 
 impl Args {
@@ -143,8 +144,14 @@ impl Args {
         self.output.iter().any(|x| matches!(x, OutputType::Raw))
     }
 
-    pub fn output_instr(&self) -> bool {
-        self.output.iter().any(|x| matches!(x, OutputType::Instr))
+    pub fn output_rewritten(&self) -> bool {
+        self.output
+            .iter()
+            .any(|x| matches!(x, OutputType::Rewritten))
+    }
+
+    pub fn output_instrs(&self) -> bool {
+        self.output.iter().any(|x| matches!(x, OutputType::Instrs))
     }
 }
 
