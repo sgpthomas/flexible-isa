@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
         used_instrs.into_iter().for_each(|(i, count)| {
             println!(
                 "instruction {i}: occurred {count} times\n{}",
-                isa.instructions[&((*i) as usize)].pretty(80)
+                isa.instructions[i].pretty(80)
             );
         });
     }
