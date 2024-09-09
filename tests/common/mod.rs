@@ -52,7 +52,7 @@ pub fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> 
         })
         // sort first by count, then by index
         .sorted_by_key(|(i, count)| (*count, *i))
-        .map(|(i, count)| (i, count, isa.instructions[&((*i) as usize)].to_string()))
+        .map(|(i, count)| (i, count, isa.instructions[i].to_string()))
         .collect();
 
     insta::with_settings!({
