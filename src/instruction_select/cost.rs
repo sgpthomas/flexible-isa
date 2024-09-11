@@ -131,11 +131,12 @@ impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
         C: FnMut(egg::Id) -> Self::Cost,
     {
         // operations that occur more frequently are less expensive
-        let max_occurence = self.op_count.values().max().unwrap();
+        let max_occurence = self.op_count.values().max().unwrap_or(&1);
 
         let op_cost = match enode.operation() {
             inst @ HalideExprOp::Instruction(_) if self.op_count.contains_key(inst) => {
-                max_occurence - self.op_count[inst]
+                // max_occurence - self.op_count[inst]
+                1
             }
             HalideExprOp::Instruction(_) => 1_000_000,
             // prefer instructions over anything else

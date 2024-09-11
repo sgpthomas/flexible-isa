@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context};
 #[doc(hidden)]
 #[allow(clippy::single_component_path_imports)]
 use derive_deftly;
+use halide_ir::{ast::Instr, SetData};
 #[allow(unused)]
 use halide_ir::{
     HalideGeneratorParser, Inline, InsertCasts, LiftExpressions, MineExpressions, NumberNodes,
@@ -14,12 +15,13 @@ use std::collections::HashMap;
 pub mod cli;
 mod halide_ir;
 mod instruction_select;
+mod utils;
 
 #[derive(Default, Debug)]
 pub struct Isa {
     pub expressions: egg::RecExpr<HalideLang>,
     // XXX: this doesn't need to be a hashmap
-    pub instructions: HashMap<usize, egg::Pattern<HalideLang>>,
+    pub instructions: HashMap<Instr, egg::Pattern<HalideLang>>,
 }
 
 pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
@@ -59,8 +61,15 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
                 })
                 .map(|ast| Inline::new(!args.no_inline).do_pass(ast))
                 .map(UniqueIdents::do_pass_default)
-                .map(|ast| TypeAnnotator::from(func_sig).do_pass(ast))
-                .map(InsertCasts::do_pass_default)
+                .map(|ast| {
+                    if args.disable_typechecker {
+                        ast
+                    } else {
+                        let ast = TypeAnnotator::from(func_sig).do_pass(ast);
+                        let ast = InsertCasts::do_pass_default(ast);
+                        SetData::<()>::do_pass_default(ast)
+                    }
+                })
                 .map(NumberNodes::do_pass_default)
                 .inspect(|ast| {
                     if args.output_types() {
@@ -103,7 +112,8 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
         return Err(anyhow!("Need either `--learn` or `--load <path>`"));
     };
 
-    let prog = instr_sel.apply(args.limit);
+    let prog = instr_sel.apply(args.limit, &args);
+
     if args.output_raw() {
         println!("== Raw Egg Program (before mapping back to Halide) ==");
         println!("{}", prog.pretty(80));

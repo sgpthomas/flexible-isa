@@ -3,6 +3,13 @@ use derive_deftly::Deftly;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Display};
 
+#[derive(
+    derive_more::Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display,
+)]
+#[display("{_0}")]
+#[debug("i{_0}")]
+pub struct Instr(pub usize);
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Id {
     pub name: String,
@@ -207,7 +214,7 @@ pub enum Expr<T = ()> {
     Access(Access<T>, #[deftly(data)] T),
 
     Instruction {
-        num: usize,
+        num: Instr,
         args: Vec<Expr<T>>,
         #[deftly(data)]
         data: T,

@@ -5,6 +5,14 @@ use std::{
 
 use itertools::Itertools;
 
+use crate::{
+    instruction_select::{
+        BruteForceIsa, EfficientIsa, Experimental, IntoMinimalIsa, Learned, MinimalIsa,
+        PairwisePrune, StrictOrdering,
+    },
+    Instructions,
+};
+
 #[derive(argh::FromArgs, Debug)]
 /// Generate an ISA from a set of Halide files
 pub struct Args {
@@ -43,6 +51,18 @@ pub struct Args {
     /// inline let expressions
     #[argh(switch)]
     pub no_inline: bool,
+
+    /// algorithm to compute minimal ISA with
+    #[argh(option, default = "MinimalIsaAlgo::BruteForce")]
+    pub minimal_isa_algo: MinimalIsaAlgo,
+
+    /// how to prune brute force options
+    #[argh(option)]
+    pub prune: Option<PruneType>,
+
+    /// disable the type checker
+    #[argh(switch)]
+    pub disable_typechecker: bool,
 }
 
 impl Args {
@@ -60,6 +80,9 @@ impl Args {
             learn: true,
             limit: None,
             no_inline: false,
+            minimal_isa_algo: MinimalIsaAlgo::BruteForce,
+            prune: None,
+            disable_typechecker: false,
         }
     }
 
@@ -131,6 +154,12 @@ pub enum OutputType {
     Instrs,
 }
 
+#[derive(Debug, derive_more::FromStr)]
+pub enum PruneType {
+    Pairwise,
+    Experimental,
+}
+
 impl Args {
     pub fn output_parse(&self) -> bool {
         self.output.iter().any(|x| matches!(x, OutputType::Parse))
@@ -152,6 +181,37 @@ impl Args {
 
     pub fn output_instrs(&self) -> bool {
         self.output.iter().any(|x| matches!(x, OutputType::Instrs))
+    }
+}
+
+#[derive(Debug, derive_more::FromStr)]
+pub enum MinimalIsaAlgo {
+    BruteForce,
+    Efficient,
+}
+
+impl<'a> IntoMinimalIsa<'a> for &Args {
+    fn make(self, learned: &'a Instructions<Learned>) -> Box<dyn MinimalIsa<'a> + 'a>
+    where
+        Self: Sized,
+    {
+        match self.minimal_isa_algo {
+            MinimalIsaAlgo::BruteForce => {
+                let mut isa = BruteForceIsa::new(learned);
+                let pruner = StrictOrdering::new(learned);
+                match self.prune {
+                    Some(PruneType::Pairwise) => {
+                        isa.set_pruner((pruner, PairwisePrune::default()));
+                    }
+                    Some(PruneType::Experimental) => {
+                        isa.set_pruner((pruner, Experimental::default()));
+                    }
+                    None => (),
+                }
+                Box::new(isa)
+            }
+            MinimalIsaAlgo::Efficient => Box::new(EfficientIsa::new(learned)),
+        }
     }
 }
 

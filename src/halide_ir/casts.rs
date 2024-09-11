@@ -6,15 +6,15 @@ pub struct InsertCasts;
 impl Visitor<HalideType> for InsertCasts {
     type Output = HalideType;
 
-    fn default_u(&mut self, data: HalideType) -> HalideType {
+    fn default_u(&mut self, data: HalideType) -> Self::Output {
         data
     }
 
     fn expr_stmt(
         &mut self,
-        expr: ast::Expr<HalideType>,
+        expr: ast::Expr<Self::Output>,
         data: HalideType,
-    ) -> ast::Stmt<HalideType> {
+    ) -> ast::Stmt<Self::Output> {
         let expr = match expr {
             ast::Expr::Cast(_, inner, _) => *inner,
             ast::Expr::PtrCast(_, inner, _) => *inner,
@@ -24,7 +24,7 @@ impl Visitor<HalideType> for InsertCasts {
         ast::Stmt::Expr(expr, data)
     }
 
-    fn make_expr(&mut self, expr: ast::Expr<HalideType>) -> ast::Expr<HalideType> {
+    fn make_expr(&mut self, expr: ast::Expr<Self::Output>) -> ast::Expr<Self::Output> {
         let typ = expr.data().clone();
 
         match expr {
