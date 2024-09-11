@@ -3,7 +3,10 @@ use std::{convert::Infallible, fmt::Display, str::FromStr};
 use babble::PartialExpr;
 use itertools::Itertools;
 
-use crate::halide_ir::{ast, HalideType};
+use crate::halide_ir::{
+    ast::{self, Instr},
+    HalideType,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum BabbleOp {
@@ -62,7 +65,7 @@ pub enum HalideExprOp {
     Access,
 
     // Instructions
-    Instruction(usize),
+    Instruction(ast::Instr),
 
     Named(u64),
 
@@ -75,6 +78,7 @@ enum HalideExprOpParseError {
     Cast,
     Call,
     Reinterpret,
+    Instruction,
 }
 
 impl HalideExprOp {
@@ -113,6 +117,18 @@ impl HalideExprOp {
                     .collect_vec()
             })
             .map(Self::Reinterpret)
+    }
+
+    fn parse_instruction(input: &str) -> Result<Self, HalideExprOpParseError> {
+        input
+            .strip_prefix("inst<")
+            .and_then(|x| x.strip_suffix('>'))
+            .ok_or(HalideExprOpParseError::Instruction)
+            .and_then(|i| {
+                i.parse::<usize>()
+                    .map_err(|_| HalideExprOpParseError::Instruction)
+            })
+            .map(|i| Self::Instruction(Instr(i)))
     }
 
     /// Operations that we need to have instructions for.
@@ -162,6 +178,13 @@ impl HalideExprOp {
             }),
         ))
     }
+
+    pub fn instruction(&self) -> Option<Instr> {
+        match self {
+            HalideExprOp::Instruction(i) => Some(*i),
+            _ => None,
+        }
+    }
 }
 
 impl FromStr for HalideExprOp {
@@ -204,6 +227,7 @@ impl FromStr for HalideExprOp {
                 .or_else(|_| Self::parse_cast(input))
                 .or_else(|_| Self::parse_call(input))
                 .or_else(|_| Self::parse_reinterpret(input))
+                .or_else(|_| Self::parse_instruction(input))
                 .or_else(|_| input.parse().map(|x| Self::Babble(BabbleOp::LambdaVar(x))))
                 .or_else(|_| input.parse().map(|x| Self::Babble(BabbleOp::LibVar(x))))
                 .or_else(|_| {

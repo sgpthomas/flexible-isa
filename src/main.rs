@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
         .sorted_by_key(|(i, count)| (*count, *i))
         .collect();
 
-    println!("Used {} instructions", used_instrs.len());
+    println!("Used {} instruction(s)", used_instrs.len());
 
     // print out expressions that haven't been mapped to instructions
     println!("==========\n");
