@@ -4,15 +4,19 @@ use crate::{instruction_select::lang::PatternConvert, HalideLang};
 use crate::{HalideExprOp, Instructions};
 use egg::Searcher;
 use itertools::Itertools;
+use rayon::iter::ParallelBridge;
+use rayon::iter::ParallelIterator;
+use smallvec::{smallvec, SmallVec};
 use std::collections::{HashMap, HashSet};
 
-use super::covering_options::ChoiceSet;
+use super::covering_options::{ChoiceSet, Covering};
 use super::minimal_isa::IsaPruner;
 
 pub struct StrictOrdering<'a, N = ()>
 where
     N: egg::Analysis<HalideLang>,
 {
+    /// An element in this set `(i, j)` means that `i < j`
     ordering: HashSet<(Instr, Instr)>,
     egraph: &'a egg::EGraph<HalideLang, N>,
     candidates: HashMap<Instr, egg::Pattern<HalideLang>>,
@@ -35,56 +39,106 @@ impl<'a> StrictOrdering<'a> {
                 }
 
                 if let Some(subst) = s.less_general_than(*i, *j) {
+                    // if the less general instruction covers all uses of the more
+                    // general instruction, we should prefer it
                     if s.covers(*j, subst) {
-                        s.ordering.insert((*i, *j));
-                        // println!("{i} is strictly better than {j}");
-                    } else {
                         s.ordering.insert((*j, *i));
+                    } else {
+                        s.ordering.insert((*i, *j));
                     }
                 }
             }
         }
 
-        // println!("ordering: {:#?}", s.ordering);
-
         s
+    }
+
+    /// Returns true if `i < j`
+    fn better_than(&self, i: &Instr, j: &Instr) -> bool {
+        self.ordering.contains(&(*i, *j))
     }
 }
 
-impl IsaPruner for StrictOrdering<'_> {
+#[derive(Default)]
+pub struct PairwisePrune {
+    msg: String,
+}
+
+impl IsaPruner for (StrictOrdering<'_>, PairwisePrune) {
     fn prune(&self, choices: ChoiceSet) -> ChoiceSet {
+        let better =
+            |((idx_a, a), (idx_b, b)): ((usize, &Covering), (usize, &Covering))| -> SmallVec<[usize; 2]> {
+                for ia in a.iter() {
+                    for ib in b.iter() {
+                        if self.0.better_than(ia, ib) {
+                            return smallvec![idx_a];
+                        } else if self.0.better_than(ib, ia) {
+                            return smallvec![idx_b];
+                        }
+                    }
+                }
+
+                smallvec![idx_a, idx_b]
+            };
+
+        let partial_order: HashSet<usize> = choices
+            .iter()
+            .enumerate()
+            .tuple_combinations()
+            .par_bridge()
+            .map(better)
+            .fold_with(HashSet::default(), |mut acc, sv| {
+                acc.extend(sv);
+                acc
+            })
+            .reduce_with(|mut acc, hset| {
+                acc.extend(hset);
+                acc
+            })
+            .unwrap();
+
         choices
-        // println!("{choices:?}");
-        // let mut partial_order: HashMap<Instr, Instr> = HashMap::default();
+            .into_iter()
+            .enumerate()
+            .filter_map(move |(i, set)| {
+                if !partial_order.contains(&i) {
+                    Some(set)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 
-        // for ((idx_a, a), (idx_b, b)) in choices.iter().enumerate().tuple_combinations() {
-        //     // println!("{a:?} <? {b:?}");
+    fn set_message(&mut self, msg: String) {
+        self.1.msg = msg;
+    }
+}
 
-        //     if a.iter()
-        //         .any(|ia| b.iter().any(|ib| self.ordering.contains(&(*ia, *ib))))
-        //     {
-        //         // println!("a better than b");
-        //         partial_order.insert(Instr(idx_b), Instr(idx_a));
-        //     } else if b
-        //         .iter()
-        //         .any(|ib| a.iter().any(|ia| self.ordering.contains(&(*ib, *ia))))
-        //     {
-        //         // println!("b better than a");
-        //         partial_order.insert(Instr(idx_a), Instr(idx_b));
-        //     }
-        // }
+#[derive(Default)]
+pub struct Experimental {
+    msg: String,
+}
 
-        // choices
-        //     .into_iter()
-        //     .enumerate()
-        //     .filter_map(move |(i, set)| {
-        //         if !partial_order.contains_key(&Instr(i)) {
-        //             Some(set)
-        //         } else {
-        //             None
-        //         }
-        //     })
-        //     .collect()
+impl IsaPruner for (StrictOrdering<'_>, Experimental) {
+    fn prune(&self, mut choices: ChoiceSet) -> ChoiceSet {
+        // find pairs in ordering such that if i < j, j exists in some set in choices
+        let relevant_ordering: HashSet<Instr> = self
+            .0
+            .ordering
+            .iter()
+            .filter(|(_, j)| choices.iter().any(|cover| cover.contains(j)))
+            .map(|(i, _)| *i)
+            .collect();
+
+        // remove all covers that contain an instruction in relevant ordering
+        choices.retain(|cover| !cover.iter().any(|i| relevant_ordering.contains(i)));
+
+        choices
+    }
+
+    fn set_message(&mut self, msg: String) {
+        self.1.msg = msg;
     }
 }
 
@@ -153,93 +207,3 @@ impl StrictOrdering<'_> {
         (root, egraph)
     }
 }
-
-// impl<'a> MinimalIsa<'a> for BruteForcePruneIsa<'a> {
-//     fn new(learned: &'a Instructions<Learned>) -> Self {
-//         learned
-//             .egraph
-//             .named_dot()
-//             .to_dot("simple.dot")
-//             .expect("dooootttt!!");
-//         println!("{:?}", learned.egraph.dump());
-//         BruteForcePruneIsa {
-//             brute_force: BruteForceIsa::new(learned),
-//             strict_ordering: HashSet::default(),
-//         }
-//     }
-
-//     fn minimize(&mut self) {
-//         let roots = &self.learned.roots;
-//         let memo = &self.eclass_memo;
-
-//         // let mut strict_ordering: HashMap<usize, usize> = HashMap::default();
-//         for i in self.candidates.keys() {
-//             for j in self.candidates.keys() {
-//                 if i == j {
-//                     continue;
-//                 }
-
-//                 if let Some(subst) = self.less_general_than(*i, *j) {
-//                     if self.covers(*j, subst) {
-//                         self.strict_ordering.insert((*i, *j));
-//                         // println!("{i} is strictly better than {j}");
-//                     } else {
-//                         self.strict_ordering.insert((*j, *i));
-//                     }
-//                 }
-//             }
-//         }
-
-//         println!("ordering: {:#?}", self.strict_ordering);
-
-//         // decide if this will be computationally feasible
-//         let options: Vec<_> = roots
-//             .iter()
-//             .map(|r| memo.get(r).expect("No ISA for root."))
-//             .filter(|r| !r.is_empty())
-//             .map(|iset| iset.clone().into_iter())
-//             // .map(|iset| self.prune(iset.clone()))
-//             .collect();
-
-//         let number_options = options
-//             .iter()
-//             .map(|r| r.clone().count())
-//             .fold(1usize, usize::saturating_mul);
-
-//         if number_options > 100_000_000 {
-//             panic!("Too many options to compute minimal ISA by brute force.");
-//         }
-
-//         self.isa = options
-//             .into_iter()
-//             .inspect(|iset| {
-//                 let reified: Vec<_> = iset.clone().collect();
-//                 println!(
-//                     "== {:?} {} ==",
-//                     &reified[..(std::cmp::min(10, reified.len()))],
-//                     reified.len()
-//                 )
-//             })
-//             .multi_cartesian_product()
-//             .map(|isets| {
-//                 // union over cartesian product
-//                 isets
-//                     .iter()
-//                     .fold(HashSet::default(), |mut acc: HashSet<_>, iset| {
-//                         acc.extend(iset);
-//                         acc
-//                     })
-//             })
-//             .min_by_key(|iset| iset.len())
-//             .unwrap_or_default();
-//         // .for_each(|opts| {
-//         //     println!("final: {opts:?}");
-//         //     println!("====");
-//         //     println!();
-//         // });
-//     }
-
-//     fn isa(&self) -> &HashSet<Instr> {
-//         self.isa()
-//     }
-// }

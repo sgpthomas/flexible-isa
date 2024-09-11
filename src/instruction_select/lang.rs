@@ -146,14 +146,14 @@ impl HalideExprOp {
             (HalideExprOp::Div, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Modulo, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Lt, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Lte, [Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Lte, [None, None]),
             (HalideExprOp::Eq, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Neq, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Gte, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Gt, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::And, [Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Or, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::If, [None, Some(Bool)]),
+            (HalideExprOp::If, [None, None]),
         ]
         .into_iter()
     }

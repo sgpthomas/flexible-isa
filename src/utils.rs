@@ -1,5 +1,6 @@
 use std::{ffi::OsStr, fmt, fmt::Formatter, io::Write, path::Path};
 
+use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 
 pub trait PrefixLines {
@@ -17,6 +18,7 @@ impl PrefixLines for String {
     }
 }
 
+#[allow(unused)]
 pub trait IntoNamedDot<'a, L: egg::Language, N: egg::Analysis<L>> {
     fn named_dot(&'a self) -> NamedDot<'a, L, N>;
 }
@@ -211,4 +213,26 @@ where
 
         write!(f, "}}")
     }
+}
+
+#[allow(unused)]
+pub fn count_combinations(n: u64, r: u64) -> u64 {
+    if r > n {
+        0
+    } else {
+        (1..=r).fold(1, |acc, val| acc * (n - val + 1) / val)
+    }
+}
+
+pub fn progress_style() -> ProgressStyle {
+    ProgressStyle::with_template("[eta:{eta}] {bar:40.cyan/blue} ({percent}%) {msg}")
+        .unwrap()
+        .progress_chars("#*-")
+}
+
+pub fn progress_bar<N: TryInto<u64>>(len: N) -> ProgressBar
+where
+    <N as TryInto<u64>>::Error: std::fmt::Debug,
+{
+    ProgressBar::new(len.try_into().unwrap()).with_style(progress_style())
 }

@@ -4,14 +4,18 @@
 use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::{halide_ir::ast::Instr, HalideExprOp, HalideLang};
+
+use super::minimal_isa::{IsaPruner, MinimalIsaDump};
 
 pub struct EGraphCovering<'a, N = ()>
 where
     N: egg::Analysis<HalideLang>,
 {
     egraph: &'a egg::EGraph<HalideLang, N>,
+    pruner: &'a dyn IsaPruner,
     covering: HashMap<egg::Id, ChoiceSet>,
 }
 
@@ -28,22 +32,18 @@ where
     }
 }
 
-impl<'a, N> From<&'a egg::EGraph<HalideLang, N>> for EGraphCovering<'a, N>
-where
-    N: egg::Analysis<HalideLang>,
-{
-    fn from(egraph: &'a egg::EGraph<HalideLang, N>) -> Self {
-        EGraphCovering {
-            egraph,
-            covering: HashMap::default(),
-        }
-    }
-}
-
 impl<'a, N> EGraphCovering<'a, N>
 where
     N: egg::Analysis<HalideLang>,
 {
+    pub fn new(egraph: &'a egg::EGraph<HalideLang, N>, pruner: &'a dyn IsaPruner) -> Self {
+        EGraphCovering {
+            egraph,
+            pruner,
+            covering: HashMap::default(),
+        }
+    }
+
     pub fn compute_from_root(&mut self, root: egg::Id) {
         // if we have already checked this eclass, just return
         if self.covering.contains_key(&root) {
@@ -78,7 +78,8 @@ where
                     children
                         .iter()
                         .map(|child| &self.covering[child])
-                        .fold(ChoiceSet::from([instr.0]), ChoiceSet::cross_product),
+                        .map(|covering| self.pruner.prune(covering.clone()))
+                        .fold(ChoiceSet::from([instr.0]), |acc, el| acc.cross_product(&el)),
                 );
             }
 
@@ -108,7 +109,8 @@ where
                 children
                     .iter()
                     .map(|child| &self.covering[child])
-                    .fold(root_choices, ChoiceSet::cross_product),
+                    .map(|covering| self.pruner.prune(covering.clone()))
+                    .fold(root_choices, |acc, el| acc.cross_product(&el)),
             );
         }
     }
@@ -133,6 +135,7 @@ impl Covering {
         self.0
     }
 
+    #[allow(unused)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -143,6 +146,20 @@ impl Covering {
 
     pub fn iter(&self) -> std::collections::hash_set::Iter<'_, Instr> {
         self.0.iter()
+    }
+
+    pub fn contains(&self, value: &Instr) -> bool {
+        self.0.contains(value)
+    }
+
+    pub fn dump<'a>(
+        &'a self,
+        instructions: &'a HashMap<Instr, egg::Pattern<HalideLang>>,
+    ) -> MinimalIsaDump<'a> {
+        MinimalIsaDump {
+            isa: &self.0,
+            instructions,
+        }
     }
 }
 
@@ -165,6 +182,7 @@ impl ChoiceSet {
             self.0
                 .into_iter()
                 .cartesian_product(&other.0)
+                .par_bridge()
                 .map(|(s, o)| s.union(o))
                 .collect(),
         )
@@ -197,6 +215,13 @@ impl ChoiceSet {
 
     pub fn iter(&self) -> impl Iterator<Item = &Covering> + Clone {
         self.0.iter()
+    }
+
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Covering) -> bool,
+    {
+        self.0.retain(f)
     }
 }
 
@@ -323,7 +348,7 @@ mod tests {
         let runner = egg::Runner::default().with_expr(&expr).run(&instrs);
         let root = runner.roots[0];
 
-        let mut covering = EGraphCovering::from(&runner.egraph);
+        let mut covering = EGraphCovering::new(&runner.egraph, &());
         covering.compute_from_root(root);
 
         assert_eq!(
@@ -347,7 +372,7 @@ mod tests {
         let runner = egg::Runner::default().with_expr(&expr).run(&instrs);
         let root = runner.roots[0];
 
-        let mut covering = EGraphCovering::from(&runner.egraph);
+        let mut covering = EGraphCovering::new(&runner.egraph, &());
         covering.compute_from_root(root);
 
         assert_eq!(

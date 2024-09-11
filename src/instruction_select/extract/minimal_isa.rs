@@ -10,11 +10,6 @@ use crate::{
 use super::covering_options::ChoiceSet;
 
 pub trait MinimalIsa<'a> {
-    fn new(learned: &'a Instructions<Learned>) -> Self;
-    #[allow(unused_variables)]
-    fn set_pruner(&mut self, pruner: impl IsaPruner + 'a) -> &mut Self {
-        self
-    }
     fn minimize(&mut self);
     fn isa(&self) -> &HashSet<Instr>;
     fn dump<'s>(
@@ -28,9 +23,15 @@ pub trait MinimalIsa<'a> {
     }
 }
 
+pub trait IntoMinimalIsa<'a> {
+    fn make(self, learned: &'a Instructions<Learned>) -> Box<dyn MinimalIsa<'a> + 'a>
+    where
+        Self: Sized;
+}
+
 pub struct MinimalIsaDump<'a> {
-    isa: &'a HashSet<Instr>,
-    instructions: &'a HashMap<Instr, egg::Pattern<HalideLang>>,
+    pub isa: &'a HashSet<Instr>,
+    pub instructions: &'a HashMap<Instr, egg::Pattern<HalideLang>>,
 }
 
 impl<'a> std::fmt::Debug for MinimalIsaDump<'a> {
@@ -54,6 +55,8 @@ impl<'a> std::fmt::Debug for MinimalIsaDump<'a> {
 
 pub trait IsaPruner {
     fn prune(&self, choices: ChoiceSet) -> ChoiceSet;
+    #[allow(unused_variables, unused)]
+    fn set_message(&mut self, msg: String) {}
 }
 
 impl IsaPruner for () {

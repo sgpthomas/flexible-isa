@@ -2,13 +2,12 @@ use anyhow::{anyhow, Context};
 #[doc(hidden)]
 #[allow(clippy::single_component_path_imports)]
 use derive_deftly;
-use halide_ir::ast::Instr;
+use halide_ir::{ast::Instr, SetData};
 #[allow(unused)]
 use halide_ir::{
     HalideGeneratorParser, Inline, InsertCasts, LiftExpressions, MineExpressions, NumberNodes,
     Printer, RemoveCasts, Rewrite, StmtParser, TypeAnnotator, UniqueIdents, Visitor,
 };
-use instruction_select::{BruteForceIsa, EfficientIsa, StrictOrdering};
 pub use instruction_select::{HalideExprOp, HalideLang, InstructionSelect, Instructions};
 use itertools::Itertools;
 use std::collections::HashMap;
@@ -62,8 +61,15 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
                 })
                 .map(|ast| Inline::new(!args.no_inline).do_pass(ast))
                 .map(UniqueIdents::do_pass_default)
-                // .map(|ast| TypeAnnotator::from(func_sig).do_pass(ast))
-                // .map(InsertCasts::do_pass_default)
+                .map(|ast| {
+                    if args.disable_typechecker {
+                        ast
+                    } else {
+                        let ast = TypeAnnotator::from(func_sig).do_pass(ast);
+                        let ast = InsertCasts::do_pass_default(ast);
+                        SetData::<()>::do_pass_default(ast)
+                    }
+                })
                 .map(NumberNodes::do_pass_default)
                 .inspect(|ast| {
                     if args.output_types() {
@@ -106,10 +112,8 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
         return Err(anyhow!("Need either `--learn` or `--load <path>`"));
     };
 
-    let prog = match args.minimal_isa_algo {
-        cli::MinimalIsaAlgo::BruteForce => instr_sel.apply::<BruteForceIsa>(args.limit, args.prune),
-        cli::MinimalIsaAlgo::Efficient => instr_sel.apply::<EfficientIsa>(args.limit, false),
-    };
+    let prog = instr_sel.apply(args.limit, &args);
+
     if args.output_raw() {
         println!("== Raw Egg Program (before mapping back to Halide) ==");
         println!("{}", prog.pretty(80));

@@ -16,8 +16,8 @@ pub struct EfficientIsa<'a> {
     candidates: HashMap<Instr, egg::Pattern<HalideLang>>,
 }
 
-impl<'a> MinimalIsa<'a> for EfficientIsa<'a> {
-    fn new(learned: &'a Instructions<Learned>) -> Self {
+impl<'a> EfficientIsa<'a> {
+    pub fn new(learned: &'a Instructions<Learned>) -> Self {
         let candidates = learned.instructions().collect();
         Self {
             isa: HashSet::default(),
@@ -25,6 +25,9 @@ impl<'a> MinimalIsa<'a> for EfficientIsa<'a> {
             candidates,
         }
     }
+}
+
+impl<'a> MinimalIsa<'a> for EfficientIsa<'a> {
     fn minimize(&mut self) {
         let rewrite_graph = self.rewritability();
         let lattice0 = self.lattice(&rewrite_graph);

@@ -2,7 +2,9 @@ module name=simple, target=hexagon-32-noos-hvx-hvx_128-hvx_v66-no_asserts-no_bou
 external_plus_metadata func simple (offset, input, brighter) {
 let brighter = (void *)_halide_buffer_get_host((struct halide_buffer_t *)brighter.buffer)
 produce brighter {
-     output[ramp((output.stride.1*t102) + ((t112 - t119) - output.min.0), 1, 128)] = saturating_cast(saturating_add(saturating_cast(rounding_shift_right(widen_right_mul(x128(inv_sqrt[0]), widening_sub(input[ramp((input.stride.1*t102) + ((t112 - t117) - input.min.0), 1, 128)] if (int16x128(ramp(0, 1, 128)) <= x128(saturating_cast(saturating_sub(t113, (t112 * 1) + 1)))), x128(input_zero))), x128(8))), x128(128)))
+    // let t102 = output.min.1 + output.s0.y.rebased
+    // output[ramp((output.stride.1*t102) + ((t112 - t119) - output.min.0), 1, 128)] = saturating_cast(saturating_add(saturating_cast(rounding_shift_right(widen_right_mul(x128(inv_sqrt[0]), widening_sub(input[ramp((input.stride.1*t102) + ((t112 - t117) - input.min.0), 1, 128)] if (int16x128(ramp(0, 1, 128)) <= x128(saturating_cast(saturating_sub(t113, (t112 * 1) + 1)))), x128(input_zero))), x128(8))), x128(128)))
      // let x = f((1 * 2) + 3, (4 * 5) + 6)
+     let x = ((1 + 0) + 0) + 0
 }
 }

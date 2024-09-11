@@ -6,15 +6,13 @@ use anyhow::Context;
 use babble::Teachable;
 use itertools::Itertools;
 
+use crate::halide_ir::ast::{self, Instr};
 #[allow(unused)]
 use crate::instruction_select::{BruteForceIsa, EfficientIsa, MinimalIsa};
-use crate::{
-    halide_ir::ast::{self, Instr},
-    instruction_select::StrictOrdering,
-};
 
 use super::{
-    cost::InstructionSelect, lang::HalideExprOp, HalideLang, Init, InstructionState, Learned,
+    cost::InstructionSelect, extract::minimal_isa::IntoMinimalIsa, lang::HalideExprOp, HalideLang,
+    Init, InstructionState, Learned,
 };
 
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
@@ -157,10 +155,10 @@ impl Instructions<Learned> {
     pub fn apply<'a, I>(
         &'a mut self,
         limit: Option<usize>,
-        prune: bool,
+        isa: I,
     ) -> egg::RecExpr<babble::AstNode<HalideExprOp>>
     where
-        I: MinimalIsa<'a>,
+        I: IntoMinimalIsa<'a>,
     {
         println!("Performing instruction selection...");
         // extract the best program
@@ -180,10 +178,7 @@ impl Instructions<Learned> {
         // put the egraph back
         self.egraph = runner.egraph;
 
-        let mut minimal_isa: I = MinimalIsa::new(self);
-        if prune {
-            minimal_isa.set_pruner(StrictOrdering::new(self));
-        }
+        let mut minimal_isa = isa.make(self);
         minimal_isa.minimize();
         println!("{:#?}", minimal_isa.dump(&self.instructions().collect()));
 
