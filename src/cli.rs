@@ -43,14 +43,6 @@ pub struct Args {
     /// inline let expressions
     #[argh(switch)]
     pub no_inline: bool,
-
-    /// algorithm to compute minimal ISA with
-    #[argh(option, default = "MinimalIsaAlgo::BruteForce")]
-    pub minimal_isa_algo: MinimalIsaAlgo,
-
-    /// how to prune brute force options
-    #[argh(switch)]
-    pub prune: bool,
 }
 
 impl Args {
@@ -68,8 +60,6 @@ impl Args {
             learn: true,
             limit: None,
             no_inline: false,
-            minimal_isa_algo: MinimalIsaAlgo::BruteForce,
-            prune: false,
         }
     }
 
@@ -163,12 +153,6 @@ impl Args {
     pub fn output_instrs(&self) -> bool {
         self.output.iter().any(|x| matches!(x, OutputType::Instrs))
     }
-}
-
-#[derive(Debug, derive_more::FromStr)]
-pub enum MinimalIsaAlgo {
-    BruteForce,
-    Efficient,
 }
 
 pub fn cli() -> Args {

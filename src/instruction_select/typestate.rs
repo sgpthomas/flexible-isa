@@ -1,7 +1,5 @@
 use derive_deftly::{define_derive_deftly, Deftly};
 
-use crate::halide_ir::ast::Instr;
-
 use super::HalideLang;
 
 // This is unnecessary, but I wanted to play around with these deftly derive macros
@@ -23,5 +21,5 @@ pub struct Init;
 #[derive(Deftly)]
 #[derive_deftly(InstructionState)]
 pub struct Learned {
-    pub instructions: Vec<(Instr, egg::Pattern<HalideLang>)>,
+    pub instructions: Vec<(usize, egg::Pattern<HalideLang>)>,
 }

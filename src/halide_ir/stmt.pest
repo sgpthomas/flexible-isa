@@ -44,7 +44,7 @@ func_arg_list = {
 
 block = {
     "{" ~ NEWLINE
-    ~ (stmt ~ (NEWLINE | WHITESPACE)+)*
+    ~ (stmt ~ NEWLINE)*
     ~ "}"
 }
 

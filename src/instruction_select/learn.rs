@@ -6,12 +6,7 @@ use anyhow::Context;
 use babble::Teachable;
 use itertools::Itertools;
 
-#[allow(unused)]
-use crate::instruction_select::{BruteForceIsa, EfficientIsa, MinimalIsa};
-use crate::{
-    halide_ir::ast::{self, Instr},
-    instruction_select::StrictOrdering,
-};
+use crate::{halide_ir::ast, instruction_select::MinimalIsa};
 
 use super::{
     cost::InstructionSelect, lang::HalideExprOp, HalideLang, Init, InstructionState, Learned,
@@ -21,8 +16,8 @@ pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
 
 pub struct Instructions<S: InstructionState> {
     pub(super) egraph: egg::EGraph<babble::AstNode<HalideExprOp>, ()>,
-    pub(super) roots: Vec<egg::Id>,
-    pub(super) state: S,
+    roots: Vec<egg::Id>,
+    state: S,
 }
 
 impl Default for Instructions<Init> {
@@ -117,7 +112,7 @@ impl Instructions<Init> {
         let instructions = learned_library
             .anti_unifications()
             .enumerate()
-            .map(|(i, au)| (Instr(i), au.clone().into()))
+            .map(|(i, au)| (i, au.clone().into()))
             .collect();
 
         Instructions {
@@ -132,9 +127,9 @@ impl Instructions<Init> {
 
         let raw: Vec<(usize, String)> = serde_json::from_reader(file)?;
 
-        let instructions: Vec<(Instr, egg::Pattern<HalideLang>)> = raw
+        let instructions: Vec<(usize, egg::Pattern<HalideLang>)> = raw
             .into_iter()
-            .map(|(i, pat)| Ok((Instr(i), pat.parse()?)))
+            .map(|(i, pat)| Ok((i, pat.parse()?)))
             .collect::<anyhow::Result<_>>()?;
 
         let Self {
@@ -154,14 +149,7 @@ impl Instructions<Init> {
 impl Instructions<Learned> {
     /// Apply the set of learned rewrite rules to the egraph that we have, and extract a
     /// program preferring instructions that are used more frequently.
-    pub fn apply<'a, I>(
-        &'a mut self,
-        limit: Option<usize>,
-        prune: bool,
-    ) -> egg::RecExpr<babble::AstNode<HalideExprOp>>
-    where
-        I: MinimalIsa<'a>,
-    {
+    pub fn apply(&mut self, limit: Option<usize>) -> egg::RecExpr<babble::AstNode<HalideExprOp>> {
         println!("Performing instruction selection...");
         // extract the best program
         let mut egraph = mem::take(&mut self.egraph);
@@ -180,17 +168,13 @@ impl Instructions<Learned> {
         // put the egraph back
         self.egraph = runner.egraph;
 
-        let mut minimal_isa: I = MinimalIsa::new(self);
-        if prune {
-            minimal_isa.set_pruner(StrictOrdering::new(self));
-        }
-        minimal_isa.minimize();
-        println!("{:#?}", minimal_isa.dump(&self.instructions().collect()));
+        let minimal_isa = MinimalIsa::new(self);
 
         let cost = InstructionSelect::new(&self.egraph)
+            // .with_filter(|(op, _)| matches!(op, HalideExprOp::Instruction(_)))
             .with_filter(|(op, _)| {
                 if let HalideExprOp::Instruction(i) = op {
-                    minimal_isa.isa().contains(i)
+                    minimal_isa.instructions.contains(i)
                 } else {
                     false
                 }
@@ -218,7 +202,7 @@ impl Instructions<Learned> {
         })
     }
 
-    pub fn instructions(&self) -> impl Iterator<Item = (Instr, egg::Pattern<HalideLang>)> + '_ {
+    pub fn instructions(&self) -> impl Iterator<Item = (usize, egg::Pattern<HalideLang>)> + '_ {
         self.state.instructions.iter().cloned()
     }
 
@@ -227,7 +211,7 @@ impl Instructions<Learned> {
 
         let value = self
             .instructions()
-            .map(|(idx, pat)| (idx.0, pat.ast))
+            .map(|(idx, pat)| (idx, pat.ast))
             .collect_vec();
         serde_json::to_writer_pretty(file, &value)?;
 
