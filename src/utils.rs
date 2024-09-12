@@ -216,7 +216,11 @@ where
 }
 
 #[allow(unused)]
-pub fn count_combinations(n: u64, r: u64) -> u64 {
+pub fn count_combinations<N: TryInto<u64>>(n: N, r: u64) -> u64
+where
+    <N as TryInto<u64>>::Error: std::fmt::Debug,
+{
+    let n = n.try_into().unwrap();
     if r > n {
         0
     } else {

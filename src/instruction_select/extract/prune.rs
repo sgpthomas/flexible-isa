@@ -1,8 +1,9 @@
 use crate::halide_ir::ast::Instr;
 use crate::instruction_select::Learned;
 use crate::{instruction_select::lang::PatternConvert, HalideLang};
-use crate::{HalideExprOp, Instructions};
+use crate::{utils, HalideExprOp, Instructions};
 use egg::Searcher;
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
@@ -32,23 +33,35 @@ impl<'a> StrictOrdering<'a> {
             candidates,
         };
 
-        for i in s.candidates.keys() {
-            for j in s.candidates.keys() {
-                if i == j {
-                    continue;
-                }
-
-                if let Some(subst) = s.less_general_than(*i, *j) {
-                    // if the less general instruction covers all uses of the more
-                    // general instruction, we should prefer it
+        // build ordering by looking at all pairs of instructions
+        s.ordering = s
+            .candidates
+            .keys()
+            .cartesian_product(s.candidates.keys())
+            .par_bridge()
+            .progress_with(
+                utils::progress_bar(s.candidates.len() * s.candidates.len())
+                    .with_message("Building ordering over instructions"),
+            )
+            // don't consider comparison with self
+            .filter(|(i, j)| i != j)
+            .filter_map(|(i, j)| {
+                // if i less general than j
+                s.less_general_than(*i, *j).map(|subst| {
+                    // and j is only used in the same context
+                    // that i is used in
                     if s.covers(*j, subst) {
-                        s.ordering.insert((*j, *i));
+                        // then j < i
+                        (*j, *i)
                     } else {
-                        s.ordering.insert((*i, *j));
+                        // else i < j
+                        // (including the more strict instruction, means that we would also need the more
+                        // general instruction, so we should just include the more general instruction)
+                        (*i, *j)
                     }
-                }
-            }
-        }
+                })
+            })
+            .collect();
 
         s
     }
