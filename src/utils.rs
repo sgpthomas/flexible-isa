@@ -1,5 +1,12 @@
-use std::{ffi::OsStr, fmt, fmt::Formatter, io::Write, path::Path};
+use std::{
+    ffi::OsStr,
+    fmt::{self, Formatter},
+    io::Write,
+    path::Path,
+    time::Duration,
+};
 
+use closure::closure;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 
@@ -239,4 +246,64 @@ where
     <N as TryInto<u64>>::Error: std::fmt::Debug,
 {
     ProgressBar::new(len.try_into().unwrap()).with_style(progress_style())
+}
+
+pub fn pb_runner<'a, L, N, D, I, S>(
+    runner: egg::Runner<L, N, D>,
+    msg: S,
+    rewrites: I,
+) -> egg::Runner<L, N, D>
+where
+    L: egg::Language + 'a,
+    N: egg::Analysis<L> + 'a,
+    D: egg::IterationData<L, N>,
+    I: IntoIterator<Item = &'a egg::Rewrite<L, N>>,
+    S: std::fmt::Display + Clone + 'static,
+{
+    let spinner = std::rc::Rc::new(
+        ProgressBar::new_spinner()
+            .with_message(format!("{}", msg))
+            .with_style(
+                ProgressStyle::with_template("{spinner:.cyan/green} {msg}")
+                    .unwrap()
+                    .tick_chars(".oO@*✓"),
+            ),
+    );
+    spinner.enable_steady_tick(Duration::from_millis(100));
+    let runner = runner
+        .with_hook(closure!(clone msg, clone spinner, |runner| {
+            spinner.set_message(
+                format!(
+                    "{msg}: {}",
+                    runner_stats_msg(runner)
+                ));
+            Ok(())
+        }))
+        .run(rewrites);
+    spinner.finish_with_message(format!(
+        "{}: {} ({})",
+        msg,
+        runner
+            .stop_reason
+            .as_ref()
+            .map(|reason| format!("{:?}", reason))
+            .unwrap_or("Unknown".to_string()),
+        runner_stats_msg(&runner)
+    ));
+    println!();
+    runner
+}
+
+fn runner_stats_msg<L, N, D>(runner: &egg::Runner<L, N, D>) -> String
+where
+    L: egg::Language,
+    N: egg::Analysis<L>,
+    D: egg::IterationData<L, N>,
+{
+    format!(
+        "iter: {}, eclasses: {}, enodes: {}",
+        runner.iterations.len(),
+        runner.egraph.number_of_classes(),
+        runner.egraph.total_number_of_nodes(),
+    )
 }

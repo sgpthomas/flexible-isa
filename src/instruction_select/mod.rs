@@ -1,5 +1,6 @@
 mod cost;
 mod extract;
+mod halide_equalities;
 mod lang;
 mod learn;
 mod simplify;
@@ -10,6 +11,7 @@ pub use extract::brute_force::BruteForceIsa;
 pub use extract::efficient_minimal_isa::EfficientIsa;
 pub use extract::minimal_isa::{IntoMinimalIsa, MinimalIsa};
 pub use extract::prune::{Experimental, PairwisePrune, StrictOrdering};
+pub use halide_equalities::HalideEqualities;
 pub use lang::{BabbleOp, HalideExprOp, HalideLang};
 pub use learn::Instructions;
 #[allow(unused)]

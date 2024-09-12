@@ -18,6 +18,7 @@ path = "src/main.rs"
 anyhow = "1.0.86"
 argh = "0.1.12"
 babble = { git = "https://github.com/sgpthomas/babble.git" }
+closure = "0.3.0"
 # babble = { path = "../babble" }
 derive-deftly = "0.14.2"
 egg = { git = "https://github.com/egraphs-good/egg.git", features = ["serde-1"] }

@@ -1,14 +1,18 @@
 //! Use babble to learn common patterns in a list of expressions.
 
-use std::{fs::File, mem, path::Path};
+use std::{fs::File, mem, path::Path, time::Duration};
 
 use anyhow::Context;
 use babble::Teachable;
 use itertools::Itertools;
 
-use crate::halide_ir::ast::{self, Instr};
 #[allow(unused)]
 use crate::instruction_select::{BruteForceIsa, EfficientIsa, MinimalIsa};
+use crate::{
+    halide_ir::ast::{self, Instr},
+    instruction_select::HalideEqualities,
+    utils,
+};
 
 use super::{
     cost::InstructionSelect, extract::minimal_isa::IntoMinimalIsa, lang::HalideExprOp, HalideLang,
@@ -168,12 +172,26 @@ impl Instructions<Learned> {
             self.roots.clone(),
         ));
 
-        let rewrites = self.rewrites().collect::<Vec<_>>();
+        // TODO: run some equalities over the graph, to make some instructions unnecessary
+        let runner = utils::pb_runner(
+            egg::Runner::default()
+                .with_egraph(egraph)
+                .with_node_limit(1_000_000),
+            "Running halide equalities",
+            &HalideEqualities::rewrites(),
+        );
 
-        let runner = egg::Runner::default()
-            .with_egraph(egraph)
-            .with_node_limit(1_000_000)
-            .run(&rewrites);
+        // run the instruction rewrites to perform essentially
+        // instruction selection
+        let instr_rewrites = self.rewrites().collect::<Vec<_>>();
+        let runner = utils::pb_runner(
+            egg::Runner::default()
+                .with_egraph(runner.egraph)
+                .with_node_limit(1_000_000)
+                .with_time_limit(Duration::from_secs(60)),
+            "Running instruction rules",
+            &instr_rewrites,
+        );
 
         // put the egraph back
         self.egraph = runner.egraph;
