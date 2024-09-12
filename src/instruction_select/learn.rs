@@ -8,6 +8,8 @@ use itertools::Itertools;
 
 #[allow(unused)]
 use crate::instruction_select::{BruteForceIsa, EfficientIsa, MinimalIsa};
+#[allow(unused)]
+use crate::utils::IntoNamedDot;
 use crate::{
     halide_ir::ast::{self, Instr},
     instruction_select::HalideEqualities,
@@ -196,9 +198,14 @@ impl Instructions<Learned> {
         // put the egraph back
         self.egraph = runner.egraph;
 
+        // self.egraph.named_dot().to_dot("simple.dot").unwrap();
+
         let mut minimal_isa = isa.make(self);
         minimal_isa.minimize();
-        println!("{:#?}", minimal_isa.dump(&self.instructions().collect()));
+        println!(
+            "Result: {:#?}",
+            minimal_isa.dump(&self.instructions().collect())
+        );
 
         let cost = InstructionSelect::new(&self.egraph)
             .with_filter(|(op, _)| {

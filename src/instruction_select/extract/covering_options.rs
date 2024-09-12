@@ -17,6 +17,7 @@ where
     egraph: &'a egg::EGraph<HalideLang, N>,
     pruner: &'a dyn IsaPruner,
     covering: HashMap<egg::Id, ChoiceSet>,
+    seen: HashSet<egg::Id>,
 }
 
 impl<'a, N> std::fmt::Debug for EGraphCovering<'a, N>
@@ -41,17 +42,27 @@ where
             egraph,
             pruner,
             covering: HashMap::default(),
+            seen: HashSet::default(),
         }
     }
 
     pub fn compute_from_root(&mut self, root: egg::Id) {
         // if we have already checked this eclass, just return
-        if self.covering.contains_key(&root) {
+        if self.covering.contains_key(&root) || self.seen.contains(&root) {
             return;
         }
 
-        // XXX(sam): collapse these two cases into one. I don't think two cases
-        // is necessary
+        // insert default element so that we don't follow loops infinitely
+        self.seen.insert(root);
+
+        // There are two cases:
+        //     1) This eclass contains some instructions. We know that one of these
+        //     instructions has to be picked, so just look at the children of the
+        //     instructions.
+        //     2) This eclass contains no instructions. We need to recurse into all
+        //     children, and then take the cross product across the children.
+
+        // XXX(sam): collapse these two cases into one. I don't think two cases is necessary
         if self.egraph[root]
             .nodes
             .iter()
@@ -77,8 +88,16 @@ where
                 choices.extend(
                     children
                         .iter()
-                        .map(|child| &self.covering[child])
-                        .map(|covering| self.pruner.prune(covering.clone()))
+                        .map(|child| {
+                            if root == *child {
+                                let mut choices = ChoiceSet::from(&self.egraph[root]);
+                                choices.retain(|covering| !covering.contains(&instr));
+                                choices
+                            } else {
+                                self.covering[child].clone()
+                            }
+                        })
+                        .map(|covering| self.pruner.prune(covering))
                         .fold(ChoiceSet::from([instr.0]), |acc, el| acc.cross_product(&el)),
                 );
             }
@@ -101,8 +120,6 @@ where
             }
 
             // gather instructions from current root
-            let root_choices = ChoiceSet::from(&self.egraph[root]);
-
             // update this roots covering with the cross-product over it's children
             self.covering.insert(
                 root,
@@ -110,7 +127,7 @@ where
                     .iter()
                     .map(|child| &self.covering[child])
                     .map(|covering| self.pruner.prune(covering.clone()))
-                    .fold(root_choices, |acc, el| acc.cross_product(&el)),
+                    .fold(ChoiceSet::from([]), |acc, el| acc.cross_product(&el)),
             );
         }
     }
@@ -202,6 +219,7 @@ impl ChoiceSet {
         I: IntoIterator<Item = Covering>,
     {
         self.0.extend(iter);
+        self.0.dedup();
         self
     }
 

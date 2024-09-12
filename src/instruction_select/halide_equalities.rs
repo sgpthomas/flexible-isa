@@ -9,11 +9,14 @@ impl HalideEqualities {
     where
         N: egg::Analysis<HalideLang>,
     {
-        let bidirectional = vec![
-            rw!("neg-eq"; "(neg (== ?a ?b))" <=> "(!= ?a ?b)"),
-            rw!("add0"; "(+ ?a 0)" <=> "?a"),
-        ];
+        let bidirectional = vec![rw!("neg-eq"; "(neg (== ?a ?b))" <=> "(!= ?a ?b)")];
 
-        bidirectional.into_iter().flatten().collect()
+        let unidirectional = vec![rw!("add0"; "(+ ?a 0)" => "?a")];
+
+        bidirectional
+            .into_iter()
+            .flatten()
+            .chain(unidirectional)
+            .collect()
     }
 }
