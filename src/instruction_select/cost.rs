@@ -138,10 +138,10 @@ impl egg::CostFunction<HalideLang> for InstructionSelect<HalideExprOp> {
                 // max_occurence - self.op_count[inst]
                 1
             }
-            HalideExprOp::Instruction(_) => 1_000_000,
+            HalideExprOp::Instruction(_) => usize::MAX,
             // prefer instructions over anything else
             _ => max_occurence * 2,
         };
-        enode.fold(op_cost, |sum, id| sum + costs(id))
+        enode.fold(op_cost, |sum, id| sum.saturating_add(costs(id)))
     }
 }
