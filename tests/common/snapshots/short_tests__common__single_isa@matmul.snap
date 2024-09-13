@@ -2,245 +2,91 @@
 source: tests/common/mod.rs
 description: generate isa for matmul
 ---
-[
-    (
-        9,
-        1,
-        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
-        15,
-        1,
-        "(+ (cast<int32> ?x0) (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?x2))))",
-    ),
-    (
-        55,
-        1,
-        "(+ (cast<unknown> (* (cast<unknown> ?x0) (cast<int32> ?x1))) (cast<int32> ?x2))",
-    ),
-    (
-        59,
-        1,
-        "(+ (cast<unknown> ?x0) (cast<int32> 32))",
-    ),
-    (
-        69,
-        1,
-        "(+ ?x0 ?x1)",
-    ),
-    (
-        70,
-        1,
-        "(- ?x0 (cast<unknown> ?x1))",
-    ),
-    (
-        74,
-        1,
-        "(* (cast<int32> (+ (cast<int32> ?x0) (cast<int32> 1))) (cast<int32> ?x1))",
-    ),
-    (
-        81,
-        1,
-        "(* (cast<int32> ?x0) (cast<int32> 512))",
-    ),
-    (
-        84,
-        1,
-        "(* (cast<int32> ?x0) ?x1)",
-    ),
-    (
-        91,
-        1,
-        "(* (cast<unknown> (+ (cast<unknown> ?x0) (cast<int32> 1))) (cast<int32> ?x1))",
-    ),
-    (
-        111,
-        1,
-        "(< ?#0 ?#1)",
-    ),
-    (
-        114,
-        1,
-        "(<= (cast<int32> ?x0) ?x1)",
-    ),
-    (
-        115,
-        1,
-        "(<= ?x0 (cast<int32> ?x1))",
-    ),
-    (
-        118,
-        1,
-        "(== (cast<int32> (call[halide_do_par_for] (\"cast<void *>\" (:: ?#7 ?x0)) (cast<int32> 0) (cast<int32> (/ (cast<int32> ?x1) (cast<int32> ?x2))) (\"cast<struct *>\" (call[make_struct] ?x3 ?x4 (cast<int32> ?#8) (cast<int32> ?x5) (cast<int32> ?x6))))) (cast<int32> 0))",
-    ),
-    (
-        119,
-        1,
-        "(== (cast<int32> (call[halide_do_par_for] (\"cast<void *>\" (:: ?#10 ?x0)) (cast<int32> 0) (cast<int32> (/ (cast<int32> ?x1) (cast<int32> ?x2))) (\"cast<struct *>\" (call[make_struct] ?x3 (\"cast<uint32 *>\" ?x4) ?x5 ?x6 ?x7 ?x8 (cast<int32> ?x9))))) (cast<int32> 0))",
-    ),
-    (
-        120,
-        1,
-        "(== ?#0 ?#1)",
-    ),
-    (
-        121,
-        1,
-        "(&& ?#0 ?#1)",
-    ),
-    (
-        127,
-        1,
-        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        133,
-        1,
-        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> (+ (cast<int32> (* (cast<int32> ?#2) (cast<int32> 4))) (cast<int32> ?x0))) (cast<int32> ?#3))) (cast<int32> (* (cast<int32> ?#4) (cast<int32> 128))))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        0,
-        2,
-        "(neg (cast<int32> ?x0))",
-    ),
-    (
-        14,
-        2,
-        "(+ (cast<int32> ?x0) (cast<int32> 2))",
-    ),
-    (
-        54,
-        2,
-        "(+ (cast<unknown> (* (cast<unknown> ?x0) (cast<int32> 4))) (cast<int32> ?x1))",
-    ),
-    (
-        86,
-        2,
-        "(* (cast<unknown> (+ (cast<unknown> (* (cast<unknown> ?#1) (cast<int32> 4))) (cast<int32> 1))) (cast<int32> ?x0))",
-    ),
-    (
-        87,
-        2,
-        "(* (cast<unknown> (+ (cast<unknown> (* (cast<unknown> ?#1) (cast<int32> 4))) (cast<int32> 2))) (cast<int32> ?x0))",
-    ),
-    (
-        88,
-        2,
-        "(* (cast<unknown> (+ (cast<unknown> (* (cast<unknown> ?#1) (cast<int32> 4))) (cast<int32> 3))) (cast<int32> ?x0))",
-    ),
-    (
-        105,
-        2,
-        "(/ (cast<unknown> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        113,
-        2,
-        "(<= (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        60,
-        3,
-        "(+ (cast<unknown> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        77,
-        3,
-        "(* (cast<int32> (/ (cast<int32> ?x0) (cast<int32> 4))) (cast<int32> 4))",
-    ),
-    (
-        79,
-        3,
-        "(* (cast<int32> ?x0) (cast<int32> 32))",
-    ),
-    (
-        95,
-        3,
-        "(* (cast<unknown> (/ (cast<unknown> ?x0) (cast<int32> ?x1))) (cast<int32> ?x1))",
-    ),
-    (
-        104,
-        3,
-        "(/ (cast<unknown> ?x0) (cast<int32> 4))",
-    ),
-    (
-        116,
-        3,
-        "(<= ?x0 ?x1)",
-    ),
-    (
-        122,
-        3,
-        "(if ?x0 (cast<bool> (<= (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#1) (cast<int32> 128))) (cast<int32> 1))) (cast<int32> 1) (cast<int32> 128))) (cast<unknownx128> (call[x128] (cast<unknown> (* (cast<unknown> (/ (cast<unknown> ?#2) (cast<int32> 128))) (cast<int32> 128))))))))",
-    ),
-    (
-        124,
-        3,
-        "(get ?x0 (cast<int32> ?x1))",
-    ),
-    (
-        21,
-        4,
-        "(+ (cast<int32x128> (call[rounding_shift_right] (cast<int32x128> (call[rounding_mul_shift_right] (cast<unknown> (+ (cast<unknown> (+ (cast<int32x128> (* (cast<int32x128> (call[int32x128] (cast<uint8x128> (get ?#6 (cast<int32x128> (call[ramp] (cast<int32> ?#7) (cast<int32> 1) (cast<int32> 128))))))) (cast<int32x128> (call[x128] (cast<int32> ?x0))))) (cast<unknown> (+ (cast<uint8x128> (get ?#8 (cast<int32x128> (call[ramp] (cast<int32> ?#9) (cast<int32> 1) (cast<int32> 128))))) (cast<int32x128> (call[int32x128] (cast<uint32x128> (get ?#10 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))))))))))) (cast<int32x128> (call[x128] (cast<int32> (+ (cast<int32> (* (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x2))) (cast<int32> ?#11))) (cast<int32> (* (cast<int32> ?x2) (cast<int32> (call[int32] (cast<uint8> (get ?#12 (cast<unknown> (+ (cast<unknown> (* (cast<unknown> (- (cast<unknown> ?#13) (cast<unknown> (call[min] (cast<unknown> (/ (cast<unknown> ?#14) (cast<int32> 4))) (cast<int32> 8))))) (cast<int32> 4))) (cast<int32> ?x3))))))))))))))) (cast<int32x128> (call[x128] (cast<int32> ?#15))) (cast<uint32x128> (call[x128] (cast<uint32> 31))))) (cast<int32x128> (call[x128] (cast<int32> ?#16))))) (cast<int32x128> (call[x128] (cast<int32> ?#17))))",
-    ),
-    (
-        24,
-        4,
-        "(+ (cast<uint32x128> (+ (cast<uint32x128> (get ?#5 (cast<int32x128> (call[ramp] (cast<int32> ?x0) (cast<int32> 1) (cast<int32> 128))))) (cast<uint32x128> (call[widening_add] (cast<uint16x128> (call[widening_mul] (cast<uint8x128> (call[slice_vectors] (cast<uint8x512> (get ?#6 (cast<int32x512> (call[ramp] (cast<int32> (* (cast<int32> ?#7) (cast<int32> 512))) (cast<int32> 1) (cast<int32> 512))))) (cast<int32> 0) (cast<int32> 4) (cast<int32> 128))) (cast<uint8x128> (call[x128] (cast<uint8> (get ?#8 (cast<unknown> ?x1))))))) (cast<uint16x128> (call[widening_mul] (cast<uint8x128> (call[slice_vectors] (cast<uint8x512> (get ?#9 (cast<int32x512> (call[ramp] (cast<int32> (* (cast<int32> ?#10) (cast<int32> 512))) (cast<int32> 1) (cast<int32> 512))))) (cast<int32> 1) (cast<int32> 4) (cast<int32> 128))) (cast<uint8x128> (call[x128] (cast<uint8> (get ?#11 (cast<unknown> (+ (cast<unknown> ?x1) (cast<int32> 1))))))))))))) (cast<uint32x128> (call[widening_add] (cast<uint16x128> (call[widening_mul] (cast<uint8x128> (call[slice_vectors] (cast<uint8x512> (get ?#12 (cast<int32x512> (call[ramp] (cast<int32> (* (cast<int32> ?#13) (cast<int32> 512))) (cast<int32> 1) (cast<int32> 512))))) (cast<int32> 2) (cast<int32> 4) (cast<int32> 128))) (cast<uint8x128> (call[x128] (cast<uint8> (get ?#14 (cast<unknown> (+ (cast<unknown> ?x1) (cast<int32> 2))))))))) (cast<uint16x128> (call[widening_mul] (cast<uint8x128> (call[slice_vectors] (cast<uint8x512> (get ?#15 (cast<int32x512> (call[ramp] (cast<int32> (* (cast<int32> ?#16) (cast<int32> 512))) (cast<int32> 1) (cast<int32> 512))))) (cast<int32> 3) (cast<int32> 4) (cast<int32> 128))) (cast<uint8x128> (call[x128] (cast<uint8> (get ?#17 (cast<unknown> (+ (cast<unknown> ?x1) (cast<int32> 3))))))))))))",
-    ),
-    (
-        96,
-        4,
-        "(* (cast<unknown> ?x0) (cast<int32> 4))",
-    ),
-    (
-        123,
-        4,
-        "(:: ?#1 ?x0)",
-    ),
-    (
-        13,
-        5,
-        "(+ (cast<int32> ?x0) (cast<int32> 1))",
-    ),
-    (
-        18,
-        5,
-        "(+ (cast<int32> ?x0) (cast<unknown> ?x1))",
-    ),
-    (
-        126,
-        5,
-        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?x2))) (cast<int32> (* (cast<int32> ?x3) (cast<int32> 128))))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        16,
-        6,
-        "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        103,
-        6,
-        "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        125,
-        6,
-        "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> 0) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        80,
-        7,
-        "(* (cast<int32> ?x0) (cast<int32> 128))",
-    ),
-    (
-        78,
-        8,
-        "(* (cast<int32> ?x0) (cast<int32> 4))",
-    ),
-    (
-        102,
-        10,
-        "(/ (cast<int32> ?x0) (cast<int32> 4))",
-    ),
-]
+(
+    MinimalIsa {
+      0: (neg (cast<int32> ?x0))
+      68: (+ ?x0 ?x1)
+      70: (- ?x0 (cast<unknown> ?x1))
+      100: (* ?x0 ?x1)
+      107: (/ ?x0 (cast<int32> ?x1))
+      112: (<= ?x0 ?x1)
+      116: (== (cast<int32> ?#0) (cast<int32> ?#1))
+      117: (&& (cast<bool> ?#0) (cast<bool> ?#1))
+      118: (:: ?#0 ?#1)
+      123: (get
+             ?x0
+             (cast<int32x128>
+               (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128)))
+             (cast<bool>
+               (<=
+                 (cast<int32x128>
+                   (call[ramp]
+                     (cast<int32>
+                       (+ (cast<int32> (* (cast<int32> ?#2) (cast<int32> 128))) (cast<int32> 1)))
+                     (cast<int32> 1)
+                     (cast<int32> 128)))
+                 (cast<unknownx128>
+                   (call[x128]
+                     (cast<unknown>
+                       (* (cast<unknown> (/ (cast<unknown> ?#3) (cast<int32> 128))) (cast<int32> 128))))))))
+      128: (get ?x0 ?x1)
+    }
+    ,
+    [
+        (
+            i117,
+            1,
+            "(&& (cast<bool> ?#0) (cast<bool> ?#1))",
+        ),
+        (
+            i0,
+            2,
+            "(neg (cast<int32> ?x0))",
+        ),
+        (
+            i116,
+            3,
+            "(== (cast<int32> ?#0) (cast<int32> ?#1))",
+        ),
+        (
+            i123,
+            3,
+            "(get ?x0 (cast<int32x128> (call[ramp] (cast<int32> ?x1) (cast<int32> 1) (cast<int32> 128))) (cast<bool> (<= (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?#2) (cast<int32> 128))) (cast<int32> 1))) (cast<int32> 1) (cast<int32> 128))) (cast<unknownx128> (call[x128] (cast<unknown> (* (cast<unknown> (/ (cast<unknown> ?#3) (cast<int32> 128))) (cast<int32> 128))))))))",
+        ),
+        (
+            i70,
+            5,
+            "(- ?x0 (cast<unknown> ?x1))",
+        ),
+        (
+            i118,
+            6,
+            "(:: ?#0 ?#1)",
+        ),
+        (
+            i112,
+            7,
+            "(<= ?x0 ?x1)",
+        ),
+        (
+            i107,
+            33,
+            "(/ ?x0 (cast<int32> ?x1))",
+        ),
+        (
+            i128,
+            65,
+            "(get ?x0 ?x1)",
+        ),
+        (
+            i68,
+            108,
+            "(+ ?x0 ?x1)",
+        ),
+        (
+            i100,
+            131,
+            "(* ?x0 ?x1)",
+        ),
+    ],
+)

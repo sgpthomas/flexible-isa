@@ -143,6 +143,21 @@ impl Args {
         self.no_inline = no_inline;
         self
     }
+
+    pub fn minimal_isa_algo(mut self, algo: MinimalIsaAlgo) -> Self {
+        self.minimal_isa_algo = algo;
+        self
+    }
+
+    pub fn prune(mut self, prune: PruneType) -> Self {
+        self.prune = Some(prune);
+        self
+    }
+
+    pub fn disable_typechecker(mut self, val: bool) -> Self {
+        self.disable_typechecker = val;
+        self
+    }
 }
 
 #[derive(Debug, derive_more::FromStr)]
@@ -153,6 +168,9 @@ pub enum OutputType {
     Rewritten,
     Instrs,
     Miner,
+    Dot,
+    Pdf,
+    MinimalIsa,
 }
 
 #[derive(Debug, derive_more::FromStr)]
@@ -186,6 +204,20 @@ impl Args {
 
     pub fn output_miner(&self) -> bool {
         self.output.iter().any(|x| matches!(x, OutputType::Miner))
+    }
+
+    pub fn output_dot(&self) -> bool {
+        self.output.iter().any(|x| matches!(x, OutputType::Dot))
+    }
+
+    pub fn output_pdf(&self) -> bool {
+        self.output.iter().any(|x| matches!(x, OutputType::Pdf))
+    }
+
+    pub fn output_minimal_isa(&self) -> bool {
+        self.output
+            .iter()
+            .any(|x| matches!(x, OutputType::MinimalIsa))
     }
 }
 

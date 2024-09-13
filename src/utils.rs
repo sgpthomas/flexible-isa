@@ -1,11 +1,13 @@
+#[cfg(feature = "pb")]
+use std::time::Duration;
 use std::{
     ffi::OsStr,
     fmt::{self, Formatter},
     io::Write,
     path::Path,
-    time::Duration,
 };
 
+#[cfg(feature = "pb")]
 use closure::closure;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
@@ -241,6 +243,7 @@ pub fn progress_style() -> ProgressStyle {
         .progress_chars("#*-")
 }
 
+#[cfg(feature = "pb")]
 pub fn progress_bar<N: TryInto<u64>>(len: N) -> ProgressBar
 where
     <N as TryInto<u64>>::Error: std::fmt::Debug,
@@ -248,6 +251,15 @@ where
     ProgressBar::new(len.try_into().unwrap()).with_style(progress_style())
 }
 
+#[cfg(not(feature = "pb"))]
+pub fn progress_bar<N: TryInto<u64>>(_len: N) -> ProgressBar
+where
+    <N as TryInto<u64>>::Error: std::fmt::Debug,
+{
+    ProgressBar::hidden()
+}
+
+#[cfg(feature = "pb")]
 pub fn pb_runner<'a, L, N, D, I, S>(
     runner: egg::Runner<L, N, D>,
     msg: S,
@@ -294,10 +306,28 @@ where
     runner
 }
 
-pub fn wrap_spinner<F, O, S>(msg: S, f: F) -> O
+#[cfg(not(feature = "pb"))]
+pub fn pb_runner<'a, L, N, D, I, S>(
+    runner: egg::Runner<L, N, D>,
+    _msg: S,
+    rewrites: I,
+) -> egg::Runner<L, N, D>
 where
-    F: Fn() -> O,
+    L: egg::Language + 'a,
+    N: egg::Analysis<L> + 'a,
+    D: egg::IterationData<L, N>,
+    I: IntoIterator<Item = &'a egg::Rewrite<L, N>>,
+    S: std::fmt::Display + Clone + 'static,
+{
+    runner.run(rewrites)
+}
+
+#[cfg(feature = "pb")]
+#[bon::builder(finish_fn = "start")]
+pub fn wrap_spinner<F, O, S>(msg: S, action: F) -> O
+where
     S: std::fmt::Display,
+    F: FnOnce() -> O,
 {
     let spinner = ProgressBar::new_spinner()
         .with_message(format!("{msg}"))
@@ -307,11 +337,23 @@ where
                 .tick_chars(".oO@*✓"),
         );
     spinner.enable_steady_tick(Duration::from_millis(100));
-    let o = f();
+    let o = action();
     spinner.finish_with_message(format!("{msg}"));
     o
 }
 
+#[cfg(not(feature = "pb"))]
+#[bon::builder(finish_fn = "start")]
+#[allow(unused_variables)]
+pub fn wrap_spinner<F, O, S>(msg: S, action: F) -> O
+where
+    F: FnOnce() -> O,
+    S: std::fmt::Display,
+{
+    action()
+}
+
+#[cfg(feature = "pb")]
 fn runner_stats_msg<L, N, D>(runner: &egg::Runner<L, N, D>) -> String
 where
     L: egg::Language,

@@ -19,7 +19,13 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - uses: Swatinem/rust-cache@v2
-    - name: Test
+    - name: Integration Tests
       env:
         CI: true
-      run: cargo test --test short_tests
+      run: cargo test --no-default-features --test short_tests
+
+    - uses: Swatinem/rust-cache@v2
+    - name: Unit Tests
+      env:
+        CI: true
+      run: cargo test --no-default-features --lib

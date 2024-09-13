@@ -1,3 +1,4 @@
+use crate::utils::IntoNamedDot;
 use anyhow::{anyhow, Context};
 #[doc(hidden)]
 #[allow(clippy::single_component_path_imports)]
@@ -8,9 +9,11 @@ use halide_ir::{
     HalideGeneratorParser, Inline, InsertCasts, LiftExpressions, MineExpressions, NumberNodes,
     Printer, RemoveCasts, Rewrite, StmtParser, TypeAnnotator, UniqueIdents, Visitor,
 };
-pub use instruction_select::{HalideExprOp, HalideLang, InstructionSelect, Instructions};
+pub use instruction_select::{
+    HalideExprOp, HalideLang, InstructionSelect, Instructions, MinimalIsaDump,
+};
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub mod cli;
 mod halide_ir;
@@ -20,7 +23,7 @@ pub mod utils;
 #[derive(Default, Debug)]
 pub struct Isa {
     pub expressions: egg::RecExpr<HalideLang>,
-    // XXX: this doesn't need to be a hashmap
+    pub minimal_isa: HashSet<Instr>,
     pub instructions: HashMap<Instr, egg::Pattern<HalideLang>>,
 }
 
@@ -117,7 +120,35 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
         ));
     };
 
-    let prog = instr_sel.apply(args.limit, &args);
+    let root = instr_sel.apply();
+
+    if args.output_dot() {
+        instr_sel.egraph.named_dot().to_dot("simple.dot")?;
+    }
+
+    if args.output_pdf() {
+        instr_sel.egraph.named_dot().to_pdf("simple.pdf")?;
+    }
+
+    let minimal_isa = instr_sel.minimal_isa(&args);
+    if args.output_minimal_isa() {
+        println!(
+            "Result: {:#?}",
+            minimal_isa.dump(&instr_sel.instructions().collect())
+        );
+    }
+
+    // extract a program using the minimal isa
+    let cost = InstructionSelect::new(&instr_sel.egraph).with_filter(|(op, _)| {
+        if let HalideExprOp::Instruction(i) = op {
+            minimal_isa.isa().contains(i)
+        } else {
+            false
+        }
+    });
+    let extractor = egg::Extractor::new(&instr_sel.egraph, cost);
+    let (cost, prog) = extractor.find_best(root);
+    println!("Cost: {cost}");
 
     if args.output_raw() {
         println!("== Raw Egg Program (before mapping back to Halide) ==");
@@ -138,9 +169,9 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
             }
         });
 
-    // print out a histogram of the instructions that were actually used
     Ok(Isa {
         expressions: prog,
+        minimal_isa: minimal_isa.isa().clone(),
         instructions: instr_sel.instructions().collect(),
     })
 }

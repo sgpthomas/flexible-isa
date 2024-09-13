@@ -181,9 +181,18 @@ impl Covering {
 }
 
 /// Each element represents a possible choice to cover some sub-tree.
-#[derive(derive_more::Debug, Clone, PartialEq, Eq, Default)]
+#[derive(derive_more::Debug, Clone, Default)]
 #[debug("{_0:?}")]
 pub struct ChoiceSet(Vec<Covering>);
+
+impl PartialEq for ChoiceSet {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.iter().all(|cov| other.0.contains(cov))
+            && other.0.iter().all(|cov| self.0.contains(cov))
+    }
+}
+
+impl Eq for ChoiceSet {}
 
 impl ChoiceSet {
     pub fn cross_product(self, other: &Self) -> Self {

@@ -150,12 +150,13 @@ impl HalideExprOp {
             (HalideExprOp::Neq, vec![Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Gte, vec![Some(Signed(32)), Some(Signed(32))]),
             (HalideExprOp::Gt, vec![Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::And, vec![Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Or, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::And, vec![Some(Bool), Some(Bool)]),
+            (HalideExprOp::Or, vec![Some(Bool), Some(Bool)]),
             (HalideExprOp::Access, vec![None, None]),
             (HalideExprOp::Access, vec![None, None, None]),
             (HalideExprOp::Access, vec![None, None, None, None]),
             (HalideExprOp::Access, vec![None, None, None, None, None]),
+            (HalideExprOp::StructMember, vec![None, None]),
         ]
         .into_iter()
     }

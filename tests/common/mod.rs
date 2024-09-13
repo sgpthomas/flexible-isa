@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use flexible_isa::{cli, run, HalideExprOp, InstructionSelect};
+use flexible_isa::{
+    cli::{self, MinimalIsaAlgo, PruneType},
+    run, HalideExprOp, InstructionSelect, MinimalIsaDump,
+};
 use itertools::Itertools;
 
 const BENCHMARKS_PATH: &str = "cache";
@@ -37,7 +40,10 @@ pub fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> 
     let mut path = PathBuf::from(BENCHMARKS_PATH).join(&name);
     path.set_extension("stmt");
 
-    let args: cli::Args = cli::Args::new(&[path]).learn(true);
+    let args: cli::Args = cli::Args::new(&[path])
+        .learn(true)
+        .minimal_isa_algo(MinimalIsaAlgo::BruteForce)
+        .prune(PruneType::Pairwise);
     let isa = run(args)?;
 
     let instr_hist = InstructionSelect::from_recexpr(&isa.expressions);
@@ -55,12 +61,17 @@ pub fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> 
         .map(|(i, count)| (i, count, isa.instructions[i].to_string()))
         .collect();
 
+    let minimal_isa_dump = MinimalIsaDump {
+        isa: &isa.minimal_isa,
+        instructions: &isa.instructions,
+    };
+
     insta::with_settings!({
         description => format!("generate isa for {name}"),
         omit_expression => true,
         snapshot_suffix => format!("{name}")
     }, {
-        insta::assert_debug_snapshot!(hist)
+        insta::assert_debug_snapshot!((minimal_isa_dump, hist))
     });
 
     Ok(())

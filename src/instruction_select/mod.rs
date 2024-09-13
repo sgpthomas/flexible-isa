@@ -9,7 +9,7 @@ mod typestate;
 pub use cost::InstructionSelect;
 pub use extract::brute_force::BruteForceIsa;
 pub use extract::efficient_minimal_isa::EfficientIsa;
-pub use extract::minimal_isa::{IntoMinimalIsa, MinimalIsa};
+pub use extract::minimal_isa::{IntoMinimalIsa, MinimalIsa, MinimalIsaDump};
 pub use extract::prune::{Experimental, PairwisePrune, StrictOrdering};
 pub use halide_equalities::HalideEqualities;
 pub use lang::{BabbleOp, HalideExprOp, HalideLang};

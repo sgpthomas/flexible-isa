@@ -17,14 +17,14 @@ use crate::{
 };
 
 use super::{
-    cost::InstructionSelect, extract::minimal_isa::IntoMinimalIsa, lang::HalideExprOp, HalideLang,
-    Init, InstructionState, Learned,
+    extract::minimal_isa::IntoMinimalIsa, lang::HalideExprOp, HalideLang, Init, InstructionState,
+    Learned,
 };
 
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
 
 pub struct Instructions<S: InstructionState> {
-    pub(super) egraph: egg::EGraph<babble::AstNode<HalideExprOp>, ()>,
+    pub egraph: egg::EGraph<babble::AstNode<HalideExprOp>, ()>,
     pub(super) roots: Vec<egg::Id>,
     pub(super) state: S,
 }
@@ -84,16 +84,19 @@ impl Instructions<Init> {
         // we need to rebuild the e-graph before learning a library
         self.egraph.rebuild();
 
-        let mut learned_library = utils::wrap_spinner("Building library", || {
-            babble::LearnedLibraryBuilder::default()
-                .learn_trivial(true)
-                .ban_op(HalideExprOp::Cast(vec![]))
-                .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
-                .ban_op(HalideExprOp::Named(0))
-                .with_roots(self.roots.clone())
-                .with_dfta(false)
-                .build(&self.egraph)
-        });
+        let mut learned_library = utils::wrap_spinner()
+            .msg("Building library")
+            .action(|| {
+                babble::LearnedLibraryBuilder::default()
+                    .learn_trivial(true)
+                    .ban_op(HalideExprOp::Cast(vec![]))
+                    .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
+                    .ban_op(HalideExprOp::Named(0))
+                    .with_roots(self.roots.clone())
+                    .with_dfta(false)
+                    .build(&self.egraph)
+            })
+            .start();
 
         // I want to rewrite all instructions that contain concrete variables into
         // instructions that use pattern vars
@@ -107,9 +110,14 @@ impl Instructions<Init> {
         // finds patterns that can apply in the same places, and only keeps the smaller
         // pattern. I think that this only matters when we are using rewrite rules. Haven't
         // quite gotten there yet.
-        println!("Deduplicating {} patterns...", learned_library.size());
-        learned_library.deduplicate(&self.egraph);
-        println!("Reduced to {} patterns", learned_library.size());
+
+        utils::wrap_spinner()
+            .msg(format!("Deduplicating {} patterns", learned_library.size()))
+            .action(|| {
+                learned_library.deduplicate(&self.egraph);
+            })
+            .start();
+        println!("\nReduced to {} patterns", learned_library.size());
 
         let Self {
             egraph,
@@ -156,16 +164,8 @@ impl Instructions<Init> {
 }
 
 impl Instructions<Learned> {
-    /// Apply the set of learned rewrite rules to the egraph that we have, and extract a
-    /// program preferring instructions that are used more frequently.
-    pub fn apply<'a, I>(
-        &'a mut self,
-        limit: Option<usize>,
-        isa: I,
-    ) -> egg::RecExpr<babble::AstNode<HalideExprOp>>
-    where
-        I: IntoMinimalIsa<'a>,
-    {
+    /// Apply the set of learned rewrite rules to the egraph that we have
+    pub fn apply(&mut self) -> egg::Id {
         println!("Performing instruction selection...");
         // extract the best program
         let mut egraph = mem::take(&mut self.egraph);
@@ -174,7 +174,7 @@ impl Instructions<Learned> {
             self.roots.clone(),
         ));
 
-        // TODO: run some equalities over the graph, to make some instructions unnecessary
+        // run some equalities over the graph, to make some instructions unnecessary
         let runner = utils::pb_runner(
             egg::Runner::default()
                 .with_egraph(egraph)
@@ -198,29 +198,16 @@ impl Instructions<Learned> {
         // put the egraph back
         self.egraph = runner.egraph;
 
-        self.egraph.named_dot().to_dot("simple.dot").unwrap();
+        root
+    }
 
+    pub fn minimal_isa<'a, I>(&'a self, isa: I) -> Box<dyn MinimalIsa<'a> + 'a>
+    where
+        I: IntoMinimalIsa<'a>,
+    {
         let mut minimal_isa = isa.make(self);
         minimal_isa.minimize();
-        println!(
-            "Result: {:#?}",
-            minimal_isa.dump(&self.instructions().collect())
-        );
-
-        let cost = InstructionSelect::new(&self.egraph)
-            .with_filter(|(op, _)| {
-                if let HalideExprOp::Instruction(i) = op {
-                    minimal_isa.isa().contains(i)
-                } else {
-                    false
-                }
-            })
-            .with_limit(limit);
-        let extractor = egg::Extractor::new(&self.egraph, cost);
-        let (cost, best) = extractor.find_best(root);
-        println!("cost: {cost}");
-
-        best
+        minimal_isa
     }
 
     pub fn rewrites(&self) -> impl Iterator<Item = egg::Rewrite<HalideLang, ()>> + '_ {

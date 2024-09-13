@@ -2,170 +2,70 @@
 source: tests/common/mod.rs
 description: generate isa for softmax
 ---
-[
-    (
-        24,
-        1,
-        "(+ (cast<int32> (* (cast<int32> ?#3) (cast<int32> 128))) (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> (+ (cast<int32> ?#4) (cast<int32> ?#5))))) (cast<int32> (- (cast<int32> ?x1) (cast<int32> ?x2))))))",
-    ),
-    (
-        30,
-        1,
-        "(- (cast<int16> ?x0) (cast<int16> ?x1))",
-    ),
-    (
-        43,
-        1,
-        "(- (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        55,
-        1,
-        "(* (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        71,
-        1,
-        "(get ?#2 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> ?x1))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        3,
-        2,
-        "(+ (cast<int16> (call[rounding_mul_shift_right] (cast<int16> 7363) (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x0) (cast<int16> ?x0) (cast<uint16> 15))) (cast<uint16> 15))) (cast<int16> (+ (cast<int16> (call[rounding_mul_shift_right] (cast<int16> 22812) (cast<int16> ?x0) (cast<uint16> 15))) (cast<int16> (call[rounding_mul_shift_right] (cast<int16> 2592) (cast<int16> (call[rounding_mul_shift_right] (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x0) (cast<int16> ?x0) (cast<uint16> 15))) (cast<int16> ?x0) (cast<uint16> 15))) (cast<uint16> 15))))))",
-    ),
-    (
-        33,
-        2,
-        "(- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> (get ?#2 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> ?x1))) (cast<int32> 1) (cast<int32> 128))))))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#3 (cast<int32> 0))))) (cast<int16> 64))))))",
-    ),
-    (
-        60,
-        2,
-        "(\"%\" (cast<int32> ?x0) (cast<int32> 128))",
-    ),
-    (
-        10,
-        3,
-        "(+ (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (call[x128] (cast<int16> 7363))) (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (call[shift_left] (cast<int16x128> (- (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#12 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#13))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#14 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#15))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#16))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#17))))))) (cast<int16x128> (call[x128] (cast<int16> (- (cast<int32> 15) (cast<int16> (call[int16] (cast<uint16> ?#18))))))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (- (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#19 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#20))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#21 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#22))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#23))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#24))))))) (cast<int16x128> (call[x128] (cast<int16> (- (cast<int32> 15) (cast<int16> (call[int16] (cast<uint16> ?#25))))))))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (+ (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (call[x128] (cast<int16> 22812))) (cast<int16x128> (call[shift_left] (cast<int16x128> (- (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#26 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#27))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#28 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#29))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#30))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#31))))))) (cast<int16x128> (call[x128] (cast<int16> (- (cast<int32> 15) (cast<int16> (call[int16] (cast<uint16> ?#32))))))))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (call[x128] (cast<int16> 2592))) (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (call[shift_left] (cast<int16x128> (- (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#33 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#34))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#35 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#36))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#37))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#38))))))) (cast<int16x128> (call[x128] (cast<int16> (- (cast<int32> 15) (cast<int16> (call[int16] (cast<uint16> ?#39))))))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (- (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#40 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#41))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#42 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#43))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#44))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#45))))))) (cast<int16x128> (call[x128] (cast<int16> (- (cast<int32> 15) (cast<int16> (call[int16] (cast<uint16> ?#46))))))))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (- (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#47 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#48))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<int16x128> (call[shift_left] (cast<int16x128> (call[shift_right] (cast<int16x128> (call[rounding_mul_shift_right] (cast<int16x128> (- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#49 (cast<int32> 0))))) (cast<int16> 64))))))) (cast<int16x128> (call[x128] (cast<int16> ?#50))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#51))))) (cast<uint16x128> (call[x128] (cast<uint16> ?#52))))))) (cast<int16x128> (call[x128] (cast<int16> (- (cast<int32> 15) (cast<int16> (call[int16] (cast<uint16> ?#53))))))))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))) (cast<uint16x128> (call[x128] (cast<uint16> 15))))))))",
-    ),
-    (
-        19,
-        3,
-        "(+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> (- (cast<int32> (- (cast<int32> ?x2) (cast<int32> (* (cast<int32> ?#3) (cast<int32> ?#4))))) (cast<int32> ?#5))))",
-    ),
-    (
-        42,
-        3,
-        "(- (cast<int32> ?x0) (cast<int32> (* (cast<int32> ?x1) (cast<int32> ?x2))))",
-    ),
-    (
-        57,
-        3,
-        "(/ (cast<int32> ?x0) (cast<int32> 128))",
-    ),
-    (
-        58,
-        3,
-        "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-    (
-        64,
-        3,
-        "(!= (cast<int32> (\"%\" (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 0))",
-    ),
-    (
-        73,
-        3,
-        "(get ?#4 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> ?x1))) (cast<int32> (- (cast<int32> ?x2) (cast<int32> ?x3))))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        5,
-        4,
-        "(+ (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x0) (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x1) (cast<int16> ?x1) (cast<uint16> 15))) (cast<uint16> 15))) (cast<int16> (+ (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x2) (cast<int16> ?x1) (cast<uint16> 15))) (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x3) (cast<int16> (call[rounding_mul_shift_right] (cast<int16> (call[rounding_mul_shift_right] (cast<int16> ?x1) (cast<int16> ?x1) (cast<uint16> 15))) (cast<int16> ?x1) (cast<uint16> 15))) (cast<uint16> 15))))))",
-    ),
-    (
-        34,
-        4,
-        "(- (cast<int16x128> (call[shift_left] (cast<int16x128> (call[int16x128] (cast<uint8x128> ?x0))) (cast<uint16x128> (call[x128] (cast<uint16> 6))))) (cast<int16x128> (call[x128] (cast<int16> (* (cast<int16> (call[int16] (cast<uint8> (get ?#1 (cast<int32> 0))))) (cast<int16> 64))))))",
-    ),
-    (
-        36,
-        4,
-        "(- (cast<int32> 0) (cast<int32> ?x0))",
-    ),
-    (
-        45,
-        4,
-        "(- ?x0 (cast<int16> (call[int16] ?x1)))",
-    ),
-    (
-        48,
-        4,
-        "(* (cast<int16> ?x0) (cast<int16> 64))",
-    ),
-    (
-        52,
-        4,
-        "(* (cast<int32> (call[int32] (cast<int16> ?x0))) (cast<int32> ?x1))",
-    ),
-    (
-        63,
-        4,
-        "(<= ?#0 ?#1)",
-    ),
-    (
-        70,
-        4,
-        "(get ?#1 (cast<int32x128> (call[ramp] (cast<int32> (+ (cast<int32> (* (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> (- (cast<int32> (* (cast<int32> (+ (cast<int32> ?#2) (cast<int32> ?#3))) (cast<int32> ?#4))) (cast<int32> (* (cast<int32> ?#5) (cast<int32> ?#6))))))) (cast<int32> 1) (cast<int32> 128))))",
-    ),
-    (
-        41,
-        5,
-        "(- (cast<int32> ?x0) (cast<int16> (call[int16] ?x1)))",
-    ),
-    (
-        51,
-        5,
-        "(* (cast<int32> (call[int32] (cast<int16> ?x0))) (cast<int32> 32768))",
-    ),
-    (
-        67,
-        5,
-        "(get ?x0 (cast<int32> ?x1))",
-    ),
-    (
-        2,
-        6,
-        "(+ (cast<int16> (call[int16] (cast<int32> ?x0))) (cast<int16> ?x1))",
-    ),
-    (
-        8,
-        6,
-        "(+ (cast<int16> ?x0) (cast<int16> ?x1))",
-    ),
-    (
-        15,
-        6,
-        "(+ (cast<int32> (* (cast<int32> (+ (cast<int32> ?#4) (cast<int32> ?#5))) (cast<int32> ?x0))) (cast<int32> (- (cast<int32> (* (cast<int32> (/ (cast<int32> ?x1) (cast<int32> 128))) (cast<int32> 128))) (cast<int32> (* (cast<int32> ?x2) (cast<int32> ?x0))))))",
-    ),
-    (
-        50,
-        7,
-        "(* (cast<int32> (/ (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 128))",
-    ),
-    (
-        0,
-        8,
-        "(neg (cast<int32> ?x0))",
-    ),
-    (
-        66,
-        22,
-        "(get ?x0 (cast<int32> 0))",
-    ),
-    (
-        28,
-        28,
-        "(+ (cast<int32> ?x0) (cast<int32> ?x1))",
-    ),
-]
+(
+    MinimalIsa {
+      0: (neg (cast<int32> ?x0))
+      30: (+ ?x0 ?x1)
+      50: (- ?x0 ?x1)
+      59: (* ?x0 ?x1)
+      61: (/ (cast<int32> ?x0) (cast<int32> ?x1))
+      62: (% (cast<int32> ?x0) (cast<int32> 128))
+      64: (<= ?#0 ?#1)
+      65: (!= (cast<int32> (% (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 0))
+      70: (get ?x0 ?x1)
+      71: (get ?#0 ?#1 ?#2)
+    }
+    ,
+    [
+        (
+            i62,
+            2,
+            "(\"%\" (cast<int32> ?x0) (cast<int32> 128))",
+        ),
+        (
+            i65,
+            3,
+            "(!= (cast<int32> (\"%\" (cast<int32> ?x0) (cast<int32> 128))) (cast<int32> 0))",
+        ),
+        (
+            i71,
+            14,
+            "(get ?#0 ?#1 ?#2)",
+        ),
+        (
+            i64,
+            15,
+            "(<= ?#0 ?#1)",
+        ),
+        (
+            i61,
+            56,
+            "(/ (cast<int32> ?x0) (cast<int32> ?x1))",
+        ),
+        (
+            i0,
+            98,
+            "(neg (cast<int32> ?x0))",
+        ),
+        (
+            i50,
+            226,
+            "(- ?x0 ?x1)",
+        ),
+        (
+            i59,
+            285,
+            "(* ?x0 ?x1)",
+        ),
+        (
+            i70,
+            288,
+            "(get ?x0 ?x1)",
+        ),
+        (
+            i30,
+            351,
+            "(+ ?x0 ?x1)",
+        ),
+    ],
+)
