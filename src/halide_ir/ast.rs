@@ -198,8 +198,6 @@ pub enum Expr<T = ()> {
     ArithBinop(ArithBinop, Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
     CompBinop(CompBinop, Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
 
-    // Not sure what the semantics of this are
-    If(Box<Expr<T>>, Box<Expr<T>>, #[deftly(data)] T),
     StructMember(Id, Id, #[deftly(data)] T),
 
     // function calls
@@ -305,7 +303,6 @@ where
             Expr::Unop(_, _, _)
             | Expr::ArithBinop(_, _, _, _)
             | Expr::CompBinop(_, _, _, _)
-            | Expr::If(_, _, _)
             | Expr::StructMember(_, _, _)
             | Expr::FunCall(_, _, _)
             | Expr::Reinterpret(_, _, _)
@@ -324,7 +321,6 @@ where
             Expr::ArithBinop(_, lhs, rhs, _) | Expr::CompBinop(_, lhs, rhs, _) => {
                 lhs.has_children() || rhs.has_children()
             }
-            Expr::If(expr, cond, _) => expr.has_children() || cond.has_children(),
             Expr::StructMember(_, _, _) => false,
             Expr::FunCall(_, args, _) => args.iter().any(Expr::has_children),
             Expr::Reinterpret(_, args, _) => args.iter().any(Expr::has_children),
@@ -335,9 +331,16 @@ where
                     var: _,
                     idx,
                     align: _,
+                    predicate,
                 },
                 _,
-            ) => idx.has_children(),
+            ) => {
+                idx.has_children()
+                    || predicate
+                        .as_ref()
+                        .map(|p| p.has_children())
+                        .unwrap_or(false)
+            }
             Expr::Instruction {
                 num: _,
                 args,
@@ -353,6 +356,7 @@ pub struct Access<T = ()> {
     pub var: Id,
     pub idx: Box<Expr<T>>,
     pub align: Option<(u64, u64)>,
+    pub predicate: Option<Box<Expr<T>>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

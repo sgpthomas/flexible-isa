@@ -51,7 +51,6 @@ pub enum HalideExprOp {
     Or,
 
     // other operators
-    If,
     StructMember,
 
     // function calls
@@ -132,41 +131,44 @@ impl HalideExprOp {
     }
 
     /// Operations that we need to have instructions for.
-    pub fn essential_unops() -> impl Iterator<Item = (Self, [Option<HalideType>; 1])> {
-        use HalideType::*;
-        [(HalideExprOp::Neg, [Some(Signed(32))])].into_iter()
-    }
-
-    pub fn essential_binops() -> impl Iterator<Item = (Self, [Option<HalideType>; 2])> {
+    pub fn essential_ops() -> impl Iterator<Item = (Self, Vec<Option<HalideType>>)> {
         use HalideType::*;
         [
-            (HalideExprOp::Add, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Sub, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Mul, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Div, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Modulo, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Lt, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Lte, [None, None]),
-            (HalideExprOp::Eq, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Neq, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Gte, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Gt, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::And, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::Or, [Some(Signed(32)), Some(Signed(32))]),
-            (HalideExprOp::If, [None, None]),
+            (HalideExprOp::Neg, vec![Some(Signed(32))]),
+            (HalideExprOp::Add, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Sub, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Mul, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Mul, vec![None, None]),
+            (HalideExprOp::Div, vec![Some(Signed(32)), Some(Signed(32))]),
+            (
+                HalideExprOp::Modulo,
+                vec![Some(Signed(32)), Some(Signed(32))],
+            ),
+            (HalideExprOp::Lt, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Lte, vec![None, None]),
+            (HalideExprOp::Eq, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Neq, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Gte, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Gt, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::And, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Or, vec![Some(Signed(32)), Some(Signed(32))]),
+            (HalideExprOp::Access, vec![None, None]),
+            (HalideExprOp::Access, vec![None, None, None]),
+            (HalideExprOp::Access, vec![None, None, None, None]),
+            (HalideExprOp::Access, vec![None, None, None, None, None]),
         ]
         .into_iter()
     }
 
     /// Produce a partial expression of `arity` for `self` of the form:
     ///   `(op ?0 .. ?arity)`
-    pub fn partial_expr<const N: usize>(
+    pub fn partial_expr<T: AsRef<[Option<HalideType>]>>(
         self,
-        types: [Option<HalideType>; N],
+        types: T,
     ) -> PartialExpr<Self, egg::Var> {
         PartialExpr::Node(babble::AstNode::new(
             self,
-            types.iter().enumerate().map(|(i, typ)| {
+            types.as_ref().iter().enumerate().map(|(i, typ)| {
                 if let Some(typ) = typ {
                     PartialExpr::Node(babble::AstNode::new(
                         HalideExprOp::Cast(vec![typ.to_id()]),
@@ -211,7 +213,6 @@ impl FromStr for HalideExprOp {
             "||" => Self::Or,
 
             // other operators
-            "if" => Self::If,
             "::" => Self::StructMember,
 
             // array access
@@ -275,7 +276,6 @@ impl Display for HalideExprOp {
             HalideExprOp::Gt => f.write_str(">"),
             HalideExprOp::And => f.write_str("&&"),
             HalideExprOp::Or => f.write_str("||"),
-            HalideExprOp::If => f.write_str("if"),
             HalideExprOp::StructMember => f.write_str("::"),
             HalideExprOp::FunCall(ast::Id { name }) => write!(f, "call[{name}]"),
             HalideExprOp::Reinterpret(ids) => {
@@ -347,7 +347,6 @@ impl babble::Arity for HalideExprOp {
             | HalideExprOp::Gt
             | HalideExprOp::And
             | HalideExprOp::Or
-            | HalideExprOp::If
             | HalideExprOp::StructMember => 2,
             HalideExprOp::FunCall(_) => 1,
             HalideExprOp::Reinterpret(_) => 1,
@@ -366,6 +365,7 @@ impl babble::Arity for HalideExprOp {
             | HalideExprOp::Reinterpret(_)
             | HalideExprOp::Instruction(_) => None,
             HalideExprOp::Babble(b) => b.max_arity(),
+            HalideExprOp::Access => Some(5),
             _ => Some(self.min_arity()),
         }
     }

@@ -82,6 +82,7 @@ impl<T> Visitor<T> for UniqueIdents {
                 var: access.var.with_prefix(&self.prefix()),
                 idx: access.idx,
                 align: access.align,
+                predicate: access.predicate,
             },
             data,
         )

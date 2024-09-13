@@ -102,9 +102,7 @@ impl Instructions<Init> {
         // add an anti-unification for operations that we definitely
         // want to have instructions for
         learned_library
-            .extend(HalideExprOp::essential_unops().map(|(op, typs)| op.partial_expr(typs)));
-        learned_library
-            .extend(HalideExprOp::essential_binops().map(|(op, typs)| op.partial_expr(typs)));
+            .extend(HalideExprOp::essential_ops().map(|(op, typs)| op.partial_expr(typs)));
 
         // finds patterns that can apply in the same places, and only keeps the smaller
         // pattern. I think that this only matters when we are using rewrite rules. Haven't
@@ -200,7 +198,7 @@ impl Instructions<Learned> {
         // put the egraph back
         self.egraph = runner.egraph;
 
-        // self.egraph.named_dot().to_dot("simple.dot").unwrap();
+        self.egraph.named_dot().to_dot("simple.dot").unwrap();
 
         let mut minimal_isa = isa.make(self);
         minimal_isa.minimize();

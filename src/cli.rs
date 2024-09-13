@@ -152,6 +152,7 @@ pub enum OutputType {
     Raw,
     Rewritten,
     Instrs,
+    Miner,
 }
 
 #[derive(Debug, derive_more::FromStr)]
@@ -181,6 +182,10 @@ impl Args {
 
     pub fn output_instrs(&self) -> bool {
         self.output.iter().any(|x| matches!(x, OutputType::Instrs))
+    }
+
+    pub fn output_miner(&self) -> bool {
+        self.output.iter().any(|x| matches!(x, OutputType::Miner))
     }
 }
 

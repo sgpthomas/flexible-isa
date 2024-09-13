@@ -425,12 +425,6 @@ impl<T> Printer for ast::Expr<T> {
                     .group()
                     .enclose("(", ")")
             }
-            ast::Expr::If(lhs, rhs, _) => lhs
-                .to_doc()
-                .space_then("if")
-                .space_then(rhs.to_doc())
-                .group()
-                .enclose("(", ")"),
             ast::Expr::StructMember(struct_expr, thing, _) => struct_expr
                 .to_doc()
                 .enclose("(", ")")
@@ -507,6 +501,11 @@ impl<T> Printer for ast::Access<T> {
         self.var
             .to_doc()
             .append(idx_doc.nest(2).group().enclose("[", "]"))
+            .map_append(&self.predicate, |expr| {
+                Doc::space()
+                    .append(Doc::text("if").highlight(|cs| cs.keyword()))
+                    .space_then(expr.to_doc())
+            })
     }
 }
 

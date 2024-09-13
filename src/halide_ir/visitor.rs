@@ -281,18 +281,6 @@ pub trait Visitor<T> {
         Expr::CompBinop(op, Box::new(lhs), Box::new(rhs), self.default_u(data))
     }
 
-    #[allow(unused_variables)]
-    fn start_if_expr(&mut self, cond: &Expr<T>, expr: &Expr<T>, data: &T) {}
-
-    fn make_if_expr(
-        &mut self,
-        expr: Expr<Self::Output>,
-        cond: Expr<Self::Output>,
-        data: T,
-    ) -> Expr<Self::Output> {
-        Expr::If(Box::new(expr), Box::new(cond), self.default_u(data))
-    }
-
     fn make_struct_member_expr(&mut self, struct_id: Id, thing: Id, data: T) -> Expr<Self::Output> {
         Expr::StructMember(struct_id, thing, self.default_u(data))
     }
@@ -510,12 +498,18 @@ impl<T, U> Visitable<T, U> for Access<T> {
     type Res = Access<U>;
 
     fn visit(self, visitor: &mut dyn Visitor<T, Output = U>) -> Self::Res {
-        let Access { var, idx, align } = self;
+        let Access {
+            var,
+            idx,
+            align,
+            predicate,
+        } = self;
 
         Access {
             var,
             idx: Box::new(idx.visit(visitor)),
             align,
+            predicate: predicate.map(|expr| Box::new(expr.visit(visitor))),
         }
     }
 }
@@ -544,12 +538,6 @@ impl<T, U> Visitable<T, U> for Expr<T> {
                 let lhs = lhs.visit(visitor);
                 let rhs = rhs.visit(visitor);
                 visitor.make_comp_binop_expr(op, lhs, rhs, data)
-            }
-            Expr::If(expr, cond, data) => {
-                visitor.start_if_expr(&expr, &cond, &data);
-                let expr = expr.visit(visitor);
-                let cond = cond.visit(visitor);
-                visitor.make_if_expr(expr, cond, data)
             }
             Expr::StructMember(struct_id, thing, data) => {
                 visitor.make_struct_member_expr(struct_id, thing, data)

@@ -18,9 +18,6 @@ impl<T> From<ast::Expr<T>> for babble::Expr<HalideExprOp> {
             ast::Expr::CompBinop(op, lhs, rhs, _) => {
                 babble::AstNode::new(op.into(), [lhs.into(), rhs.into()])
             }
-            ast::Expr::If(lhs, rhs, _) => {
-                babble::AstNode::new(HalideExprOp::If, [lhs.into(), rhs.into()])
-            }
             ast::Expr::StructMember(struct_expr, thing, _) => babble::AstNode::new(
                 HalideExprOp::StructMember,
                 [struct_expr.into(), thing.into()],
@@ -41,6 +38,15 @@ impl<T> From<ast::Expr<T>> for babble::Expr<HalideExprOp> {
                 typs.push(ast::Id::new("*"));
                 babble::AstNode::new(HalideExprOp::Cast(typs), [expr.into()])
             }
+            ast::Expr::Access(
+                ast::Access {
+                    var,
+                    idx,
+                    predicate: Some(pred),
+                    ..
+                },
+                _,
+            ) => babble::AstNode::new(HalideExprOp::Access, [var.into(), idx.into(), pred.into()]),
             ast::Expr::Access(ast::Access { var, idx, .. }, _) => {
                 babble::AstNode::new(HalideExprOp::Access, [var.into(), idx.into()])
             }
@@ -159,12 +165,6 @@ impl TryFrom<babble::Expr<HalideExprOp>> for ast::Expr<()> {
             (HalideExprOp::And, _) => Err(anyhow!("Wrong number of arguments for `And`")),
             (HalideExprOp::Or, [lhs, rhs]) => Ok(ast::Expr::or(lhs.try_into()?, rhs.try_into()?)),
             (HalideExprOp::Or, _) => Err(anyhow!("Wrong number of arguments for `Or`")),
-            (HalideExprOp::If, [lhs, rhs]) => Ok(ast::Expr::If(
-                Box::new(lhs.try_into()?),
-                Box::new(rhs.try_into()?),
-                (),
-            )),
-            (HalideExprOp::If, _) => Err(anyhow!("Wrong number of arguments for `If`")),
             (HalideExprOp::StructMember, [struct_expr, thing]) => Ok(ast::Expr::StructMember(
                 struct_expr.try_into()?,
                 thing.try_into()?,
@@ -203,6 +203,16 @@ impl TryFrom<babble::Expr<HalideExprOp>> for ast::Expr<()> {
                     var: var.try_into()?,
                     idx: Box::new(idx.try_into()?),
                     align: None,
+                    predicate: None,
+                },
+                (),
+            )),
+            (HalideExprOp::Access, [var, idx, predicate]) => Ok(ast::Expr::Access(
+                ast::Access {
+                    var: var.try_into()?,
+                    idx: Box::new(idx.try_into()?),
+                    align: None,
+                    predicate: Some(Box::new(predicate.try_into()?)),
                 },
                 (),
             )),

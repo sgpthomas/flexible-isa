@@ -474,14 +474,4 @@ impl<T> Visitor<T> for TypeAnnotator {
             ast::Expr::Access(access, typ)
         }
     }
-
-    fn make_if_expr(
-        &mut self,
-        expr: ast::Expr<HalideType>,
-        cond: ast::Expr<HalideType>,
-        _data: T,
-    ) -> ast::Expr<HalideType> {
-        let typ = expr.data().clone();
-        ast::Expr::If(Box::new(expr), Box::new(cond), typ)
-    }
 }

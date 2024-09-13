@@ -89,6 +89,9 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
     // add all of the expressions into the instruction selector
     let mut instr_sel = Instructions::default();
     miner.into_iter().for_each(|expr| {
+        if args.output_miner() {
+            println!("  mined: {}", expr.to_pretty());
+        }
         instr_sel.add_expr(expr.clone());
     });
 

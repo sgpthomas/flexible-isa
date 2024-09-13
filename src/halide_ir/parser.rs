@@ -32,7 +32,6 @@ lazy_static::lazy_static! {
         .op(Op::infix(Rule::gt, Assoc::Left))
         .op(Op::infix(Rule::and, Assoc::Left))
         .op(Op::infix(Rule::or, Assoc::Left))
-        .op(Op::infix(Rule::if_infx, Assoc::Left))
         .op(Op::infix(Rule::struct_member, Assoc::Left))
         .op(Op::prefix(Rule::neg));
 }
@@ -98,7 +97,6 @@ impl StmtParser {
                     Rule::gt => Expr::gt(lhs?, rhs?),
                     Rule::and => Expr::and(lhs?, rhs?),
                     Rule::or => Expr::or(lhs?, rhs?),
-                    Rule::if_infx => Expr::If(Box::new(lhs?), Box::new(rhs?), ()),
                     Rule::struct_member => Self::struct_member(lhs?, rhs?, op.as_span())?,
                     x => unreachable!("Unexpected infix operator: `{x:?}`"),
                 })
@@ -498,10 +496,6 @@ impl StmtParser {
         Ok(())
     }
 
-    fn if_infx(input: Node) -> ParseResult<()> {
-        Ok(())
-    }
-
     fn reinterpret(input: Node) -> ParseResult<Expr> {
         Ok(match_nodes!(
             input.into_children();
@@ -553,11 +547,24 @@ impl StmtParser {
     fn access_expr(input: Node) -> ParseResult<Access> {
         Ok(match_nodes!(
             input.into_children();
-            [identifier(var), expr(idx)] => Access { var, idx: Box::new(idx), align: None },
+            [identifier(var), expr(idx)] => Access { var, idx: Box::new(idx), align: None, predicate: None },
             [identifier(var), expr(idx), int(low), int(hi)] => Access {
                 var,
                 idx: Box::new(idx),
-                align: Some((low, hi))
+                align: Some((low, hi)),
+                predicate: None,
+            },
+            [identifier(var), expr(idx), expr(predicate)] => Access {
+                var,
+                idx: Box::new(idx),
+                align: None,
+                predicate: Some(Box::new(predicate)),
+            },
+            [identifier(var), expr(idx), int(low), int(hi), expr(predicate)] => Access {
+                var,
+                idx: Box::new(idx),
+                align: Some((low, hi)),
+                predicate: Some(Box::new(predicate)),
             }
         ))
     }

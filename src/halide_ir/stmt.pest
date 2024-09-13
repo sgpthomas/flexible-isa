@@ -158,7 +158,7 @@ infix = _{
     add | sub | mul | div | modulo
   | lte | lt | eq | neq | gte | gt
   | and | or
-  | if_infx | struct_member
+  | struct_member
 }
 add           = { "+" }
 sub           = { "-" }
@@ -173,7 +173,6 @@ gte           = { ">=" }
 gt            = { ">" }
 and           = { "&&" }
 or            = { "||" }
-if_infx       = { "if" }
 struct_member = { "::" }
 
 primary = _{
@@ -214,6 +213,7 @@ cast_args = {
 // array access
 access_expr = {
     identifier ~ "[" ~ expr ~ ("aligned" ~ "(" ~ int ~ "," ~ int ~ ")")? ~ "]"
+    ~ ("if" ~ expr)?
 }
 
 let_expr = {
