@@ -15,7 +15,7 @@ use std::collections::HashMap;
 pub mod cli;
 mod halide_ir;
 mod instruction_select;
-mod utils;
+pub mod utils;
 
 #[derive(Default, Debug)]
 pub struct Isa {
@@ -97,7 +97,7 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
     let mut instr_sel = if let Some(path) = &args.load {
         println!("Loading instructions from {path:?}...");
         instr_sel.load(path)?
-    } else if args.learn {
+    } else if args.learn || args.save.is_some() {
         // run anti-unification to discover patterns (instructions)
         println!("Learning instructions...");
         let instrs = instr_sel.learn();
@@ -109,7 +109,9 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
 
         instrs
     } else {
-        return Err(anyhow!("Need either `--learn` or `--load <path>`"));
+        return Err(anyhow!(
+            "Need either `--learn`, `--load <path>`, or `--save <path>`"
+        ));
     };
 
     let prog = instr_sel.apply(args.limit, &args);
