@@ -294,6 +294,24 @@ where
     runner
 }
 
+pub fn wrap_spinner<F, O, S>(msg: S, f: F) -> O
+where
+    F: Fn() -> O,
+    S: std::fmt::Display,
+{
+    let spinner = ProgressBar::new_spinner()
+        .with_message(format!("{msg}"))
+        .with_style(
+            ProgressStyle::with_template("{spinner:.cyan/green} {msg}")
+                .unwrap()
+                .tick_chars(".oO@*✓"),
+        );
+    spinner.enable_steady_tick(Duration::from_millis(100));
+    let o = f();
+    spinner.finish_with_message(format!("{msg}"));
+    o
+}
+
 fn runner_stats_msg<L, N, D>(runner: &egg::Runner<L, N, D>) -> String
 where
     L: egg::Language,

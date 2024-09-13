@@ -84,14 +84,16 @@ impl Instructions<Init> {
         // we need to rebuild the e-graph before learning a library
         self.egraph.rebuild();
 
-        let mut learned_library = babble::LearnedLibraryBuilder::default()
-            .learn_trivial(true)
-            .ban_op(HalideExprOp::Cast(vec![]))
-            .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
-            .ban_op(HalideExprOp::Named(0))
-            .with_roots(self.roots.clone())
-            .with_dfta(false)
-            .build(&self.egraph);
+        let mut learned_library = utils::wrap_spinner("Building library", || {
+            babble::LearnedLibraryBuilder::default()
+                .learn_trivial(true)
+                .ban_op(HalideExprOp::Cast(vec![]))
+                .ban_op(HalideExprOp::FunCall(ast::Id::new("")))
+                .ban_op(HalideExprOp::Named(0))
+                .with_roots(self.roots.clone())
+                .with_dfta(false)
+                .build(&self.egraph)
+        });
 
         // I want to rewrite all instructions that contain concrete variables into
         // instructions that use pattern vars
