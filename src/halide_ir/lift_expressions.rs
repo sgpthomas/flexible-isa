@@ -5,6 +5,8 @@ use super::{ast, NumberNodes, SetData, Visitor};
 /// Extract all nested expressions into assignments.
 #[derive(Default)]
 pub struct LiftExpressions {
+    /// pass to lift if conditions out of if stmts
+    condition_lifter: ConditionLifter,
     /// pass to number expressions
     number: NumberNodes,
     /// pass that performs the lifting
@@ -18,11 +20,48 @@ impl LiftExpressions {
         let mut lift_expressions = Self::default();
         // we first have to number expressions so that
         // we can refer to them in the lifter
+        let ast = lift_expressions.condition_lifter.do_pass(ast);
         let ast = lift_expressions.number.do_pass(ast);
         let ast = lift_expressions.lifter.do_pass(ast);
         // remove numbers because lifted expressions don't
         // have valid numbers
         lift_expressions.setter.do_pass(ast)
+    }
+}
+
+#[derive(Default)]
+struct ConditionLifter {
+    count: usize,
+}
+
+impl<T> Visitor<T> for ConditionLifter {
+    type Output = ();
+
+    fn default_u(&mut self, _data: T) -> Self::Output {}
+
+    fn make_if_stmt(
+        &mut self,
+        cond: ast::Expr<Self::Output>,
+        tru: ast::Block<Self::Output>,
+        fls: Option<ast::Block<Self::Output>>,
+        _data: T,
+    ) -> Vec<ast::Stmt<Self::Output>> {
+        let new_var = ast::Id::new(format!("if_cond_{}", self.count));
+        self.count += 1;
+        let cond_stmt = ast::Stmt::Let {
+            var: new_var.clone(),
+            expr: cond,
+            data: (),
+        };
+        vec![
+            cond_stmt,
+            ast::Stmt::If {
+                cond: ast::Expr::Ident(new_var, ()),
+                tru,
+                fls,
+                data: (),
+            },
+        ]
     }
 }
 
@@ -87,19 +126,18 @@ impl Visitor<u64> for LiftExpressionsInternal {
     }
 
     fn start_stmt(&mut self, stmt: &ast::Stmt<u64>) {
-        let var = match stmt {
-            ast::Stmt::Let { var, .. } => var.clone(),
-            ast::Stmt::Produce { var, .. } => var.clone(),
-            ast::Stmt::Consume { var, .. } => var.clone(),
-            ast::Stmt::Store { access, .. } => access.var.clone(),
-            ast::Stmt::Allocate { name, .. } => name.clone(),
-            ast::Stmt::Free { var, .. } => var.clone(),
-            ast::Stmt::For { var, .. } => var.clone(),
-            ast::Stmt::If { data, .. } => ast::Id::new(format!("if_{data}")),
-            ast::Stmt::Predicate { data, .. } => ast::Id::new(format!("predicate_{data}")),
-            ast::Stmt::Expr(_, data) => ast::Id::new(format!("expr_{data}")),
+        self.var = match stmt {
+            ast::Stmt::Let { var, .. } => Some(var.clone()),
+            ast::Stmt::Produce { var, .. } => Some(var.clone()),
+            ast::Stmt::Consume { var, .. } => Some(var.clone()),
+            ast::Stmt::Store { access, .. } => Some(access.var.clone()),
+            ast::Stmt::Allocate { name, .. } => Some(name.clone()),
+            ast::Stmt::Free { var, .. } => Some(var.clone()),
+            ast::Stmt::For { var, .. } => Some(var.clone()),
+            ast::Stmt::If { .. } => None,
+            ast::Stmt::Predicate { data, .. } => Some(ast::Id::new(format!("predicate_{data}"))),
+            ast::Stmt::Expr(_, data) => Some(ast::Id::new(format!("expr_{data}"))),
         };
-        self.var = Some(var.clone());
     }
 
     fn make_stmt(&mut self, stmt: ast::Stmt<Self::Output>) -> Vec<ast::Stmt<Self::Output>> {

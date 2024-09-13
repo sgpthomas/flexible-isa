@@ -193,19 +193,22 @@ pub trait Visitor<T> {
         }
     }
 
-    fn if_stmt(
+    #[allow(unused_variables)]
+    fn start_if_stmt(&mut self, cond: &Expr<T>, tru: &Block<T>, fls: &Option<Block<T>>, data: &T) {}
+
+    fn make_if_stmt(
         &mut self,
         cond: Expr<Self::Output>,
         tru: Block<Self::Output>,
         fls: Option<Block<Self::Output>>,
         data: T,
-    ) -> Stmt<Self::Output> {
-        Stmt::If {
+    ) -> Vec<Stmt<Self::Output>> {
+        vec![Stmt::If {
             cond,
             tru,
             fls,
             data: self.default_u(data),
-        }
+        }]
     }
 
     #[allow(unused_variables)]
@@ -457,10 +460,11 @@ impl<T, U> Visitable<T, U> for Stmt<T> {
                 fls,
                 data,
             } => {
+                visitor.start_if_stmt(&cond, &tru, &fls, &data);
                 let cond = cond.visit(visitor);
                 let tru = tru.visit(visitor);
                 let fls = fls.visit(visitor);
-                vec![visitor.if_stmt(cond, tru, fls, data)]
+                visitor.make_if_stmt(cond, tru, fls, data)
             }
             Stmt::Predicate { cond, stmt, data } => {
                 visitor.start_predicate_stmt(&cond, &*stmt, &data);
