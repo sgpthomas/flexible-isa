@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for max_pool
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       31: (+ (cast<int32> ?x0) (cast<int32> ?x1))
       42: (- (cast<int32> ?x0) (cast<int32> ?x1))

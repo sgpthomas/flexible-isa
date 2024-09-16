@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for matmul
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       68: (+ ?x0 ?x1)
       70: (- ?x0 (cast<unknown> ?x1))

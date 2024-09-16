@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for mean
 ---
 (
-    MinimalIsa {
+    BestIsa {
       33: (+ ?x0 ?x1)
       44: (- (cast<int32> ?x0) (cast<int32> ?x1))
       49: (* (cast<int32> ?x0) (cast<int32> ?x1))

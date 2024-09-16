@@ -10,7 +10,7 @@ use rayon::iter::ParallelIterator;
 use smallvec::{smallvec, SmallVec};
 use std::collections::{HashMap, HashSet};
 
-use super::covering_options::{ChoiceSet, Covering};
+use super::instruction_covering::{ChoiceSet, Covering};
 use super::minimal_isa::IsaPruner;
 
 pub struct StrictOrdering<'a, N = ()>

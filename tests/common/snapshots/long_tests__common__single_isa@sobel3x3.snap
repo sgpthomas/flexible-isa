@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for sobel3x3
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       121: (+ ?x0 ?x1)
       138: (- ?x0 (cast<int32> ?x1))

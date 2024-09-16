@@ -10,7 +10,7 @@ use halide_ir::{
     Printer, RemoveCasts, Rewrite, StmtParser, TypeAnnotator, UniqueIdents, Visitor,
 };
 pub use instruction_select::{
-    HalideExprOp, HalideLang, InstructionSelect, Instructions, MinimalIsaDump,
+    BestIsaDump, HalideExprOp, HalideLang, InstructionSelect, Instructions,
 };
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
@@ -131,7 +131,7 @@ pub fn run(args: cli::Args) -> anyhow::Result<Isa> {
     }
 
     let minimal_isa = instr_sel.minimal_isa(&args);
-    if args.output_minimal_isa() {
+    if args.output_best_isa() {
         println!(
             "Result: {:#?}",
             minimal_isa.dump(&instr_sel.instructions().collect())

@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for depthwise_conv
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       697: (+ ?x0 ?x1)
       773: (- ?x0 ?x1)

@@ -8,7 +8,7 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::{halide_ir::ast::Instr, HalideExprOp, HalideLang};
 
-use super::minimal_isa::{IsaPruner, MinimalIsaDump};
+use super::minimal_isa::{BestIsaDump, IsaPruner};
 
 pub struct EGraphCovering<'a, N = ()>
 where
@@ -52,7 +52,7 @@ where
             return;
         }
 
-        // insert default element so that we don't follow loops infinitely
+        // mark this root as seen, so that we don't follow loops infinitely
         self.seen.insert(root);
 
         // There are two cases:
@@ -172,8 +172,8 @@ impl Covering {
     pub fn dump<'a>(
         &'a self,
         instructions: &'a HashMap<Instr, egg::Pattern<HalideLang>>,
-    ) -> MinimalIsaDump<'a> {
-        MinimalIsaDump {
+    ) -> BestIsaDump<'a> {
+        BestIsaDump {
             isa: &self.0,
             instructions,
         }
@@ -185,6 +185,8 @@ impl Covering {
 #[debug("{_0:?}")]
 pub struct ChoiceSet(Vec<Covering>);
 
+/// Equality for choicesets doesn't depend on the order that they appear
+/// in the vector
 impl PartialEq for ChoiceSet {
     fn eq(&self, other: &Self) -> bool {
         self.0.iter().all(|cov| other.0.contains(cov))

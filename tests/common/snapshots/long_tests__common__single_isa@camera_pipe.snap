@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for camera_pipe
 ---
 (
-    MinimalIsa {
+    BestIsa {
       2: (neg ?x0)
       306: (+ ?x0 ?x1)
       356: (- ?x0 ?x1)

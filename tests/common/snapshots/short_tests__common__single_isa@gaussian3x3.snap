@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for gaussian3x3
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?#0))
       64: (+ ?x0 ?x1)
       69: (- (cast<int32> ?x0) (cast<int32> ?x1))

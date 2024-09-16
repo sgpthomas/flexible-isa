@@ -12,8 +12,8 @@ use std::collections::{HashMap, HashSet};
 use crate::{halide_ir::ast::Instr, instruction_select::Learned, utils, Instructions};
 
 use super::{
-    covering_options::{ChoiceSet, EGraphCovering},
-    minimal_isa::{IsaPruner, MinimalIsa},
+    instruction_covering::{ChoiceSet, EGraphCovering},
+    minimal_isa::{BestIsa, IsaPruner},
 };
 
 pub struct BruteForceIsa<'a> {
@@ -37,8 +37,8 @@ impl<'a> BruteForceIsa<'a> {
     }
 }
 
-impl<'a> MinimalIsa<'a> for BruteForceIsa<'a> {
-    fn minimize(&mut self) {
+impl<'a> BestIsa<'a> for BruteForceIsa<'a> {
+    fn select(&mut self) {
         let mut covering = EGraphCovering::new(&self.learned.egraph, &(*self.pruner));
 
         for r in self.learned.roots.iter().progress_with(

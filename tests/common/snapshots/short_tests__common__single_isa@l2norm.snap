@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for l2norm
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       18: (+ ?x0 ?x1)
       28: (- ?x0 ?x1)

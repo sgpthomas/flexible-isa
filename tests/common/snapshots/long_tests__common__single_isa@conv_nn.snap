@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for conv_nn
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       331: (+ ?x0 ?x1)
       393: (- ?x0 ?x1)

@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for mul
 ---
 (
-    MinimalIsa {
+    BestIsa {
       10: (+ (cast<int32> ?x0) (cast<int32> ?x1))
       21: (- ?x0 ?x1)
       27: (* ?x0 ?x1)

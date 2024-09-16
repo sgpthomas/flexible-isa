@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for average_pool
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       33: (+ ?x0 ?x1)
       45: (- (cast<int32> ?x0) (cast<int32> ?x1))

@@ -7,8 +7,7 @@ use itertools::Itertools;
 
 use crate::{
     instruction_select::{
-        BruteForceIsa, EfficientIsa, Experimental, IntoMinimalIsa, Learned, MinimalIsa,
-        PairwisePrune, StrictOrdering,
+        BestIsa, BruteForceIsa, Experimental, IntoBestIsa, Learned, PairwisePrune, StrictOrdering,
     },
     Instructions,
 };
@@ -53,8 +52,8 @@ pub struct Args {
     pub no_inline: bool,
 
     /// algorithm to compute minimal ISA with
-    #[argh(option, default = "MinimalIsaAlgo::BruteForce")]
-    pub minimal_isa_algo: MinimalIsaAlgo,
+    #[argh(option, default = "BestIsaAlgo::BruteForce")]
+    pub select_with: BestIsaAlgo,
 
     /// how to prune brute force options
     #[argh(option)]
@@ -80,7 +79,7 @@ impl Args {
             learn: true,
             limit: None,
             no_inline: false,
-            minimal_isa_algo: MinimalIsaAlgo::BruteForce,
+            select_with: BestIsaAlgo::BruteForce,
             prune: None,
             disable_typechecker: false,
         }
@@ -144,8 +143,8 @@ impl Args {
         self
     }
 
-    pub fn minimal_isa_algo(mut self, algo: MinimalIsaAlgo) -> Self {
-        self.minimal_isa_algo = algo;
+    pub fn select_with(mut self, algo: BestIsaAlgo) -> Self {
+        self.select_with = algo;
         self
     }
 
@@ -170,13 +169,14 @@ pub enum OutputType {
     Miner,
     Dot,
     Pdf,
-    MinimalIsa,
+    BestIsa,
 }
 
 #[derive(Debug, derive_more::FromStr)]
 pub enum PruneType {
     Pairwise,
     Experimental,
+    Default,
 }
 
 impl Args {
@@ -214,26 +214,23 @@ impl Args {
         self.output.iter().any(|x| matches!(x, OutputType::Pdf))
     }
 
-    pub fn output_minimal_isa(&self) -> bool {
-        self.output
-            .iter()
-            .any(|x| matches!(x, OutputType::MinimalIsa))
+    pub fn output_best_isa(&self) -> bool {
+        self.output.iter().any(|x| matches!(x, OutputType::BestIsa))
     }
 }
 
 #[derive(Debug, derive_more::FromStr)]
-pub enum MinimalIsaAlgo {
+pub enum BestIsaAlgo {
     BruteForce,
-    Efficient,
 }
 
-impl<'a> IntoMinimalIsa<'a> for &Args {
-    fn make(self, learned: &'a Instructions<Learned>) -> Box<dyn MinimalIsa<'a> + 'a>
+impl<'a> IntoBestIsa<'a> for &Args {
+    fn make(self, learned: &'a Instructions<Learned>) -> Box<dyn BestIsa<'a> + 'a>
     where
         Self: Sized,
     {
-        match self.minimal_isa_algo {
-            MinimalIsaAlgo::BruteForce => {
+        match self.select_with {
+            BestIsaAlgo::BruteForce => {
                 let mut isa = BruteForceIsa::new(learned);
                 let pruner = StrictOrdering::new(learned);
                 match self.prune {
@@ -243,11 +240,13 @@ impl<'a> IntoMinimalIsa<'a> for &Args {
                     Some(PruneType::Experimental) => {
                         isa.set_pruner((pruner, Experimental::default()));
                     }
+                    Some(PruneType::Default) => {
+                        isa.set_pruner((pruner, Experimental::default()));
+                    }
                     None => (),
                 }
                 Box::new(isa)
             }
-            MinimalIsaAlgo::Efficient => Box::new(EfficientIsa::new(learned)),
         }
     }
 }

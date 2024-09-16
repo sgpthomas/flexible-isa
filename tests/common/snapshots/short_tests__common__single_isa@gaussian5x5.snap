@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for gaussian5x5
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       100: (+ ?x0 ?x1)
       106: (- ?x0 ?x1)

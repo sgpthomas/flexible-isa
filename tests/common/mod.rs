@@ -4,8 +4,8 @@ use std::{
 };
 
 use flexible_isa::{
-    cli::{self, MinimalIsaAlgo, PruneType},
-    run, HalideExprOp, InstructionSelect, MinimalIsaDump,
+    cli::{self, BestIsaAlgo, PruneType},
+    run, BestIsaDump, HalideExprOp, InstructionSelect,
 };
 use itertools::Itertools;
 
@@ -42,7 +42,7 @@ pub fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> 
 
     let args: cli::Args = cli::Args::new(&[path])
         .learn(true)
-        .minimal_isa_algo(MinimalIsaAlgo::BruteForce)
+        .select_with(BestIsaAlgo::BruteForce)
         .prune(PruneType::Pairwise);
     let isa = run(args)?;
 
@@ -61,7 +61,7 @@ pub fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> 
         .map(|(i, count)| (i, count, isa.instructions[i].to_string()))
         .collect();
 
-    let minimal_isa_dump = MinimalIsaDump {
+    let minimal_isa_dump = BestIsaDump {
         isa: &isa.minimal_isa,
         instructions: &isa.instructions,
     };

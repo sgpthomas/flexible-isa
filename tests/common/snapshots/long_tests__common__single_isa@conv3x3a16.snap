@@ -3,7 +3,7 @@ source: tests/common/mod.rs
 description: generate isa for conv3x3a16
 ---
 (
-    MinimalIsa {
+    BestIsa {
       0: (neg (cast<int32> ?x0))
       159: (+ ?x0 ?x1)
       165: (- ?x0 ?x1)

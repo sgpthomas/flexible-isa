@@ -7,8 +7,6 @@ use babble::Teachable;
 use itertools::Itertools;
 
 #[allow(unused)]
-use crate::instruction_select::{BruteForceIsa, EfficientIsa, MinimalIsa};
-#[allow(unused)]
 use crate::utils::IntoNamedDot;
 use crate::{
     halide_ir::ast::{self, Instr},
@@ -17,8 +15,8 @@ use crate::{
 };
 
 use super::{
-    extract::minimal_isa::IntoMinimalIsa, lang::HalideExprOp, HalideLang, Init, InstructionState,
-    Learned,
+    extract::minimal_isa::IntoBestIsa, lang::HalideExprOp, BestIsa, HalideLang, Init,
+    InstructionState, Learned,
 };
 
 pub type LibraryPattern = egg::Pattern<babble::AstNode<HalideExprOp>>;
@@ -201,12 +199,12 @@ impl Instructions<Learned> {
         root
     }
 
-    pub fn minimal_isa<'a, I>(&'a self, isa: I) -> Box<dyn MinimalIsa<'a> + 'a>
+    pub fn minimal_isa<'a, I>(&'a self, isa: I) -> Box<dyn BestIsa<'a> + 'a>
     where
-        I: IntoMinimalIsa<'a>,
+        I: IntoBestIsa<'a>,
     {
         let mut minimal_isa = isa.make(self);
-        minimal_isa.minimize();
+        minimal_isa.select();
         minimal_isa
     }
 
