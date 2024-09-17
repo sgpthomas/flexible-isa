@@ -7,7 +7,8 @@ use itertools::Itertools;
 
 use crate::{
     instruction_select::{
-        BestIsa, BruteForceIsa, Experimental, IntoBestIsa, Learned, PairwisePrune, StrictOrdering,
+        BeamSearchIsa, BestIsa, BruteForceIsa, Experimental, IntoBestIsa, Learned, PairwisePrune,
+        StrictOrdering,
     },
     Instructions,
 };
@@ -59,6 +60,10 @@ pub struct Args {
     #[argh(option)]
     pub prune: Option<PruneType>,
 
+    /// the beam size to use during beam search
+    #[argh(option, default = "usize::MAX")]
+    pub beam_size: usize,
+
     /// disable the type checker
     #[argh(switch)]
     pub disable_typechecker: bool,
@@ -81,6 +86,7 @@ impl Args {
             no_inline: false,
             select_with: BestIsaAlgo::BruteForce,
             prune: None,
+            beam_size: usize::MAX,
             disable_typechecker: false,
         }
     }
@@ -153,6 +159,11 @@ impl Args {
         self
     }
 
+    pub fn beam_size(mut self, beam_size: usize) -> Self {
+        self.beam_size = beam_size;
+        self
+    }
+
     pub fn disable_typechecker(mut self, val: bool) -> Self {
         self.disable_typechecker = val;
         self
@@ -222,6 +233,7 @@ impl Args {
 #[derive(Debug, derive_more::FromStr)]
 pub enum BestIsaAlgo {
     BruteForce,
+    BeamSearch,
 }
 
 impl<'a> IntoBestIsa<'a> for &Args {
@@ -245,6 +257,10 @@ impl<'a> IntoBestIsa<'a> for &Args {
                     }
                     None => (),
                 }
+                Box::new(isa)
+            }
+            BestIsaAlgo::BeamSearch => {
+                let isa = BeamSearchIsa::new(learned).with_beam_size(self.beam_size);
                 Box::new(isa)
             }
         }

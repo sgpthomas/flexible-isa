@@ -53,14 +53,14 @@ impl<'a> std::fmt::Debug for BestIsaDump<'a> {
     }
 }
 
-pub trait IsaPruner {
-    fn prune(&self, choices: ChoiceSet) -> ChoiceSet;
+pub trait IsaPruner<T> {
+    fn prune(&self, choices: ChoiceSet<T>) -> ChoiceSet<T>;
     #[allow(unused_variables, unused)]
     fn set_message(&mut self, msg: String) {}
 }
 
-impl IsaPruner for () {
-    fn prune(&self, choices: ChoiceSet) -> ChoiceSet {
+impl<T> IsaPruner<T> for () {
+    fn prune(&self, choices: ChoiceSet<T>) -> ChoiceSet<T> {
         choices
     }
 }

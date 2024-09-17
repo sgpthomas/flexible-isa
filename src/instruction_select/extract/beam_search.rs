@@ -1,47 +1,69 @@
-//! A brute-force implementation of finding the minimal ISA. This algorithm runs in
-//! exponential time, but is guaranteed to produce the correct result. Or at least
-//! that's the goal.
+use std::collections::{HashMap, HashSet};
 
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 
-#[allow(unused)]
-use crate::utils::IntoNamedDot;
-use std::collections::{HashMap, HashSet};
-
-use crate::{halide_ir::ast::Instr, instruction_select::Learned, utils, Instructions};
+use crate::{halide_ir::ast, instruction_select::Learned, utils, Instructions};
 
 use super::{
-    instruction_covering::{ChoiceSet, EGraphCovering},
+    instruction_covering::{ChoiceSet, CoveringDataMerge, EGraphCovering},
     minimal_isa::{BestIsa, IsaPruner},
 };
 
-pub struct BruteForceIsa<'a> {
-    pub isa: HashSet<Instr>,
-    pub learned: &'a Instructions<Learned>,
-    pruner: Box<dyn IsaPruner<()> + 'a>,
+pub struct BeamSearchIsa<'a> {
+    isa: HashSet<ast::Instr>,
+    learned: &'a Instructions<Learned>,
+    beam_size: usize,
 }
 
-impl<'a> BruteForceIsa<'a> {
+impl<'a> BeamSearchIsa<'a> {
     pub fn new(learned: &'a Instructions<Learned>) -> Self {
         Self {
             isa: HashSet::default(),
             learned,
-            pruner: Box::new(()),
+            beam_size: usize::MAX,
         }
     }
 
-    pub fn set_pruner(&mut self, pruner: impl IsaPruner<()> + 'a) -> &mut Self {
-        self.pruner = Box::new(pruner);
+    pub fn with_beam_size(mut self, beam_size: usize) -> Self {
+        self.beam_size = beam_size;
         self
     }
 }
 
-impl<'a> BestIsa<'a> for BruteForceIsa<'a> {
-    fn select(&mut self) {
-        let covering = EGraphCovering::new(&self.learned.egraph, &(*self.pruner))
-            .with_roots(&self.learned.roots);
+impl<'a> IsaPruner<usize> for BeamSearchIsa<'a> {
+    /// Only keep `self.beam_size` lowest cost coverings
+    fn prune(&self, choices: ChoiceSet<usize>) -> ChoiceSet<usize> {
+        choices
+            .into_iter()
+            .sorted_by_key(|covering| covering.data)
+            .take(self.beam_size)
+            .collect()
+    }
+}
 
+impl CoveringDataMerge for usize {
+    fn merge(self, other: &Self) -> Self {
+        self.saturating_add(*other)
+    }
+
+    fn one() -> Self {
+        1
+    }
+
+    fn zero() -> Self {
+        0
+    }
+}
+
+impl<'a> BestIsa<'a> for BeamSearchIsa<'a> {
+    fn select(&mut self) {
+        let covering: EGraphCovering<usize> =
+            EGraphCovering::new(&self.learned.egraph, &*self).with_roots(&self.learned.roots);
+
+        // println!("{covering:#?}");
+
+        // TODO: abstract this code so that this is shared with bruteforce
         let options: Vec<_> = self
             .learned
             .roots
@@ -69,7 +91,7 @@ impl<'a> BestIsa<'a> for BruteForceIsa<'a> {
             .progress_with(utils::progress_bar(options.len()).with_message("Final product"))
             .fold(ChoiceSet::empty(), ChoiceSet::cross_product)
             .into_iter()
-            .sorted_by_key(|iset| iset.len())
+            .sorted_by_key(|iset| iset.data)
             .collect();
 
         let instructions: HashMap<_, _> = self.learned.instructions().collect();
@@ -83,7 +105,7 @@ impl<'a> BestIsa<'a> for BruteForceIsa<'a> {
         }
     }
 
-    fn isa(&self) -> &HashSet<Instr> {
+    fn isa(&self) -> &HashSet<ast::Instr> {
         &self.isa
     }
 }

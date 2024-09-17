@@ -9,9 +9,11 @@ impl HalideEqualities {
     where
         N: egg::Analysis<HalideLang>,
     {
-        let bidirectional = vec![rw!("neg-eq"; "(neg (== ?a ?b))" <=> "(!= ?a ?b)")];
+        // let bidirectional = vec![rw!("neg-eq"; "(neg (== ?a ?b))" <=> "(!= ?a ?b)")];
+        let bidirectional: Vec<Vec<egg::Rewrite<_, _>>> = vec![];
 
-        let unidirectional = vec![rw!("add0"; "(+ ?a 0)" => "?a")];
+        // let unidirectional = vec![rw!("add0"; "(+ ?a 0)" => "?a")];
+        let unidirectional: Vec<egg::Rewrite<_, _>> = vec![];
 
         bidirectional
             .into_iter()

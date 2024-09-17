@@ -1,27 +1,32 @@
 //! Module for computing all possible instruction sets that can cover each e-class
 //! in an e-graph.
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeSet, HashMap, HashSet},
+};
 
+use indicatif::ProgressIterator;
 use itertools::Itertools;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::{halide_ir::ast::Instr, HalideExprOp, HalideLang};
+use crate::{halide_ir::ast::Instr, utils, HalideExprOp, HalideLang};
 
 use super::minimal_isa::{BestIsaDump, IsaPruner};
 
-pub struct EGraphCovering<'a, N = ()>
+pub struct EGraphCovering<'a, T = (), N = ()>
 where
     N: egg::Analysis<HalideLang>,
 {
     egraph: &'a egg::EGraph<HalideLang, N>,
-    pruner: &'a dyn IsaPruner,
-    covering: HashMap<egg::Id, ChoiceSet>,
+    pruner: &'a dyn IsaPruner<T>,
+    covering: HashMap<egg::Id, ChoiceSet<T>>,
     seen: HashSet<egg::Id>,
 }
 
-impl<'a, N> std::fmt::Debug for EGraphCovering<'a, N>
+impl<'a, T, N> std::fmt::Debug for EGraphCovering<'a, T, N>
 where
+    T: std::fmt::Debug,
     N: egg::Analysis<HalideLang>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -33,17 +38,29 @@ where
     }
 }
 
-impl<'a, N> EGraphCovering<'a, N>
+impl<'a, T, N> EGraphCovering<'a, T, N>
 where
     N: egg::Analysis<HalideLang>,
+    T: Clone + Send + Sync + CoveringDataMerge,
 {
-    pub fn new(egraph: &'a egg::EGraph<HalideLang, N>, pruner: &'a dyn IsaPruner) -> Self {
+    pub fn new(egraph: &'a egg::EGraph<HalideLang, N>, pruner: &'a dyn IsaPruner<T>) -> Self {
         EGraphCovering {
             egraph,
             pruner,
             covering: HashMap::default(),
             seen: HashSet::default(),
         }
+    }
+
+    pub fn with_roots(mut self, roots: &[egg::Id]) -> Self {
+        for r in roots.iter().progress_with(
+            utils::progress_bar(roots.len())
+                .with_message("Computing valid instruction coverings..."),
+        ) {
+            self.compute_from_root(*r);
+        }
+
+        self
     }
 
     pub fn compute_from_root(&mut self, root: egg::Id) {
@@ -55,6 +72,17 @@ where
         // mark this root as seen, so that we don't follow loops infinitely
         self.seen.insert(root);
 
+        let instrs: Vec<(Instr, &[egg::Id])> = self.egraph[root]
+            .nodes
+            .iter()
+            .filter_map(|enode| {
+                enode
+                    .operation()
+                    .instruction()
+                    .map(|instr| (instr, enode.args()))
+            })
+            .collect();
+
         // There are two cases:
         //     1) This eclass contains some instructions. We know that one of these
         //     instructions has to be picked, so just look at the children of the
@@ -63,22 +91,7 @@ where
         //     children, and then take the cross product across the children.
 
         // XXX(sam): collapse these two cases into one. I don't think two cases is necessary
-        if self.egraph[root]
-            .nodes
-            .iter()
-            .any(|enode| enode.operation().instruction().is_some())
-        {
-            let instrs: Vec<(Instr, &[egg::Id])> = self.egraph[root]
-                .nodes
-                .iter()
-                .filter_map(|enode| {
-                    enode
-                        .operation()
-                        .instruction()
-                        .map(|instr| (instr, enode.args()))
-                })
-                .collect();
-
+        let choices = if !instrs.is_empty() {
             let mut choices = ChoiceSet::default();
             for (instr, children) in instrs {
                 for child in children {
@@ -89,20 +102,24 @@ where
                     children
                         .iter()
                         .map(|child| {
+                            // if there is a cycle, the choice set contains all the
+                            // instructions in the eclass besides the current instruction
                             if root == *child {
-                                let mut choices = ChoiceSet::from(&self.egraph[root]);
+                                let mut choices =
+                                    ChoiceSet::from(&self.egraph[root]).map_data(T::zero());
                                 choices.retain(|covering| !covering.contains(&instr));
                                 choices
                             } else {
                                 self.covering[child].clone()
                             }
                         })
-                        .map(|covering| self.pruner.prune(covering))
-                        .fold(ChoiceSet::from([instr.0]), |acc, el| acc.cross_product(&el)),
+                        .fold(ChoiceSet::from([instr.0]).map_data(T::zero()), |acc, el| {
+                            acc.cross_product(&el)
+                        }),
                 );
             }
 
-            self.covering.insert(root, choices);
+            choices
         } else {
             // gather all unique children of the nodes in self.egraph[root]
             let children: Vec<egg::Id> = self.egraph[root]
@@ -121,52 +138,125 @@ where
 
             // gather instructions from current root
             // update this roots covering with the cross-product over it's children
-            self.covering.insert(
-                root,
-                children
-                    .iter()
-                    .map(|child| &self.covering[child])
-                    .map(|covering| self.pruner.prune(covering.clone()))
-                    .fold(ChoiceSet::from([]), |acc, el| acc.cross_product(&el)),
-            );
-        }
+            children
+                .iter()
+                .map(|child| &self.covering[child])
+                .fold(ChoiceSet::from([]).map_data(T::one()), |acc, el| {
+                    acc.cross_product(el)
+                })
+        };
+
+        self.covering.insert(root, self.pruner.prune(choices));
     }
 
-    pub fn get(&self, root: &egg::Id) -> Option<&ChoiceSet> {
+    pub fn get(&self, root: &egg::Id) -> Option<&ChoiceSet<T>> {
         self.covering.get(root)
     }
 }
 
+pub trait CoveringDataMerge {
+    fn merge(self, other: &Self) -> Self;
+    fn one() -> Self;
+    fn zero() -> Self;
+}
+
+impl CoveringDataMerge for () {
+    fn merge(self, _other: &Self) -> Self {}
+    fn one() -> Self {}
+    fn zero() -> Self {}
+}
+
 /// Represents a set of instructions that must be choosen together, in order to
 /// cover a sub-tree.
-#[derive(derive_more::Debug, Clone, PartialEq, Eq, Default)]
-#[debug("{_0:?}")]
-pub struct Covering(HashSet<Instr>);
+#[derive(Clone, Default)]
+pub struct Covering<T = ()> {
+    set: HashSet<Instr>,
+    pub data: T,
+}
 
-impl Covering {
-    pub fn union(self, other: &Self) -> Self {
-        Covering(self.0.union(&other.0).copied().collect())
+impl<T> PartialEq for Covering<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.set == other.set
     }
+}
 
+impl<T> Eq for Covering<T> {}
+
+impl<T> PartialOrd for Covering<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T> Ord for Covering<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // first compare by length
+        match self.len().cmp(&other.len()) {
+            x @ (Ordering::Less | Ordering::Greater) => return x,
+            Ordering::Equal => (),
+        }
+
+        // if they are exactly the same, then they are equal of course
+        if self.set == other.set {
+            return Ordering::Equal;
+        }
+
+        // compare element-wise until we find a difference
+        for (s, o) in self.set.iter().sorted().zip(other.set.iter().sorted()) {
+            if s == o {
+                continue;
+            }
+
+            return s.cmp(o);
+        }
+
+        unreachable!()
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for Covering<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut set_fmtter = f.debug_set();
+        for item in self.set.iter().sorted() {
+            set_fmtter.entry(item);
+        }
+        set_fmtter.entry(&self.data);
+        set_fmtter.finish()
+    }
+}
+
+impl<T> Covering<T>
+where
+    T: CoveringDataMerge,
+{
+    pub fn union(self, other: &Self) -> Self {
+        Covering {
+            set: self.set.union(&other.set).copied().collect(),
+            data: self.data.merge(&other.data),
+        }
+    }
+}
+
+impl<T> Covering<T> {
     pub fn into_inner(self) -> HashSet<Instr> {
-        self.0
+        self.set
     }
 
     #[allow(unused)]
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.set.is_empty()
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.set.len()
     }
 
     pub fn iter(&self) -> std::collections::hash_set::Iter<'_, Instr> {
-        self.0.iter()
+        self.set.iter()
     }
 
     pub fn contains(&self, value: &Instr) -> bool {
-        self.0.contains(value)
+        self.set.contains(value)
     }
 
     pub fn dump<'a>(
@@ -174,29 +264,34 @@ impl Covering {
         instructions: &'a HashMap<Instr, egg::Pattern<HalideLang>>,
     ) -> BestIsaDump<'a> {
         BestIsaDump {
-            isa: &self.0,
+            isa: &self.set,
             instructions,
+        }
+    }
+
+    pub fn map_data<U>(self, data: U) -> Covering<U> {
+        Covering {
+            set: self.set,
+            data,
         }
     }
 }
 
 /// Each element represents a possible choice to cover some sub-tree.
-#[derive(derive_more::Debug, Clone, Default)]
+#[derive(derive_more::Debug, Clone, PartialEq, Eq)]
 #[debug("{_0:?}")]
-pub struct ChoiceSet(Vec<Covering>);
+pub struct ChoiceSet<T = ()>(BTreeSet<Covering<T>>);
 
-/// Equality for choicesets doesn't depend on the order that they appear
-/// in the vector
-impl PartialEq for ChoiceSet {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.iter().all(|cov| other.0.contains(cov))
-            && other.0.iter().all(|cov| self.0.contains(cov))
+impl<T> Default for ChoiceSet<T> {
+    fn default() -> Self {
+        ChoiceSet(BTreeSet::default())
     }
 }
 
-impl Eq for ChoiceSet {}
-
-impl ChoiceSet {
+impl<T> ChoiceSet<T>
+where
+    T: Clone + Send + Sync + CoveringDataMerge,
+{
     pub fn cross_product(self, other: &Self) -> Self {
         if self.0.is_empty() {
             return other.clone();
@@ -215,22 +310,23 @@ impl ChoiceSet {
                 .collect(),
         )
     }
+}
 
+impl<T> ChoiceSet<T> {
     #[allow(unused)]
     fn or<C>(mut self, value: C) -> Self
     where
-        C: Into<Covering>,
+        C: Into<Covering<T>>,
     {
-        self.0.push(value.into());
+        self.0.insert(value.into());
         self
     }
 
     pub fn extend<I>(&mut self, iter: I) -> &mut Self
     where
-        I: IntoIterator<Item = Covering>,
+        I: IntoIterator<Item = Covering<T>>,
     {
         self.0.extend(iter);
-        self.0.dedup();
         self
     }
 
@@ -242,34 +338,52 @@ impl ChoiceSet {
         self.0.len()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Covering> + Clone {
+    pub fn iter(&self) -> impl Iterator<Item = &Covering<T>> + Clone {
         self.0.iter()
     }
 
     pub fn retain<F>(&mut self, f: F)
     where
-        F: FnMut(&Covering) -> bool,
+        F: FnMut(&Covering<T>) -> bool,
     {
         self.0.retain(f)
     }
-}
 
-impl<const N: usize> From<[usize; N]> for Covering {
-    fn from(value: [usize; N]) -> Self {
-        Covering(HashSet::from_iter(value.into_iter().map(Instr)))
+    #[allow(unused)]
+    pub fn empty() -> Self {
+        Self(BTreeSet::new())
+    }
+
+    pub fn map_data<U: Clone>(self, data: U) -> ChoiceSet<U> {
+        ChoiceSet(
+            self.0
+                .into_iter()
+                .map(|cov| cov.map_data(data.clone()))
+                .collect(),
+        )
     }
 }
 
-impl<C> From<C> for ChoiceSet
+impl<const N: usize> From<[usize; N]> for Covering<()> {
+    fn from(value: [usize; N]) -> Self {
+        Covering {
+            set: HashSet::from_iter(value.into_iter().map(Instr)),
+            data: (),
+        }
+    }
+}
+
+impl<C, T> From<C> for ChoiceSet<T>
 where
-    C: Into<Covering>,
+    C: Into<Covering<T>>,
+    T: Default,
 {
     fn from(value: C) -> Self {
-        ChoiceSet(vec![value.into()])
+        ChoiceSet(BTreeSet::from([value.into()]))
     }
 }
 
-impl<'a, D> From<&'a egg::EClass<HalideLang, D>> for ChoiceSet {
+impl<'a, D> From<&'a egg::EClass<HalideLang, D>> for ChoiceSet<()> {
     fn from(value: &'a egg::EClass<HalideLang, D>) -> Self {
         ChoiceSet(
             value
@@ -282,23 +396,26 @@ impl<'a, D> From<&'a egg::EClass<HalideLang, D>> for ChoiceSet {
                         None
                     }
                 })
-                .map(|i| Covering(HashSet::from([i])))
+                .map(|i| Covering {
+                    set: HashSet::from([i]),
+                    data: (),
+                })
                 .collect(),
         )
     }
 }
 
-impl IntoIterator for ChoiceSet {
-    type Item = Covering;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+impl<T> IntoIterator for ChoiceSet<T> {
+    type Item = Covering<T>;
+    type IntoIter = std::collections::btree_set::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl FromIterator<Covering> for ChoiceSet {
-    fn from_iter<T: IntoIterator<Item = Covering>>(iter: T) -> Self {
+impl<T> FromIterator<Covering<T>> for ChoiceSet<T> {
+    fn from_iter<I: IntoIterator<Item = Covering<T>>>(iter: I) -> Self {
         ChoiceSet(iter.into_iter().collect())
     }
 }
@@ -358,7 +475,7 @@ mod tests {
     #[test]
     fn test_empty_cross_product2() {
         let a = ChoiceSet::from([0]).or([1]);
-        let b = ChoiceSet(vec![]);
+        let b = ChoiceSet::empty();
 
         assert_eq!(b.clone().cross_product(&a), a)
     }
@@ -411,5 +528,28 @@ mod tests {
                 .or([1, 2, 4])
                 .or([1, 3, 4])
         )
+    }
+
+    #[test]
+    fn test_covering_ordering() {
+        let cov1 = Covering::from([0, 1, 2]);
+        let cov2 = Covering::from([2, 1, 3, 0]);
+
+        assert!(cov1 < cov2);
+
+        let cov1 = Covering::from([]);
+        let cov2 = Covering::from([]);
+
+        assert!(cov1 == cov2);
+
+        let cov1 = Covering::from([0, 1, 2]);
+        let cov2 = Covering::from([1, 2, 3]);
+
+        assert!(cov1 < cov2);
+
+        let cov1 = Covering::from([0, 1, 2]);
+        let cov2 = Covering::from([2, 1, 0]);
+
+        assert!(cov1 == cov2);
     }
 }

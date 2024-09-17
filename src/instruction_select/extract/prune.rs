@@ -77,10 +77,15 @@ pub struct PairwisePrune {
     msg: String,
 }
 
-impl IsaPruner for (StrictOrdering<'_>, PairwisePrune) {
-    fn prune(&self, choices: ChoiceSet) -> ChoiceSet {
+type IdxCovering<'a, T> = (usize, &'a Covering<T>);
+
+impl<T> IsaPruner<T> for (StrictOrdering<'_>, PairwisePrune)
+where
+    T: Send + Sync,
+{
+    fn prune(&self, choices: ChoiceSet<T>) -> ChoiceSet<T> {
         let better =
-            |((idx_a, a), (idx_b, b)): ((usize, &Covering), (usize, &Covering))| -> SmallVec<[usize; 2]> {
+            |((idx_a, a), (idx_b, b)): (IdxCovering<T>, IdxCovering<T>)| -> SmallVec<[usize; 2]> {
                 for ia in a.iter() {
                     for ib in b.iter() {
                         if self.0.better_than(ia, ib) {
@@ -133,8 +138,8 @@ pub struct Experimental {
     msg: String,
 }
 
-impl IsaPruner for (StrictOrdering<'_>, Experimental) {
-    fn prune(&self, mut choices: ChoiceSet) -> ChoiceSet {
+impl<T> IsaPruner<T> for (StrictOrdering<'_>, Experimental) {
+    fn prune(&self, mut choices: ChoiceSet<T>) -> ChoiceSet<T> {
         // find pairs in ordering such that if i < j, j exists in some set in choices
         let relevant_ordering: HashSet<Instr> = self
             .0

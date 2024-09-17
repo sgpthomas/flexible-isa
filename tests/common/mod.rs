@@ -42,7 +42,8 @@ pub fn test_single_isa<S: AsRef<Path> + Display>(name: S) -> anyhow::Result<()> 
 
     let args: cli::Args = cli::Args::new(&[path])
         .learn(true)
-        .select_with(BestIsaAlgo::BruteForce)
+        .select_with(BestIsaAlgo::BeamSearch)
+        .beam_size(5)
         .prune(PruneType::Pairwise);
     let isa = run(args)?;
 

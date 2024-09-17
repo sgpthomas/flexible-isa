@@ -7,6 +7,7 @@ mod simplify;
 mod typestate;
 
 pub use cost::InstructionSelect;
+pub use extract::beam_search::BeamSearchIsa;
 pub use extract::brute_force::BruteForceIsa;
 pub use extract::minimal_isa::{BestIsa, BestIsaDump, IntoBestIsa};
 pub use extract::prune::{Experimental, PairwisePrune, StrictOrdering};
